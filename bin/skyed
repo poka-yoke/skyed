@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'skyed'
+
+options = {}
+
+subtext = "Available commands are:\n"
+Skyed::Commands::Command.getCommands.each do |name, description|
+  subtext += "  #{name} :  #{description}\n"
+end
+subtext += "Use --help after each command to see specific options"
+
+print subtext
