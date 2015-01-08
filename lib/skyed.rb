@@ -1,1 +1,1 @@
-require 'skyed/commands'
+require 'skyed/init'

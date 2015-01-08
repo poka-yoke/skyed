@@ -1,15 +1,8 @@
-module Skyed
-  module Commands
-    class Command
-      @@commands = Hash.new(nil)
+desc 'Initialize skyed'
+long_desc 'Sets up skyed configuration for a repository'
 
-      def self.register name, description
-        @@commands[name] = description
-      end
-
-      def self.getCommands
-        @@commands
-      end
-    end
+command :init do |cmd|
+  cmd.action do |global_options, options, args|
+    Skyed::Init.execute(global_options)
   end
 end

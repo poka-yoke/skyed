@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'skyed'
-  s.version     = '0.0.1'
+  s.version     = '0.0.2'
   s.date        = '2015-01-07'
   s.summary     = "Are you surrounded by sky?"
   s.description = "A cloudy gem"
