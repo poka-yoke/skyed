@@ -1,0 +1,14 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    git (1.2.8)
+    gli (2.12.2)
+    highline (1.6.21)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  git (= 1.2.8)
+  gli
+  highline
