@@ -1,4 +1,3 @@
-
 module Skyed
   module Settings
     extend self
