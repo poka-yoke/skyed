@@ -1,5 +1,6 @@
 require 'git'
 require 'highline/import'
+require 'digest/sha1'
 
 module Skyed
   module Init
@@ -8,8 +9,16 @@ module Skyed
     def execute(global_options)
       fail "Already initialized" unless Skyed::Settings.empty?
       puts 'Initializing...' if !global_options[:quiet]
-      Skyed::Settings.repo = repo_path(get_repo()).to_s
+      repo = get_repo()
+      Skyed::Settings.repo = repo_path(repo).to_s
+      branch = "devel-#{Digest::SHA1.hexdigest Skyed::Settings.repo}"
+      repo.branch(branch).checkout
+      Skyed::Settings.branch = branch
       Skyed::Settings.save
+    end
+
+    def repo_path(repo)
+      Pathname.new(repo.repo.path).dirname
     end
 
     def get_repo(agree = '.', ask = true)
@@ -19,14 +28,10 @@ module Skyed
         agree = ask("Which is your CM repository? ")
         repo = get_repo(agree, false)
       elsif ask then
-        agree = ask("Which is your CM repository? ") { |q| q.default = repo_path(repo).to_s }
+        agree = ask("Confirm this is your CM repository? ") { |q| q.default = repo_path(repo).to_s }
         repo = get_repo(agree) if agree != repo_path(repo).to_s
       end
       repo
-    end
-
-    def repo_path(repo)
-      Pathname.new(repo.repo.path).dirname
     end
 
     def is_repo(path)
