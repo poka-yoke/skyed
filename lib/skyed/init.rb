@@ -6,9 +6,10 @@ module Skyed
     extend self
 
     def execute(global_options)
+      fail "Already initialized" unless Skyed::Settings.empty?
       puts 'Initializing...' if !global_options[:quiet]
-      repo = get_repo()
-      puts repo_path repo
+      Skyed::Settings.repo = repo_path(get_repo()).to_s
+      Skyed::Settings.save
     end
 
     def get_repo(agree = '.', ask = true)

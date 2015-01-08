@@ -6,6 +6,7 @@ require 'skyed'
 include GLI::App
 
 program_desc 'Are you surrounded by sky?'
+Skyed::Settings.load!
 
 switch [:q, :quiet]
 
