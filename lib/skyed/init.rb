@@ -5,7 +5,7 @@ require 'digest/sha1'
 module Skyed
   # This module encapsulates all the init command steps.
   module Init
-    def execute(global_options)
+    def self.execute(global_options)
       fail 'Already initialized' unless Skyed::Settings.empty?
       puts 'Initializing...' unless global_options[:quiet]
       repo = get_repo
@@ -15,14 +15,12 @@ module Skyed
       Skyed::Settings.branch = branch
       Skyed::Settings.save
     end
-    module_function :execute
 
-    def repo_path(repo)
+    def self.repo_path(repo)
       Pathname.new(repo.repo.path).dirname
     end
-    module_function :repo_path
 
-    def get_repo(agree = '.', ask = true)
+    def self.get_repo(agree = '.', ask = true)
       repo = repo?(agree)
       if !repo
         repo = another_repo(agree)
@@ -31,14 +29,12 @@ module Skyed
       end
       repo
     end
-    module_function :get_repo
 
     def another_repo(agree)
       say("ERROR: #{agree} is not a repository")
       agree = ask('Which is your CM repository? ')
       get_repo(agree, false)
     end
-    module_function :another_repo
 
     def confirm_repo(repo)
       agree = ask('Confirm this is your CM repository? ') do |q|
@@ -46,13 +42,24 @@ module Skyed
       end
       get_repo(agree) if agree != repo_path(repo).to_s
     end
-    module_function :confirm_repo
 
-    def repo?(path)
+    def self.another_repo(agree)
+      say("ERROR: #{agree} is not a repository")
+      agree = ask('Which is your CM repository? ')
+      get_repo(agree, false)
+    end
+
+    def self.confirm_repo(repo)
+      agree = ask('Enter your CM repository? ') do |q|
+        q.default = repo_path(repo).to_s
+      end
+      get_repo(agree, false)
+    end
+
+    def self.repo?(path)
       Git.open(path)
     rescue ArgumentError
       return false
     end
-    module_function :repo?
   end
 end
