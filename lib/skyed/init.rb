@@ -30,19 +30,6 @@ module Skyed
       repo
     end
 
-    def another_repo(agree)
-      say("ERROR: #{agree} is not a repository")
-      agree = ask('Which is your CM repository? ')
-      get_repo(agree, false)
-    end
-
-    def confirm_repo(repo)
-      agree = ask('Confirm this is your CM repository? ') do |q|
-        q.default = repo_path(repo).to_s
-      end
-      get_repo(agree) if agree != repo_path(repo).to_s
-    end
-
     def self.another_repo(agree)
       say("ERROR: #{agree} is not a repository")
       agree = ask('Which is your CM repository? ')
