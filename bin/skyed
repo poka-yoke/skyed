@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+project_path = File.dirname(File.dirname(__FILE__))
+$LOAD_PATH.unshift project_path + '/lib'
 
 require 'gli'
 require 'skyed'

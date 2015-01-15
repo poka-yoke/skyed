@@ -20,27 +20,17 @@ module Skyed
       Pathname.new(repo.repo.path).dirname
     end
 
-    def self.get_repo(agree = '.', ask = true)
-      repo = repo?(agree)
+    def self.get_repo(path = '.', ask = true)
+      question = 'Which is your CM repository? '
+      repo = repo?(path)
       if !repo
-        repo = another_repo(agree)
+        say("ERROR: #{path} is not a repository")
+        repo = get_repo(ask(question), false)
       elsif ask
-        repo = confirm_repo(repo)
+        repo = get_repo(
+          ask(question) { |q| q.default = repo_path(repo).to_s }, false)
       end
       repo
-    end
-
-    def self.another_repo(agree)
-      say("ERROR: #{agree} is not a repository")
-      agree = ask('Which is your CM repository? ')
-      get_repo(agree, false)
-    end
-
-    def self.confirm_repo(repo)
-      agree = ask('Enter your CM repository? ') do |q|
-        q.default = repo_path(repo).to_s
-      end
-      get_repo(agree, false)
     end
 
     def self.repo?(path)
