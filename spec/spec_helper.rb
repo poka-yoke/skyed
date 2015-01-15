@@ -1,4 +1,6 @@
 require 'rspec'
+require 'coveralls'
+Coveralls.wear!
 
 RSpec.configure do |config|
   original_stderr = $stderr
