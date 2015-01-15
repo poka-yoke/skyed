@@ -3,6 +3,10 @@ source 'https://rubygems.org'
 gem 'git', '1.2.8'
 gem 'gli'
 gem 'highline'
-gem 'rubocop'
-gem 'rspec'
-gem 'aruba'
+
+group :test do
+  gem 'rubocop'
+  gem 'rspec'
+  gem 'aruba'
+  gem 'rake'
+end
