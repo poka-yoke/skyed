@@ -20,3 +20,6 @@ task test: :rubocop
 task :rubocop do
   sh 'rubocop'
 end
+
+require 'coveralls'
+Coveralls.wear!
