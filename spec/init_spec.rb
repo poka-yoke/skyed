@@ -2,9 +2,6 @@ require 'spec_helper'
 require 'skyed/init'
 require 'highline/import'
 
-describe 'Skyed::Init.execute' do
-end
-
 describe 'Skyed::Init.repo_path' do
   let(:repo_path)  { '/home/ifosch/projects/myrepo/.git' }
   let(:path)       { Pathname.new('/home/ifosch/projects/myrepo') }
@@ -25,8 +22,8 @@ describe 'Skyed::Init.repo_path' do
 end
 
 describe 'Skyed::Init.repo?' do
-  let(:path1) { double('String') }
-  let(:path2) { double('String') }
+  let(:path1)      { double('String') }
+  let(:path2)      { double('String') }
   let(:repository) { double('repository') }
   before(:each) do
     allow(Git)
