@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'skyed'
+require 'skyed/init'
 require 'highline/import'
 
 describe 'Skyed::Init.execute' do
