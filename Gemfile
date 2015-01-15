@@ -9,4 +9,5 @@ group :test do
   gem 'rspec'
   gem 'aruba'
   gem 'rake'
+  gem 'coveralls', require: false
 end
