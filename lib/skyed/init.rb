@@ -1,4 +1,5 @@
 require 'git'
+require 'aws-sdk'
 require 'highline/import'
 require 'digest/sha1'
 
@@ -20,13 +21,16 @@ module Skyed
       branch
     end
 
-    def self.credentials
+    def self.credentials(
+      access = ENV['AWS_ACCESS_KEY'],
+      secret = ENV['AWS_SECRET_KEY'])
       access_question = 'What is your AWS Access Key? '
-      access = ENV['AWS_ACCESS_KEY']
-      access = ask(access_question) if ENV['AWS_ACCESS_KEY'] == ''
+      access = ask(access_question) unless ENV['AWS_ACCESS_KEY'] != ''
       secret_question = 'What is your AWS Secret Key? '
-      secret = ENV['AWS_SECRET_KEY']
-      secret = ask(secret_question) if ENV['AWS_SECRET_KEY'] == ''
+      secret = ask(secret_question) unless ENV['AWS_SECRET_KEY'] != ''
+      AWS::OpsWorks.new(
+        access_key_id: access,
+        secret_access_key: secret)
       [access, secret]
     end
 

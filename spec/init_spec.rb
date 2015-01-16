@@ -32,17 +32,22 @@ describe 'Skyed::Init.branch' do
 end
 
 describe 'Skyed::Init.credentials' do
-  let(:access) { 'AKIAAKIAAKIA' }
-  let(:secret) { 'sGe84ofDSkfo' }
+  let(:opsworks) { double('AWS::OpsWorks') }
+  let(:access)   { 'AKIAAKIAAKIA' }
+  let(:secret)   { 'sGe84ofDSkfo' }
   before(:each) do
-    allow(ENV)
-      .to receive(:[])
-      .with('AWS_ACCESS_KEY')
-      .and_return(access)
-    allow(ENV)
-      .to receive(:[])
-      .with('AWS_SECRET_KEY')
-      .and_return(secret)
+    @oldaccess = ENV['AWS_ACCESS_KEY']
+    @oldsecret = ENV['AWS_SECRET_KEY']
+    ENV['AWS_ACCESS_KEY'] = access
+    ENV['AWS_SECRET_KEY'] = secret
+    expect(AWS::OpsWorks)
+      .to receive(:new)
+      .with(access_key_id: access, secret_access_key: secret)
+      .and_return(opsworks)
+  end
+  after(:each) do
+    ENV['AWS_ACCESS_KEY'] = @oldaccess
+    ENV['AWS_SECRET_KEY'] = @oldsecret
   end
   it 'recovers credentials from environment variables' do
     expect(Skyed::Init.credentials)

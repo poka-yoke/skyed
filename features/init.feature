@@ -48,9 +48,9 @@ Feature: Initialization
         Given the default aruba timeout is 30 seconds
         And a mocked home directory
         And I set the environment variables to:
-          | variable       | value        |
-          | AWS_ACCESS_KEY |  |
-          | AWS_SECRET_KEY |  |
+          | variable       | value |
+          | AWS_ACCESS_KEY |       |
+          | AWS_SECRET_KEY |       |
         And I run `git init test`
         And I cd to "test"
         And I run `git config user.email "test@test.com"`
