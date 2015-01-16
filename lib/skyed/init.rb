@@ -21,7 +21,13 @@ module Skyed
     end
 
     def self.credentials
-      [ENV['AWS_ACCESS_KEY'], ENV['AWS_SECRET_KEY']]
+      access_question = 'What is your AWS Access Key? '
+      access = ENV['AWS_ACCESS_KEY']
+      access = ask(access_question) if ENV['AWS_ACCESS_KEY'] == ''
+      secret_question = 'What is your AWS Secret Key? '
+      secret = ENV['AWS_SECRET_KEY']
+      secret = ask(secret_question) if ENV['AWS_SECRET_KEY'] == ''
+      [access, secret]
     end
 
     def self.repo_path(repo)
