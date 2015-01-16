@@ -34,4 +34,5 @@ Feature: Initialization
         And I wait for output to contain "test"
         And I type ""
         Then the exit status should be 0
-        And a file named "../.skyed" should exist
+        And the file "../.skyed" should contain "tmp/aruba/test"
+        And the file "../.skyed" should contain "devel-"
