@@ -25,13 +25,17 @@ module Skyed
       access = ENV['AWS_ACCESS_KEY'],
       secret = ENV['AWS_SECRET_KEY'])
       access_question = 'What is your AWS Access Key? '
-      access = ask(access_question) unless ENV['AWS_ACCESS_KEY'] != ''
+      access = ask(access_question) unless valid_credential?('AWS_ACCESS_KEY')
       secret_question = 'What is your AWS Secret Key? '
-      secret = ask(secret_question) unless ENV['AWS_SECRET_KEY'] != ''
+      secret = ask(secret_question) unless valid_credential?('AWS_SECRET_KEY')
       AWS::OpsWorks.new(
         access_key_id: access,
         secret_access_key: secret)
       [access, secret]
+    end
+
+    def self.valid_credential?(env_name)
+      ENV[env_name] != '' && !ENV[env_name].nil?
     end
 
     def self.repo_path(repo)
