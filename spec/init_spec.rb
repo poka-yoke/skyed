@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'skyed/init'
+require 'skyed'
 require 'highline/import'
 
 describe 'Skyed::Init.repo_path' do
