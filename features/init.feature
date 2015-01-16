@@ -4,7 +4,7 @@ Feature: Initialization
     As an infrastructure developer using Skyed
     I want to setup my Skyed installation
 
-    @wip
+    @init
     Scenario: Running init with skyed already configured
         Given a mocked home directory
         And a file named ".skyed" with:
@@ -18,3 +18,20 @@ Feature: Initialization
           """
           error: Already initialized\n
           """
+
+    @init @wip
+    Scenario: Running init for first time
+        Given the default aruba timeout is 30 seconds
+        And a mocked home directory
+        And I run `git init test`
+        And I cd to "test"
+        And I run `git config user.email "test@test.com"`
+        And I run `git config user.name "test"`
+        And I run `touch file`
+        And I run `git add file`
+        And I run `git commit -m "file"`
+        When I run `skyed init` interactively
+        And I wait for output to contain "test"
+        And I type ""
+        Then the exit status should be 0
+        And a file named "../.skyed" should exist
