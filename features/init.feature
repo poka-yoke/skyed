@@ -43,7 +43,7 @@ Feature: Initialization
         And the file "../.skyed" should contain "AKIAAKIAAKIA"
         And the file "../.skyed" should contain "sGe84ofDSkfo"
 
-    @init @wip
+    @init
     Scenario: Running init for first time without AWS environment variables
         Given the default aruba timeout is 30 seconds
         And a mocked home directory
