@@ -5,15 +5,23 @@ require 'digest/sha1'
 module Skyed
   # This module encapsulates all the init command steps.
   module Init
-    def self.execute(global_options)
+    def self.execute(_global_options)
       fail 'Already initialized' unless Skyed::Settings.empty?
-      puts 'Initializing...' unless global_options[:quiet]
-      repo = get_repo
-      Skyed::Settings.repo = repo_path(repo).to_s
-      branch = "devel-#{Digest::SHA1.hexdigest Skyed::Settings.repo}"
-      repo.branch(branch).checkout
+      Skyed::Settings.repo = repo_path(get_repo).to_s
       Skyed::Settings.branch = branch
+      Skyed::Settings.access_key, Skyed::Settings.secret_key = credentials
       Skyed::Settings.save
+    end
+
+    def self.branch
+      branch = "devel-#{Digest::SHA1.hexdigest Skyed::Settings.repo}"
+      repo = repo?(Skyed::Settings.repo)
+      repo.branch(branch).checkout
+      branch
+    end
+
+    def self.credentials
+      [ENV['AWS_ACCESS_KEY'], ENV['AWS_SECRET_KEY']]
     end
 
     def self.repo_path(repo)

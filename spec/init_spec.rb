@@ -2,6 +2,25 @@ require 'spec_helper'
 require 'skyed'
 require 'highline/import'
 
+describe 'Skyed::Init.credentials' do
+  let(:access) { 'AKIAAKIAAKIA' }
+  let(:secret) { 'sGe84ofDSkfo' }
+  before(:each) do
+    allow(ENV)
+      .to receive(:[])
+      .with('AWS_ACCESS_KEY')
+      .and_return(access)
+    allow(ENV)
+      .to receive(:[])
+      .with('AWS_SECRET_KEY')
+      .and_return(secret)
+  end
+  it 'recovers credentials from environment variables' do
+    expect(Skyed::Init.credentials)
+      .to eq([access, secret])
+  end
+end
+
 describe 'Skyed::Init.repo_path' do
   let(:repo_path)  { '/home/ifosch/projects/myrepo/.git' }
   let(:path)       { Pathname.new('/home/ifosch/projects/myrepo') }

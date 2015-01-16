@@ -23,6 +23,10 @@ Feature: Initialization
     Scenario: Running init for first time
         Given the default aruba timeout is 30 seconds
         And a mocked home directory
+        And I set the environment variables to:
+          | variable       | value        |
+          | AWS_ACCESS_KEY | AKIAAKIAAKIA |
+          | AWS_SECRET_KEY | sGe84ofDSkfo |
         And I run `git init test`
         And I cd to "test"
         And I run `git config user.email "test@test.com"`
@@ -36,3 +40,5 @@ Feature: Initialization
         Then the exit status should be 0
         And the file "../.skyed" should contain "tmp/aruba/test"
         And the file "../.skyed" should contain "devel-"
+        And the file "../.skyed" should contain "AKIAAKIAAKIA"
+        And the file "../.skyed" should contain "sGe84ofDSkfo"
