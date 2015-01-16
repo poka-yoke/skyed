@@ -1,3 +1,6 @@
+require 'coveralls'
+Coveralls.wear!
+
 require 'bundler/gem_tasks'
 require 'rake/testtask'
 Rake::TestTask.new do |t|
@@ -20,6 +23,3 @@ task test: :rubocop
 task :rubocop do
   sh 'rubocop'
 end
-
-require 'coveralls'
-Coveralls.wear!
