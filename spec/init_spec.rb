@@ -2,6 +2,35 @@ require 'spec_helper'
 require 'skyed'
 require 'highline/import'
 
+describe 'Skyed::Init.branch' do
+  let(:hash)       { '099f87e8090a09d' }
+  let(:repository) { double('repository') }
+  let(:branch)     { double('branch') }
+  let(:repo_path)  { '/home/ifosch/projects/myrepo/.git' }
+  before(:each) do
+    allow(Skyed::Settings)
+      .to receive(:repo)
+      .and_return(repo_path)
+    allow(Digest::SHA1)
+      .to receive(:hexdigest)
+      .and_return(hash)
+    allow(Git)
+      .to receive(:open)
+      .with(repo_path)
+      .and_return(repository)
+    allow(repository)
+      .to receive(:branch)
+      .with("devel-#{hash}")
+      .and_return(branch)
+    allow(branch)
+      .to receive(:checkout)
+  end
+  it 'calculates and creates the devel branch' do
+    expect(Skyed::Init.branch)
+      .to eq("devel-#{hash}")
+  end
+end
+
 describe 'Skyed::Init.credentials' do
   let(:access) { 'AKIAAKIAAKIA' }
   let(:secret) { 'sGe84ofDSkfo' }
