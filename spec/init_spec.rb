@@ -44,12 +44,38 @@ describe 'Skyed::Init.execute' do
 end
 
 describe 'Skyed::Init.vagrant' do
+  let(:repo_path)         { '/tmp/path' }
+  let :provisioning_path do
+    File.join(
+      repo_path,
+      '.provisioning')
+  end
+  let(:templates_path) do
+    File.join(
+      provisioning_path,
+      'templates',
+      'aws')
+  end
+  let(:tasks_path) do
+    File.join(
+      provisioning_path,
+      'tasks')
+  end
   before(:each) do
     expect(Skyed::Init)
       .to receive(:`)
       .with('which ansible')
+    allow(Skyed::Settings)
+      .to receive(:repo)
+      .and_return(repo_path)
+    allow(FileUtils)
+      .to receive(:mkdir_p)
+      .with(templates_path)
+    allow(FileUtils)
+      .to receive(:mkdir_p)
+      .with(tasks_path)
   end
-  it 'installs package' do
+  it 'sets vagrant up' do
     expect($CHILD_STATUS)
       .to receive(:success?)
       .and_return(true)

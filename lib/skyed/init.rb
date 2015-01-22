@@ -1,3 +1,4 @@
+require 'fileutils'
 require 'git'
 require 'aws-sdk'
 require 'highline/import'
@@ -17,6 +18,17 @@ module Skyed
     def self.vagrant
       `which ansible`
       pip_install 'ansible' unless $CHILD_STATUS.success?
+      create_directory(Skyed::Settings.repo, '.provisioning/templates/aws')
+      create_directory(Skyed::Settings.repo, '.provisioning/tasks')
+      # TODO: Create templates
+      # TODO: Create ansible playbook
+      # TODO: Create Vagrantfile
+    end
+
+    def self.create_directory(base, subpath)
+      folders = subpath.split('/')
+      new_dir = File.join(base, folders)
+      FileUtils.mkdir_p(new_dir)
     end
 
     def self.pip_install(package)
