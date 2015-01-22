@@ -2,6 +2,83 @@ require 'spec_helper'
 require 'skyed'
 require 'highline/import'
 
+describe 'Skyed::Init.vagrant' do
+  before(:each) do
+    expect(Skyed::Init)
+      .to receive(:`)
+      .with('which ansible')
+  end
+  it 'installs package' do
+    expect($CHILD_STATUS)
+      .to receive(:success?)
+      .and_return(true)
+    Skyed::Init.vagrant
+  end
+  it 'fails on install package' do
+    allow(Skyed::Init)
+      .to receive(:pip_install)
+      .with('package')
+    expect($CHILD_STATUS)
+      .to receive(:success?)
+      .and_return(false)
+    expect { Skyed::Init.vagrant }
+      .to raise_error
+  end
+end
+
+describe 'Skyed::Init.pip_install' do
+  before(:each) do
+    expect(Skyed::Init)
+      .to receive(:`)
+      .with('which pip')
+    allow(Skyed::Init)
+      .to receive(:`)
+      .with('pip install package')
+    allow($CHILD_STATUS)
+      .to receive(:success?)
+      .and_return(false)
+  end
+  it 'installs package' do
+    expect($CHILD_STATUS)
+      .to receive(:success?)
+      .twice
+      .and_return(true)
+    Skyed::Init.pip_install 'package'
+  end
+  it 'fails on install package' do
+    allow(Skyed::Init)
+      .to receive(:easy_install)
+      .with('package')
+    expect($CHILD_STATUS)
+      .to receive(:success?)
+      .and_return(false)
+    expect { Skyed::Init.pip_install 'package' }
+      .to raise_error
+  end
+end
+
+describe 'Skyed::Init.easy_install' do
+  before(:each) do
+    expect(Skyed::Init)
+      .to receive(:`)
+      .once
+      .with('easy_install package')
+  end
+  it 'installs package' do
+    expect($CHILD_STATUS)
+      .to receive(:success?)
+      .and_return(true)
+    Skyed::Init.easy_install 'package'
+  end
+  it 'fails on install package' do
+    expect($CHILD_STATUS)
+      .to receive(:success?)
+      .and_return(false)
+    expect { Skyed::Init.easy_install 'package' }
+      .to raise_error
+  end
+end
+
 describe 'Skyed::Init.valid_credential?' do
   before(:all) do
     ENV['SKYED1'] = 'test'

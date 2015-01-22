@@ -14,6 +14,23 @@ module Skyed
       Skyed::Settings.save
     end
 
+    def self.vagrant
+      `which ansible`
+      pip_install 'ansible' unless $CHILD_STATUS.success?
+    end
+
+    def self.pip_install(package)
+      `which pip`
+      easy_install 'pip' unless $CHILD_STATUS.success?
+      `pip install #{package}`
+      fail "Can't install #{package}" unless $CHILD_STATUS.success?
+    end
+
+    def self.easy_install(package)
+      `easy_install package`
+      fail "Can't install #{package}" unless $CHILD_STATUS.success?
+    end
+
     def self.branch
       branch = "devel-#{Digest::SHA1.hexdigest Skyed::Settings.repo}"
       repo = repo?(Skyed::Settings.repo)
