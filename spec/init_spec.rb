@@ -2,6 +2,47 @@ require 'spec_helper'
 require 'skyed'
 require 'highline/import'
 
+describe 'Skyed::Init.execute' do
+  let(:repository) { double('repository') }
+  let(:repo_path)  { double('repo_path') }
+  let(:path)       { 'path' }
+  before(:each) do
+    allow(Skyed::Init)
+      .to receive(:repo_path)
+      .and_return(repo_path)
+    allow(Skyed::Init)
+      .to receive(:get_repo)
+      .and_return(repository)
+    allow(repo_path)
+      .to receive(:to_s)
+      .and_return(path)
+    allow(Skyed::Init)
+      .to receive(:branch)
+      .and_return('devel-1')
+    allow(Skyed::Init)
+      .to receive(:credentials)
+      .and_return(%w( 'a', 'a' ))
+    allow(File)
+      .to receive(:exist?)
+      .and_return(true)
+    allow(Skyed::Settings)
+      .to receive(:save)
+    allow(Skyed::Settings)
+      .to receive(:empty?)
+      .and_return(true)
+  end
+  it 'initializes skyed' do
+    Skyed::Init.execute(nil)
+  end
+  it 'fails when already initialized' do
+    allow(Skyed::Settings)
+      .to receive(:empty?)
+      .and_return(false)
+    expect { Skyed::Init.execute(nil) }
+      .to raise_error
+  end
+end
+
 describe 'Skyed::Init.vagrant' do
   before(:each) do
     expect(Skyed::Init)
