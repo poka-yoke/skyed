@@ -64,6 +64,9 @@ describe 'Skyed::Init.vagrant' do
       'tasks')
   end
   before(:each) do
+    allow(Skyed::Init)
+      .to receive(:`)
+      .with('pip install ansible')
     allow(Skyed::Settings)
       .to receive(:repo)
       .and_return(repo_path)
