@@ -57,7 +57,6 @@ module Skyed
     def self.pip_install(package)
       `pip list | grep #{package}`
       unless $CHILD_STATUS.success?
-        puts 'adios'
         `which pip`
         easy_install 'pip' unless $CHILD_STATUS.success?
         `pip install #{package}`
