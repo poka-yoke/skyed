@@ -105,7 +105,7 @@ describe 'Skyed::Init.pip_install' do
       .with('pip')
     allow(Skyed::Init)
       .to receive(:`)
-      .with('pip install package')
+      .with('sudo pip install package')
     allow($CHILD_STATUS)
       .to receive(:success?)
       .and_return(false)

@@ -59,7 +59,7 @@ module Skyed
       unless $CHILD_STATUS.success?
         `which pip`
         easy_install 'pip' unless $CHILD_STATUS.success?
-        `pip install #{package}`
+        `sudo pip install #{package}`
         fail "Can't install #{package}" unless $CHILD_STATUS.success?
       end
     end
