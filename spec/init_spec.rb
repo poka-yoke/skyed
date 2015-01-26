@@ -44,7 +44,9 @@ describe 'Skyed::Init.execute' do
 end
 
 describe 'Skyed::Init.vagrant' do
-  let(:repo_path)         { '/tmp/path' }
+  let(:repo_path)          { '/tmp/path' }
+  let(:vagrantfile_erb)    { double('ERB') }
+  let(:vagrantfile_handle) { double('File') }
   let :provisioning_path do
     File.join(
       repo_path,
@@ -62,9 +64,6 @@ describe 'Skyed::Init.vagrant' do
       'tasks')
   end
   before(:each) do
-    expect(Skyed::Init)
-      .to receive(:`)
-      .with('which ansible')
     allow(Skyed::Settings)
       .to receive(:repo)
       .and_return(repo_path)
@@ -74,22 +73,20 @@ describe 'Skyed::Init.vagrant' do
     allow(FileUtils)
       .to receive(:mkdir_p)
       .with(tasks_path)
+    allow(ERB)
+      .to receive(:new)
+      .and_return(vagrantfile_erb)
+    allow(vagrantfile_erb)
+      .to receive(:result)
   end
   it 'sets vagrant up' do
-    expect($CHILD_STATUS)
+    allow($CHILD_STATUS)
       .to receive(:success?)
       .and_return(true)
+    allow(File)
+      .to receive(:open)
+      .and_return(vagrantfile_handle)
     Skyed::Init.vagrant
-  end
-  it 'fails on install package' do
-    allow(Skyed::Init)
-      .to receive(:pip_install)
-      .with('package')
-    expect($CHILD_STATUS)
-      .to receive(:success?)
-      .and_return(false)
-    expect { Skyed::Init.vagrant }
-      .to raise_error
   end
 end
 
@@ -97,7 +94,13 @@ describe 'Skyed::Init.pip_install' do
   before(:each) do
     expect(Skyed::Init)
       .to receive(:`)
+      .with('pip list | grep package')
+    allow(Skyed::Init)
+      .to receive(:`)
       .with('which pip')
+    allow(Skyed::Init)
+      .to receive(:easy_install)
+      .with('pip')
     allow(Skyed::Init)
       .to receive(:`)
       .with('pip install package')
@@ -108,14 +111,10 @@ describe 'Skyed::Init.pip_install' do
   it 'installs package' do
     expect($CHILD_STATUS)
       .to receive(:success?)
-      .twice
       .and_return(true)
     Skyed::Init.pip_install 'package'
   end
   it 'fails on install package' do
-    allow(Skyed::Init)
-      .to receive(:easy_install)
-      .with('package')
     expect($CHILD_STATUS)
       .to receive(:success?)
       .and_return(false)

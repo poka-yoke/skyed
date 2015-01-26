@@ -1,4 +1,6 @@
+require 'English'
 require 'fileutils'
+require 'erb'
 require 'git'
 require 'aws-sdk'
 require 'highline/import'
@@ -12,17 +14,38 @@ module Skyed
       Skyed::Settings.repo = repo_path(get_repo).to_s
       Skyed::Settings.branch = branch
       Skyed::Settings.access_key, Skyed::Settings.secret_key = credentials
+      # Setup Opsworks environment (Stack and Layer)
+      vagrant
       Skyed::Settings.save
     end
 
+    def self.vagrantfile
+      File.join(Skyed::Settings.repo, 'Vagrantfile')
+    end
+
     def self.vagrant
-      `which ansible`
-      pip_install 'ansible' unless $CHILD_STATUS.success?
-      create_directory(Skyed::Settings.repo, '.provisioning/templates/aws')
-      create_directory(Skyed::Settings.repo, '.provisioning/tasks')
-      # TODO: Create templates
-      # TODO: Create ansible playbook
-      # TODO: Create Vagrantfile
+      unless File.exist?(vagrantfile)
+        pip_install 'ansible'
+        create_directory(Skyed::Settings.repo, '.provisioning/templates/aws')
+        create_directory(Skyed::Settings.repo, '.provisioning/tasks')
+        create_template(
+          Skyed::Settings.repo,
+          'Vagrantfile',
+          'templates/Vagrantfile.erb')
+        # TODO: Create ansible playbook
+      end
+    end
+
+    def self.create_template(base, subpath, template_file)
+      folders = subpath.split('/')
+      template = ERB.new(
+        File.read(
+          File.join(
+            File.dirname(File.dirname(File.dirname(__FILE__))),
+            template_file)))
+      File.open(File.join(base, folders), 'w') do |f|
+        f.write(template.result)
+      end
     end
 
     def self.create_directory(base, subpath)
@@ -32,14 +55,18 @@ module Skyed
     end
 
     def self.pip_install(package)
-      `which pip`
-      easy_install 'pip' unless $CHILD_STATUS.success?
-      `pip install #{package}`
-      fail "Can't install #{package}" unless $CHILD_STATUS.success?
+      `pip list | grep #{package}`
+      unless $CHILD_STATUS.success?
+        puts 'adios'
+        `which pip`
+        easy_install 'pip' unless $CHILD_STATUS.success?
+        `pip install #{package}`
+        fail "Can't install #{package}" unless $CHILD_STATUS.success?
+      end
     end
 
     def self.easy_install(package)
-      `easy_install package`
+      `easy_install #{package}`
       fail "Can't install #{package}" unless $CHILD_STATUS.success?
     end
 

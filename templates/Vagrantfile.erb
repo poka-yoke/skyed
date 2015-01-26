@@ -1,0 +1,42 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+ram = ENV['VAGRANT_RAM'] || '2048'
+aws_access_key_id = ENV['AWS_ACCESS_KEY_ID'] || ENV['AWS_ACCESS_KEY']
+aws_access_key_id ||= 'AAAAAA'
+aws_secret_access_key = ENV['AWS_SECRET_ACCESS_KEY'] || ENV['AWS_SECRET_KEY']
+aws_secret_access_key ||= 'AAAAAA'
+aws_session_token = ENV['AWS_SESSION_TOKEN'] || ''
+aws_default_region = ENV['AWS_DEFAULT_REGION'] || 'us-east-1'
+aws_opsworks_stack_id = ENV['AWS_OPSWORKS_STACK_ID']
+aws_opsworks_stack_id ||= '57225c7f-1c06-4fd2-98d5-f39d9a484d62'
+aws_opsworks_layer_id = ENV['AWS_OPSWORKS_LAYER_ID']
+aws_opsworks_layer_id ||= '1fc7637a-dc23-411b-910d-5b5674109195'
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = '2'
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.hostname = "test-#{ENV['USER']}"
+
+  config.vm.provider :virtualbox do |virtualbox, override|
+    override.vm.box = 'trusty-cloudimg-64'
+    override.vm.box_url = 'https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box'
+    override.vm.network :forwarded_port, host: 9200, guest: 9200
+    override.vm.network :forwarded_port, host: 9300, guest: 9300
+    virtualbox.memory = ram.to_i
+    virtualbox.cpus = 2
+  end
+
+  config.vm.provision :ansible do |ansible|
+    ansible.playbook = 'provisioning/tasks/ow-on-premise.yml'
+    ansible.extra_vars = {
+      aws_access_key_id: aws_access_key_id,
+      aws_secret_access_key: aws_secret_access_key,
+      aws_session_token: aws_session_token,
+      aws_default_region: aws_default_region,
+      aws_opsworks_stack_id: aws_opsworks_stack_id,
+      aws_opsworks_layer_id: aws_opsworks_layer_id
+    }
+  end
+end

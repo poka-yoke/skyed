@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.description = 'A cloudy gem'
   s.authors     = ['Ignasi Fosch']
   s.email       = 'natx@y10k.ws'
-  s.files       = ['lib/skyed.rb']
+  s.files       = ['lib/skyed.rb', 'templates/*.erb']
   s.executables << 'skyed'
   s.homepage    = 'http://rubygems.org/gems/skyed'
   s.add_runtime_dependency 'git', ['= 1.2.8']
