@@ -22,6 +22,8 @@ describe 'Skyed::Init.execute' do
     allow(Skyed::Init)
       .to receive(:credentials)
       .and_return(%w( 'a', 'a' ))
+    allow(Skyed::Init)
+      .to receive(:vagrant)
     allow(File)
       .to receive(:exist?)
       .and_return(true)
