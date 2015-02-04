@@ -45,12 +45,6 @@ describe 'Skyed::Init.execute' do
   end
 end
 
-describe 'Skyed::Init.opsworks' do
-  it 'sets up opsworks stack' do
-    Skyed::Init.opsworks
-  end
-end
-
 describe 'Skyed::Init.vagrant' do
   let(:repo_path)          { '/tmp/path' }
   let(:vagrantfile_erb)    { double('ERB') }
