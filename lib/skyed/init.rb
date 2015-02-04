@@ -6,6 +6,12 @@ require 'aws-sdk'
 require 'highline/import'
 require 'digest/sha1'
 
+ACCESS_QUESTION = 'What is your AWS Access Key? '
+SECRET_QUESTION = 'What is your AWS Secret Key? '
+
+SRA = 'arn:aws:iam::406396564037:role/aws-opsworks-service-role'
+IPA = 'arn:aws:iam::406396564037:instance-profile/aws-opsworks-ec2-role'
+
 module Skyed
   # This module encapsulates all the init command steps.
   module Init
@@ -13,10 +19,44 @@ module Skyed
       fail 'Already initialized' unless Skyed::Settings.empty?
       Skyed::Settings.repo = repo_path(get_repo).to_s
       Skyed::Settings.branch = branch
-      Skyed::Settings.access_key, Skyed::Settings.secret_key = credentials
-      # Setup Opsworks environment (Stack and Layer)
+      credentials
+      opsworks
       vagrant
       Skyed::Settings.save
+    end
+
+    def self.opsworks
+      opsworks = ow_client
+      stack = opsworks.create_stack(stack_params).data[:stack_id]
+      Skyed::Settings.stack_id = stack
+      Skyed::Settings.layer_id = opsworks.create_layer(
+        layer_params(stack)).data[:layer_id]
+    end
+
+    def self.layer_params(stack_id)
+      { stack_id: stack_id,
+        type: 'custom',
+        name: "test-#{ENV['USER']}",
+        shortname: "test-#{ENV['USER']}" }
+    end
+
+    def self.stack_params
+      { name: ENV['USER'],
+        region: region,
+        service_role_arn: Skyed::Settings.service_role,
+        default_instance_profile_arn: Skyed::Settings.instance_profile }
+    end
+
+    def self.region
+      ENV['DEFAULT_REGION'] || 'us-east-1'
+    end
+
+    def self.ow_client(
+      access = Skyed::Settings.access_key,
+      secret = Skyed::Settings.secret_key)
+      AWS::OpsWorks::Client.new(
+        access_key_id: access,
+        secret_access_key: secret)
     end
 
     def self.vagrantfile
@@ -79,14 +119,14 @@ module Skyed
     def self.credentials(
       access = ENV['AWS_ACCESS_KEY'],
       secret = ENV['AWS_SECRET_KEY'])
-      access_question = 'What is your AWS Access Key? '
-      access = ask(access_question) unless valid_credential?('AWS_ACCESS_KEY')
-      secret_question = 'What is your AWS Secret Key? '
-      secret = ask(secret_question) unless valid_credential?('AWS_SECRET_KEY')
-      AWS::OpsWorks.new(
-        access_key_id: access,
-        secret_access_key: secret)
-      [access, secret]
+      # TODO: Generalize these two settings
+      Skyed::Settings.service_role = SRA
+      Skyed::Settings.instance_profile = IPA
+      access = ask(ACCESS_QUESTION) unless valid_credential?('AWS_ACCESS_KEY')
+      secret = ask(SECRET_QUESTION) unless valid_credential?('AWS_SECRET_KEY')
+      ow_client(access, secret)
+      Skyed::Settings.access_key = access
+      Skyed::Settings.secret_key = secret
     end
 
     def self.valid_credential?(env_name)

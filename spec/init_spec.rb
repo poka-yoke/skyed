@@ -23,6 +23,8 @@ describe 'Skyed::Init.execute' do
       .to receive(:credentials)
       .and_return(%w( 'a', 'a' ))
     allow(Skyed::Init)
+      .to receive(:opsworks)
+    allow(Skyed::Init)
       .to receive(:vagrant)
     allow(File)
       .to receive(:exist?)
@@ -42,6 +44,76 @@ describe 'Skyed::Init.execute' do
       .and_return(false)
     expect { Skyed::Init.execute(nil) }
       .to raise_error
+  end
+end
+
+describe 'Skyed::Init.opsworks' do
+  let(:opsworks)          { double('AWS::OpsWorks::Client') }
+  let(:ow_stack_response) { double('Core::Response') }
+  let(:ow_layer_response) { double('Core::Response') }
+  let(:access)            { 'AKIAAKIAAKIA' }
+  let(:secret)            { 'sGe84ofDSkfo' }
+  let(:user)              { 'user' }
+  let(:region)            { 'us-east-1' }
+  let(:stack_id)          { 'e1403a56-286e-4b5e-6798-c3406c947b4a' }
+  let(:stack_data)        { { stack_id: stack_id } }
+  let(:layer_id)          { 'e1403a56-286e-4b5e-6798-c3406c947b4b' }
+  let(:layer_data)        { { layer_id: layer_id } }
+  let(:service_role_arn) do
+    'arn:aws:iam::234098234027:role/aws-opsworks-service-role'
+  end
+  let(:instance_profile_arn) do
+    'arn:aws:iam::234098234027:instance-profile/aws-opsworks-ec2-role'
+  end
+  before(:each) do
+    @olduser = ENV['USER']
+    ENV['USER'] = user
+    allow(Skyed::Settings)
+      .to receive(:access_key)
+      .and_return(access)
+    allow(Skyed::Settings)
+      .to receive(:secret_key)
+      .and_return(secret)
+    allow(Skyed::Settings)
+      .to receive(:service_role)
+      .and_return(service_role_arn)
+    allow(Skyed::Settings)
+      .to receive(:instance_profile)
+      .and_return(instance_profile_arn)
+    allow(AWS::OpsWorks::Client)
+      .to receive(:new)
+      .with(access_key_id: access, secret_access_key: secret)
+      .and_return(opsworks)
+    expect(opsworks)
+      .to receive(:create_stack)
+      .with(
+        name: user,
+        region: region,
+        service_role_arn: service_role_arn,
+        default_instance_profile_arn: instance_profile_arn)
+      .and_return(ow_stack_response)
+    allow(ow_stack_response)
+      .to receive(:data)
+      .and_return(stack_data)
+    expect(opsworks)
+      .to receive(:create_layer)
+      .with(
+        stack_id: stack_id,
+        type: 'custom',
+        name: "test-#{user}",
+        shortname: "test-#{user}")
+      .and_return(ow_layer_response)
+    allow(ow_layer_response)
+      .to receive(:data)
+      .and_return(layer_data)
+  end
+  after(:each) do
+    ENV['USER'] = @olduser
+  end
+  it 'sets up opsworks stack' do
+    Skyed::Init.opsworks
+    expect(Skyed::Settings.stack_id).to eq(stack_id)
+    expect(Skyed::Settings.layer_id).to eq(layer_id)
   end
 end
 
@@ -195,15 +267,21 @@ describe 'Skyed::Init.branch' do
 end
 
 describe 'Skyed::Init.credentials' do
-  let(:opsworks) { double('AWS::OpsWorks') }
+  let(:opsworks) { double('AWS::OpsWorks::Client') }
   let(:access)   { 'AKIAAKIAAKIA' }
   let(:secret)   { 'sGe84ofDSkfo' }
+  let(:sra) do
+    'arn:aws:iam::406396564037:role/aws-opsworks-service-role'
+  end
+  let(:ipa) do
+    'arn:aws:iam::406396564037:instance-profile/aws-opsworks-ec2-role'
+  end
   before(:each) do
     @oldaccess = ENV['AWS_ACCESS_KEY']
     @oldsecret = ENV['AWS_SECRET_KEY']
     ENV['AWS_ACCESS_KEY'] = access
     ENV['AWS_SECRET_KEY'] = secret
-    expect(AWS::OpsWorks)
+    expect(AWS::OpsWorks::Client)
       .to receive(:new)
       .with(access_key_id: access, secret_access_key: secret)
       .and_return(opsworks)
@@ -213,8 +291,15 @@ describe 'Skyed::Init.credentials' do
     ENV['AWS_SECRET_KEY'] = @oldsecret
   end
   it 'recovers credentials from environment variables' do
-    expect(Skyed::Init.credentials)
-      .to eq([access, secret])
+    Skyed::Init.credentials
+    expect(Skyed::Settings.access_key)
+      .to eq(access)
+    expect(Skyed::Settings.secret_key)
+      .to eq(secret)
+    expect(Skyed::Settings.service_role)
+      .to eq(sra)
+    expect(Skyed::Settings.instance_profile)
+      .to eq(ipa)
   end
 end
 
