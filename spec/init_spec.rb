@@ -75,11 +75,20 @@ describe 'Skyed::Init.opsworks' do
       .to receive(:secret_key)
       .and_return(secret)
     allow(Skyed::Settings)
-      .to receive(:service_role)
+      .to receive(:role_arn)
       .and_return(service_role_arn)
     allow(Skyed::Settings)
-      .to receive(:instance_profile)
+      .to receive(:profile_arn)
       .and_return(instance_profile_arn)
+    allow(Skyed::Settings)
+      .to receive(:aws_key_name)
+      .and_return('secret')
+    allow(Skyed::Settings)
+      .to receive(:git_url)
+      .and_return('git@github.com:ifosch/repo')
+    allow(Skyed::Settings)
+      .to receive(:branch)
+      .and_return('devel-1')
     allow(AWS::OpsWorks::Client)
       .to receive(:new)
       .with(access_key_id: access, secret_access_key: secret)
@@ -90,7 +99,17 @@ describe 'Skyed::Init.opsworks' do
         name: user,
         region: region,
         service_role_arn: service_role_arn,
-        default_instance_profile_arn: instance_profile_arn)
+        default_instance_profile_arn: instance_profile_arn,
+        default_os: 'Ubuntu 12.04 LTS',
+        use_custom_cookbooks: true,
+        custom_cookbooks_source: {
+          url: 'git@github.com:ifosch/repo',
+          # ssh_key: '',
+          revision: 'devel-1',
+          type: 'git'
+        },
+        default_ssh_key_name: 'secret',
+        use_opsworks_security_groups: false)
       .and_return(ow_stack_response)
     allow(ow_stack_response)
       .to receive(:data)
@@ -101,7 +120,8 @@ describe 'Skyed::Init.opsworks' do
         stack_id: stack_id,
         type: 'custom',
         name: "test-#{user}",
-        shortname: "test-#{user}")
+        shortname: "test-#{user}",
+        custom_security_group_ids: ['sg-f1cc2498'])
       .and_return(ow_layer_response)
     allow(ow_layer_response)
       .to receive(:data)
@@ -239,9 +259,11 @@ end
 
 describe 'Skyed::Init.branch' do
   let(:hash)       { '099f87e8090a09d' }
+  let(:remote)     { double('Git::Remote') }
+  let(:remote_url) { 'git@github.com/test/test.git' }
   let(:repository) { double('repository') }
-  let(:branch)     { double('branch') }
   let(:repo_path)  { '/home/ifosch/projects/myrepo/.git' }
+  let(:branch)     { double('branch') }
   before(:each) do
     allow(Skyed::Settings)
       .to receive(:repo)
@@ -257,38 +279,57 @@ describe 'Skyed::Init.branch' do
       .to receive(:branch)
       .with("devel-#{hash}")
       .and_return(branch)
+    allow(repository)
+      .to receive(:remotes)
+      .and_return([remote])
+    allow(remote)
+      .to receive(:url)
+      .and_return(remote_url)
     allow(branch)
       .to receive(:checkout)
   end
   it 'calculates and creates the devel branch' do
-    expect(Skyed::Init.branch)
+    Skyed::Init.branch
+    expect(Skyed::Settings.branch)
       .to eq("devel-#{hash}")
+    expect(Skyed::Settings.git_url)
+      .to eq('git@github.com/test/test.git')
   end
 end
 
 describe 'Skyed::Init.credentials' do
-  let(:opsworks) { double('AWS::OpsWorks::Client') }
-  let(:access)   { 'AKIAAKIAAKIA' }
-  let(:secret)   { 'sGe84ofDSkfo' }
+  let(:opsworks)       { double('AWS::OpsWorks::Client') }
+  let(:access)         { 'AKIAAKIAAKIA' }
+  let(:secret)         { 'sGe84ofDSkfo' }
+  let(:aws_key_name)   { 'keypair' }
   let(:sra) do
-    'arn:aws:iam::406396564037:role/aws-opsworks-service-role'
+    'arn:aws:iam::123098345737:role/aws-opsworks-service-role'
   end
   let(:ipa) do
-    'arn:aws:iam::406396564037:instance-profile/aws-opsworks-ec2-role'
+    'arn:aws:iam::234098345717:instance-profile/aws-opsworks-ec2-role'
   end
   before(:each) do
-    @oldaccess = ENV['AWS_ACCESS_KEY']
-    @oldsecret = ENV['AWS_SECRET_KEY']
-    ENV['AWS_ACCESS_KEY'] = access
-    ENV['AWS_SECRET_KEY'] = secret
+    @oldaccess                 = ENV['AWS_ACCESS_KEY']
+    @oldsecret                 = ENV['AWS_SECRET_KEY']
+    @oldaws_ssh_key_name       = ENV['AWS_SSH_KEY_NAME']
+    @oldservice_role           = ENV['OW_SERVICE_ROLE']
+    @oldinstance_profile       = ENV['OW_INSTANCE_PROFILE']
+    ENV['AWS_ACCESS_KEY']      = access
+    ENV['AWS_SECRET_KEY']      = secret
+    ENV['AWS_SSH_KEY_NAME']    = aws_key_name
+    ENV['OW_SERVICE_ROLE']     = sra
+    ENV['OW_INSTANCE_PROFILE'] = ipa
     expect(AWS::OpsWorks::Client)
       .to receive(:new)
       .with(access_key_id: access, secret_access_key: secret)
       .and_return(opsworks)
   end
   after(:each) do
-    ENV['AWS_ACCESS_KEY'] = @oldaccess
-    ENV['AWS_SECRET_KEY'] = @oldsecret
+    ENV['AWS_ACCESS_KEY']      = @oldaccess
+    ENV['AWS_SECRET_KEY']      = @oldsecret
+    ENV['AWS_SSH_KEY_NAME']    = @oldaws_ssh_key_name
+    ENV['OW_SERVICE_ROLE']     = @oldservice_role
+    ENV['OW_INSTANCE_PROFILE'] = @oldinstance_profile
   end
   it 'recovers credentials from environment variables' do
     Skyed::Init.credentials
@@ -296,9 +337,11 @@ describe 'Skyed::Init.credentials' do
       .to eq(access)
     expect(Skyed::Settings.secret_key)
       .to eq(secret)
-    expect(Skyed::Settings.service_role)
+    expect(Skyed::Settings.aws_key_name)
+      .to eq(aws_key_name)
+    expect(Skyed::Settings.role_arn)
       .to eq(sra)
-    expect(Skyed::Settings.instance_profile)
+    expect(Skyed::Settings.profile_arn)
       .to eq(ipa)
   end
 end

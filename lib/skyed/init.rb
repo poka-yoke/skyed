@@ -9,8 +9,18 @@ require 'digest/sha1'
 ACCESS_QUESTION = 'What is your AWS Access Key? '
 SECRET_QUESTION = 'What is your AWS Secret Key? '
 
-SRA = 'arn:aws:iam::406396564037:role/aws-opsworks-service-role'
-IPA = 'arn:aws:iam::406396564037:instance-profile/aws-opsworks-ec2-role'
+STACK = { name: '',
+          region: '',
+          service_role_arn: '',
+          default_instance_profile_arn: '',
+          default_os: 'Ubuntu 12.04 LTS',
+          default_ssh_key_name: '',
+          custom_cookbooks_source: {
+            type: 'git'
+          },
+          use_custom_cookbooks: true,
+          use_opsworks_security_groups: false
+        }
 
 module Skyed
   # This module encapsulates all the init command steps.
@@ -18,7 +28,7 @@ module Skyed
     def self.execute(_global_options)
       fail 'Already initialized' unless Skyed::Settings.empty?
       Skyed::Settings.repo = repo_path(get_repo).to_s
-      Skyed::Settings.branch = branch
+      branch
       credentials
       opsworks
       vagrant
@@ -38,15 +48,27 @@ module Skyed
       { stack_id: stack_id,
         type: 'custom',
         name: "test-#{ENV['USER']}",
-        shortname: "test-#{ENV['USER']}" }
+        shortname: "test-#{ENV['USER']}",
+        custom_security_group_ids: ['sg-f1cc2498'] }
     end
 
     def self.stack_params
       # TODO: Include extra stack parameters
-      { name: ENV['USER'],
-        region: region,
-        service_role_arn: Skyed::Settings.service_role,
-        default_instance_profile_arn: Skyed::Settings.instance_profile }
+      result = STACK
+      result[:name]                         = ENV['USER']
+      result[:region]                       = region
+      result[:service_role_arn]             = Skyed::Settings.role_arn
+      result[:default_instance_profile_arn] = Skyed::Settings.profile_arn
+      result[:default_ssh_key_name]         = Skyed::Settings.aws_key_name
+      result[:custom_cookbooks_source]      = custom_cookbooks_source(
+        STACK[:custom_cookbooks_source])
+      result
+    end
+
+    def self.custom_cookbooks_source(base_source)
+      base_source[:url] = Skyed::Settings.git_url
+      base_source[:revision] = Skyed::Settings.branch
+      base_source
     end
 
     def self.region
@@ -116,15 +138,23 @@ module Skyed
       branch = "devel-#{Digest::SHA1.hexdigest Skyed::Settings.repo}"
       repo = repo?(Skyed::Settings.repo)
       repo.branch(branch).checkout
-      branch
+      Skyed::Settings.branch = branch
+      Skyed::Settings.git_url = repo.remotes[0].url
     end
 
     def self.credentials(
-      access = ENV['AWS_ACCESS_KEY'],
-      secret = ENV['AWS_SECRET_KEY'])
-      # TODO: Generalize these two settings
-      Skyed::Settings.service_role = SRA
-      Skyed::Settings.instance_profile = IPA
+      access       = ENV['AWS_ACCESS_KEY'],
+      secret       = ENV['AWS_SECRET_KEY'],
+      role_arn     = ENV['OW_SERVICE_ROLE'],
+      profile_arn  = ENV['OW_INSTANCE_PROFILE'],
+      aws_key_name = ENV['AWS_SSH_KEY_NAME'])
+      aws_access_key(access, secret)
+      Skyed::Settings.role_arn     = role_arn
+      Skyed::Settings.profile_arn  = profile_arn
+      Skyed::Settings.aws_key_name = aws_key_name
+    end
+
+    def self.aws_access_key(access, secret)
       access = ask(ACCESS_QUESTION) unless valid_credential?('AWS_ACCESS_KEY')
       secret = ask(SECRET_QUESTION) unless valid_credential?('AWS_SECRET_KEY')
       ow_client(access, secret)
