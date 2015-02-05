@@ -8,10 +8,8 @@ aws_secret_access_key = ENV['AWS_SECRET_ACCESS_KEY'] || ENV['AWS_SECRET_KEY']
 aws_secret_access_key ||= 'AAAAAA'
 aws_session_token = ENV['AWS_SESSION_TOKEN'] || ''
 aws_default_region = ENV['AWS_DEFAULT_REGION'] || 'us-east-1'
-aws_opsworks_stack_id = ENV['AWS_OPSWORKS_STACK_ID']
-aws_opsworks_stack_id ||= '57225c7f-1c06-4fd2-98d5-f39d9a484d62'
-aws_opsworks_layer_id = ENV['AWS_OPSWORKS_LAYER_ID']
-aws_opsworks_layer_id ||= '1fc7637a-dc23-411b-910d-5b5674109195'
+aws_opsworks_stack_id = '<%= Skyed::Settings.stack_id %>'
+aws_opsworks_layer_id = '<%= Skyed::Settings.layer_id %>'
 
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = '2'

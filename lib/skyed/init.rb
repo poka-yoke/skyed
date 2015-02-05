@@ -34,6 +34,7 @@ module Skyed
     end
 
     def self.layer_params(stack_id)
+      # TODO: Include extra layer parameters
       { stack_id: stack_id,
         type: 'custom',
         name: "test-#{ENV['USER']}",
@@ -41,6 +42,7 @@ module Skyed
     end
 
     def self.stack_params
+      # TODO: Include extra stack parameters
       { name: ENV['USER'],
         region: region,
         service_role_arn: Skyed::Settings.service_role,
@@ -77,6 +79,7 @@ module Skyed
     end
 
     def self.create_template(base, subpath, template_file)
+      b = binding
       folders = subpath.split('/')
       template = ERB.new(
         File.read(
@@ -84,7 +87,7 @@ module Skyed
             File.dirname(File.dirname(File.dirname(__FILE__))),
             template_file)))
       File.open(File.join(base, folders), 'w') do |f|
-        f.write(template.result)
+        f.write(template.result b)
       end
     end
 
