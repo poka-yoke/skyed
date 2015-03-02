@@ -87,27 +87,25 @@ module Skyed
       File.join(Skyed::Settings.repo, 'Vagrantfile')
     end
 
+    def self.create_vagrant_files
+      provisioning_path = File.join(Skyed::Settings.repo, '.provisioning')
+      tasks_path = File.join(provisioning_path, 'tasks')
+      aws_path = File.join(provisioning_path, 'templates', 'aws')
+      create_template(Skyed::Settings.repo, 'Vagrantfile',
+                      'templates/Vagrantfile.erb')
+      create_template(tasks_path, 'ow-on-premise.yml',
+                      'templates/ow-on-premise.yml.erb')
+      create_template(aws_path, 'config.j2', 'templates/config.j2.erb')
+      create_template(aws_path, 'credentials.j2',
+                      'templates/credentials.j2.erb')
+    end
+
     def self.vagrant
       unless File.exist?(vagrantfile)
         pip_install 'ansible'
         create_directory(Skyed::Settings.repo, '.provisioning/templates/aws')
         create_directory(Skyed::Settings.repo, '.provisioning/tasks')
-        create_template(
-          Skyed::Settings.repo,
-          'Vagrantfile',
-          'templates/Vagrantfile.erb')
-        create_template(
-          File.join(Skyed::Settings.repo, '.provisioning', 'tasks'),
-          'ow-on-premise.yml',
-          'templates/ow-on-premise.yml.erb')
-        create_template(
-          File.join(Skyed::Settings.repo, '.provisioning', 'templates', 'aws'),
-          'config.j2',
-          'templates/config.j2.erb')
-        create_template(
-          File.join(Skyed::Settings.repo, '.provisioning', 'templates', 'aws'),
-          'credentials.j2',
-          'templates/credentials.j2.erb')
+        create_vagrant_files
       end
     end
 
