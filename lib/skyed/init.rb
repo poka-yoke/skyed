@@ -96,7 +96,18 @@ module Skyed
           Skyed::Settings.repo,
           'Vagrantfile',
           'templates/Vagrantfile.erb')
-        # TODO: Create ansible playbook
+        create_template(
+          File.join(Skyed::Settings.repo, '.provisioning', 'tasks'),
+          'ow-on-premise.yml',
+          'templates/ow-on-premise.yml.erb')
+        create_template(
+          File.join(Skyed::Settings.repo, '.provisioning', 'templates', 'aws'),
+          'config.j2',
+          'templates/config.j2.erb')
+        create_template(
+          File.join(Skyed::Settings.repo, '.provisioning', 'templates', 'aws'),
+          'credentials.j2',
+          'templates/credentials.j2.erb')
       end
     end
 

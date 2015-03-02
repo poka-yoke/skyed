@@ -1,0 +1,52 @@
+- hosts: all
+  sudo: true
+  vars:
+    aws_access_key_id: ´{{ aws_access_key_id }}´
+    aws_secret_access_key: ´{{ aws_secret_access_key }}´
+    aws_session_token: ´{{ aws_session_token }}´
+    aws_default_region: ´{{ aws_default_region }}´
+    aws_opsworks_stack_id: ´{{ aws_opsworks_stack_id }}´
+    aws_opsworks_layer_id: ´{{ aws_opsworks_layer_id }}´
+  tasks:
+    - name: Install pip
+      apt: name=python-pip
+    - name: Install AWS CLI
+      pip: name=awscli
+    - name: Prepare directory for AWS credentials
+      file: path=/home/vagrant/.aws state=directory owner=vagrant group=vagrant mode=0700
+    - name: Setup AWS credentials
+      template: src=../templates/aws/credentials.j2 dest=/home/vagrant/.aws/credentials owner=vagrant group=vagrant mode=0600
+    - name: Setup AWS config
+      template: src=../templates/aws/config.j2 dest=/home/vagrant/.aws/config owner=vagrant group=vagrant mode=0644
+    - name: Register into opsworks
+      shell: aws opsworks register --infrastructure-class on-premises --local --stack-id {{ aws_opsworks_stack_id }}
+      args:
+          creates: /opt/aws/opsworks
+      sudo: false
+      register: ow_register
+    - name: Debug OW registration
+      debug: var=ow_register
+    - name: Save the instance ID
+      set_fact: ow_instance_id={{ ow_register.stderr.split()[-1] }}
+      when: ow_register|success
+    - name: Debug OW registration
+      debug: var=ow_instance_id
+    - name: Wait for the instance to be registered
+      shell: aws opsworks describe-instances --instance-id {{ ow_instance_id }} | grep -c registered
+      sudo: false
+      ignore_errors: true
+      register: result
+      until: result.stdout == "1"
+      retries: 30
+      delay: 10
+    - name: Debug registration
+      debug: var=result
+      when: result|failed
+    - name: Assign layer in opsworks
+      shell: aws opsworks assign-instance --instance-id {{ ow_instance_id }} --layer-id {{ aws_opsworks_layer_id}}
+      sudo: false
+      register: ow_assign
+      ignore_errors: true
+    - name: Debug OW layer assign
+      debug: var=ow_assign
+      when: ow_assign|failed

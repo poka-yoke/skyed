@@ -139,8 +139,6 @@ end
 
 describe 'Skyed::Init.vagrant' do
   let(:repo_path)          { '/tmp/path' }
-  let(:vagrantfile_erb)    { double('ERB') }
-  let(:vagrantfile_handle) { double('File') }
   let :provisioning_path do
     File.join(
       repo_path,
@@ -169,19 +167,35 @@ describe 'Skyed::Init.vagrant' do
     allow(FileUtils)
       .to receive(:mkdir_p)
       .with(tasks_path)
-    allow(ERB)
-      .to receive(:new)
-      .and_return(vagrantfile_erb)
-    allow(vagrantfile_erb)
-      .to receive(:result)
+    expect(Skyed::Init)
+      .to receive(:create_template)
+      .with(
+        repo_path,
+        'Vagrantfile',
+        'templates/Vagrantfile.erb')
+    expect(Skyed::Init)
+      .to receive(:create_template)
+      .with(
+        File.join(repo_path, '.provisioning', 'tasks'),
+        'ow-on-premise.yml',
+        'templates/ow-on-premise.yml.erb')
+    expect(Skyed::Init)
+      .to receive(:create_template)
+      .with(
+        File.join(repo_path, '.provisioning', 'templates', 'aws'),
+        'config.j2',
+        'templates/config.j2.erb')
+    expect(Skyed::Init)
+      .to receive(:create_template)
+      .with(
+        File.join(repo_path, '.provisioning', 'templates', 'aws'),
+        'credentials.j2',
+        'templates/credentials.j2.erb')
   end
   it 'sets vagrant up' do
     allow($CHILD_STATUS)
       .to receive(:success?)
       .and_return(true)
-    allow(File)
-      .to receive(:open)
-      .and_return(vagrantfile_handle)
     Skyed::Init.vagrant
   end
 end
