@@ -18,6 +18,10 @@ STACK = { name: '',
           custom_cookbooks_source: {
             type: 'git'
           },
+          configuration_manager: {
+            name: 'Chef',
+            version: 11.10
+          },
           use_custom_cookbooks: true,
           use_opsworks_security_groups: false
         }

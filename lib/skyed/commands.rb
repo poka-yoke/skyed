@@ -6,3 +6,12 @@ command :init do |cmd|
     Skyed::Init.execute(global_options)
   end
 end
+
+desc 'Deploy current setup'
+long_desc 'Deploys from current repository'
+
+command :deploy do |cmd|
+  cmd.action do |global_options|
+    Skyed::Deploy.execute(global_options)
+  end
+end
