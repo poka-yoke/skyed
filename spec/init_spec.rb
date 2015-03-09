@@ -101,6 +101,10 @@ describe 'Skyed::Init.opsworks' do
         service_role_arn: service_role_arn,
         default_instance_profile_arn: instance_profile_arn,
         default_os: 'Ubuntu 12.04 LTS',
+        configuration_manager: {
+          name: 'Chef',
+          version: 11.10
+        },
         use_custom_cookbooks: true,
         custom_cookbooks_source: {
           url: 'git@github.com:ifosch/repo',
