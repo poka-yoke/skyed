@@ -20,7 +20,7 @@ STACK = { name: '',
           },
           configuration_manager: {
             name: 'Chef',
-            version: 11.10
+            version: '11.10'
           },
           use_custom_cookbooks: true,
           use_opsworks_security_groups: false

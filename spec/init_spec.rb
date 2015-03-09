@@ -103,7 +103,7 @@ describe 'Skyed::Init.opsworks' do
         default_os: 'Ubuntu 12.04 LTS',
         configuration_manager: {
           name: 'Chef',
-          version: 11.10
+          version: '11.10'
         },
         use_custom_cookbooks: true,
         custom_cookbooks_source: {
