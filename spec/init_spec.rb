@@ -8,12 +8,15 @@ describe 'Skyed::Init.execute' do
   let(:path)       { 'path' }
   context 'when skyed is not initialized' do
     before(:each) do
-      expect(Skyed::Init)
-        .to receive(:repo_path)
-        .and_return(repo_path)
+      expect(Skyed::Settings)
+        .to receive(:empty?)
+        .and_return(true)
       expect(Skyed::Init)
         .to receive(:get_repo)
         .and_return(repository)
+      expect(Skyed::Init)
+        .to receive(:repo_path)
+        .and_return(repo_path)
       expect(repo_path)
         .to receive(:to_s)
         .and_return(path)
@@ -29,9 +32,6 @@ describe 'Skyed::Init.execute' do
         .to receive(:vagrant)
       expect(Skyed::Settings)
         .to receive(:save)
-      expect(Skyed::Settings)
-        .to receive(:empty?)
-        .and_return(true)
     end
     it 'initializes it' do
       Skyed::Init.execute(nil)
