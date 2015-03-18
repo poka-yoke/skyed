@@ -6,44 +6,45 @@ describe 'Skyed::Init.execute' do
   let(:repository) { double('repository') }
   let(:repo_path)  { double('repo_path') }
   let(:path)       { 'path' }
-  before(:each) do
-    allow(Skyed::Init)
-      .to receive(:repo_path)
-      .and_return(repo_path)
-    allow(Skyed::Init)
-      .to receive(:get_repo)
-      .and_return(repository)
-    allow(repo_path)
-      .to receive(:to_s)
-      .and_return(path)
-    allow(Skyed::Init)
-      .to receive(:branch)
-      .and_return('devel-1')
-    allow(Skyed::Init)
-      .to receive(:credentials)
-      .and_return(%w( 'a', 'a' ))
-    allow(Skyed::Init)
-      .to receive(:opsworks)
-    allow(Skyed::Init)
-      .to receive(:vagrant)
-    allow(File)
-      .to receive(:exist?)
-      .and_return(true)
-    allow(Skyed::Settings)
-      .to receive(:save)
-    allow(Skyed::Settings)
-      .to receive(:empty?)
-      .and_return(true)
+  context 'when skyed is not initialized' do
+    before(:each) do
+      expect(Skyed::Init)
+        .to receive(:repo_path)
+        .and_return(repo_path)
+      expect(Skyed::Init)
+        .to receive(:get_repo)
+        .and_return(repository)
+      expect(repo_path)
+        .to receive(:to_s)
+        .and_return(path)
+      expect(Skyed::Init)
+        .to receive(:branch)
+        .and_return('devel-1')
+      expect(Skyed::Init)
+        .to receive(:credentials)
+        .and_return(%w( 'a', 'a' ))
+      expect(Skyed::Init)
+        .to receive(:opsworks)
+      expect(Skyed::Init)
+        .to receive(:vagrant)
+      expect(Skyed::Settings)
+        .to receive(:save)
+      expect(Skyed::Settings)
+        .to receive(:empty?)
+        .and_return(true)
+    end
+    it 'initializes it' do
+      Skyed::Init.execute(nil)
+    end
   end
-  it 'initializes skyed' do
-    Skyed::Init.execute(nil)
-  end
-  it 'fails when already initialized' do
-    allow(Skyed::Settings)
-      .to receive(:empty?)
-      .and_return(false)
-    expect { Skyed::Init.execute(nil) }
-      .to raise_error
+  context 'when skyed is already initialized' do
+    it 'fails' do
+      expect(Skyed::Settings)
+        .to receive(:empty?)
+        .and_return(false)
+      expect { Skyed::Init.execute(nil) }
+        .to raise_error
+    end
   end
 end
 
