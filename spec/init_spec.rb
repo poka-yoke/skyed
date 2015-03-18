@@ -27,6 +27,8 @@ describe 'Skyed::Init.execute' do
         .to receive(:credentials)
         .and_return(%w( 'a', 'a' ))
       expect(Skyed::Init)
+        .to receive(:opsworks_git_key)
+      expect(Skyed::Init)
         .to receive(:opsworks)
       expect(Skyed::Init)
         .to receive(:vagrant)

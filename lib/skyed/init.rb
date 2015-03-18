@@ -34,6 +34,7 @@ module Skyed
       Skyed::Settings.repo = repo_path(get_repo).to_s
       branch
       credentials
+      opsworks_git_key
       opsworks
       vagrant
       Skyed::Settings.save
@@ -153,6 +154,11 @@ module Skyed
       repo.branch(branch).checkout
       Skyed::Settings.branch = branch
       Skyed::Settings.git_url = repo.remotes[0].url
+    end
+
+    def self.opsworks_git_key
+      question = 'Which ssh key should be used for the git repository? '
+      Skyed::Settings.opsworks_git_key = ask(question)
     end
 
     def self.credentials(
