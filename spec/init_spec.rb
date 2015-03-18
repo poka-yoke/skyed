@@ -54,6 +54,7 @@ describe 'Skyed::Init.opsworks' do
   let(:opsworks)          { double('AWS::OpsWorks::Client') }
   let(:ow_stack_response) { double('Core::Response') }
   let(:ow_layer_response) { double('Core::Response') }
+  let(:ow_git_key_file)   { '/home/user/.ssh/private_key' }
   let(:access)            { 'AKIAAKIAAKIA' }
   let(:secret)            { 'sGe84ofDSkfo' }
   let(:user)              { 'user' }
@@ -62,6 +63,12 @@ describe 'Skyed::Init.opsworks' do
   let(:stack_data)        { { stack_id: stack_id } }
   let(:layer_id)          { 'e1403a56-286e-4b5e-6798-c3406c947b4b' }
   let(:layer_data)        { { layer_id: layer_id } }
+  let(:ow_git_key) do
+    key = "-----BEGIN RSA PRIVATE KEY-----\n"
+    key += "ASOCSSDCKLKJERLKJsdxljsdfLJKDSf\n"
+    key += '-----END RSA PRIVATE KEY-----'
+    key
+  end
   let(:service_role_arn) do
     'arn:aws:iam::234098234027:role/aws-opsworks-service-role'
   end
@@ -71,28 +78,35 @@ describe 'Skyed::Init.opsworks' do
   before(:each) do
     @olduser = ENV['USER']
     ENV['USER'] = user
-    allow(Skyed::Settings)
+    expect(Skyed::Settings)
+      .to receive(:opsworks_git_key)
+      .and_return(ow_git_key_file)
+    expect(Skyed::Init)
+      .to receive(:read_key_file)
+      .with(ow_git_key_file)
+      .and_return(ow_git_key)
+    expect(Skyed::Settings)
       .to receive(:access_key)
       .and_return(access)
-    allow(Skyed::Settings)
+    expect(Skyed::Settings)
       .to receive(:secret_key)
       .and_return(secret)
-    allow(Skyed::Settings)
+    expect(Skyed::Settings)
       .to receive(:role_arn)
       .and_return(service_role_arn)
-    allow(Skyed::Settings)
+    expect(Skyed::Settings)
       .to receive(:profile_arn)
       .and_return(instance_profile_arn)
-    allow(Skyed::Settings)
+    expect(Skyed::Settings)
       .to receive(:aws_key_name)
       .and_return('secret')
-    allow(Skyed::Settings)
+    expect(Skyed::Settings)
       .to receive(:git_url)
       .and_return('git@github.com:ifosch/repo')
-    allow(Skyed::Settings)
+    expect(Skyed::Settings)
       .to receive(:branch)
       .and_return('devel-1')
-    allow(AWS::OpsWorks::Client)
+    expect(AWS::OpsWorks::Client)
       .to receive(:new)
       .with(access_key_id: access, secret_access_key: secret)
       .and_return(opsworks)
@@ -111,14 +125,14 @@ describe 'Skyed::Init.opsworks' do
         use_custom_cookbooks: true,
         custom_cookbooks_source: {
           url: 'git@github.com:ifosch/repo',
-          # ssh_key: '',
+          ssh_key: ow_git_key,
           revision: 'devel-1',
           type: 'git'
         },
         default_ssh_key_name: 'secret',
         use_opsworks_security_groups: false)
       .and_return(ow_stack_response)
-    allow(ow_stack_response)
+    expect(ow_stack_response)
       .to receive(:data)
       .and_return(stack_data)
     expect(opsworks)
@@ -130,7 +144,7 @@ describe 'Skyed::Init.opsworks' do
         shortname: "test-#{user}",
         custom_security_group_ids: ['sg-f1cc2498'])
       .and_return(ow_layer_response)
-    allow(ow_layer_response)
+    expect(ow_layer_response)
       .to receive(:data)
       .and_return(layer_data)
   end
