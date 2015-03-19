@@ -101,7 +101,7 @@ describe 'Skyed::Init.opsworks' do
       .to receive(:aws_key_name)
       .and_return('secret')
     expect(Skyed::Settings)
-      .to receive(:git_url)
+      .to receive(:remote_url)
       .and_return('git@github.com:ifosch/repo')
     expect(Skyed::Settings)
       .to receive(:branch)
@@ -293,12 +293,13 @@ describe 'Skyed::Init.valid_credential?' do
 end
 
 describe 'Skyed::Init.branch' do
-  let(:hash)       { '099f87e8090a09d' }
-  let(:remote)     { double('Git::Remote') }
-  let(:remote_url) { 'git@github.com/test/test.git' }
-  let(:repository) { double('repository') }
-  let(:repo_path)  { '/home/ifosch/projects/myrepo/.git' }
-  let(:branch)     { double('branch') }
+  let(:hash)        { '099f87e8090a09d' }
+  let(:remote)      { double('Git::Remote') }
+  let(:remote_name) { 'name' }
+  let(:remote_url)  { 'git@github.com/test/test.git' }
+  let(:repository)  { double('repository') }
+  let(:repo_path)   { '/home/ifosch/projects/myrepo/.git' }
+  let(:branch)      { double('branch') }
   before(:each) do
     allow(Skyed::Settings)
       .to receive(:repo)
@@ -320,6 +321,9 @@ describe 'Skyed::Init.branch' do
     allow(remote)
       .to receive(:url)
       .and_return(remote_url)
+    allow(remote)
+      .to receive(:name)
+      .and_return(remote_name)
     allow(branch)
       .to receive(:checkout)
   end
@@ -327,7 +331,9 @@ describe 'Skyed::Init.branch' do
     Skyed::Init.branch
     expect(Skyed::Settings.branch)
       .to eq("devel-#{hash}")
-    expect(Skyed::Settings.git_url)
+    expect(Skyed::Settings.remote_name)
+      .to eq('name')
+    expect(Skyed::Settings.remote_url)
       .to eq('git@github.com/test/test.git')
   end
 end

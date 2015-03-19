@@ -72,7 +72,7 @@ module Skyed
       end
 
       def custom_cookbooks_source(base_source)
-        base_source[:url] = Skyed::Settings.git_url
+        base_source[:url] = Skyed::Settings.remote_url
         base_source[:revision] = Skyed::Settings.branch
         base_source[:ssh_key] = read_key_file(Skyed::Settings.opsworks_git_key)
         base_source
@@ -157,7 +157,12 @@ module Skyed
         repo = repo?(Skyed::Settings.repo)
         repo.branch(branch).checkout
         Skyed::Settings.branch = branch
-        Skyed::Settings.git_url = repo.remotes[0].url
+        git_remote_data repo
+      end
+
+      def git_remote_data(repo)
+        Skyed::Settings.remote_name = repo.remotes[0].name
+        Skyed::Settings.remote_url = repo.remotes[0].url
       end
 
       def opsworks_git_key
