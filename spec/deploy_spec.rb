@@ -4,7 +4,6 @@ require 'highline/import'
 
 describe 'Skyed::Deploy.execute' do
   let(:repo_path) { '/home/ifosch/projects/myrepo/.git' }
-  let(:branch)    { double('branch') }
   context 'when initialized' do
     before(:each) do
       expect(Skyed::Settings)
@@ -17,6 +16,8 @@ describe 'Skyed::Deploy.execute' do
         .to receive(:`)
         .with("cd #{repo_path} && vagrant up")
         .and_return('Any output')
+      expect(Skyed::Deploy)
+        .to receive(:push_devel_branch)
     end
     context 'and vagrant runs ok' do
       before(:each) do
@@ -52,5 +53,33 @@ describe 'Skyed::Deploy.execute' do
       expect { Skyed::Deploy.execute(nil) }
         .to raise_error
     end
+  end
+end
+
+describe 'Skyed::Deploy.push_devel_branch' do
+  let(:repo_path)   { '/home/ifosch/projects/myrepo/.git' }
+  let(:branch)      { 'devel-xxxxx' }
+  let(:remote_name) { 'test' }
+  let(:repository)  { double('repository') }
+  before(:each) do
+    expect(Skyed::Settings)
+      .to receive(:repo)
+      .and_return(repo_path)
+    expect(Git)
+      .to receive(:open)
+      .with(repo_path)
+      .and_return(repository)
+    expect(Skyed::Settings)
+      .to receive(:branch)
+      .and_return(branch)
+    expect(Skyed::Settings)
+      .to receive(:remote_name)
+      .and_return(remote_name)
+    expect(repository)
+      .to receive(:push)
+      .with(remote_name, branch)
+  end
+  it 'pushes devel branch' do
+    Skyed::Deploy.push_devel_branch(nil)
   end
 end
