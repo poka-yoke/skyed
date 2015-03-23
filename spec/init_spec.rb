@@ -293,9 +293,6 @@ end
 
 describe 'Skyed::Init.branch' do
   let(:hash)        { '099f87e8090a09d' }
-  let(:remote)      { double('Git::Remote') }
-  let(:remote_name) { 'name' }
-  let(:remote_url)  { 'git@github.com/test/test.git' }
   let(:repository)  { double('repository') }
   let(:repo_path)   { '/home/ifosch/projects/myrepo/.git' }
   let(:branch)      { double('branch') }
@@ -324,6 +321,32 @@ describe 'Skyed::Init.branch' do
     Skyed::Init.branch
     expect(Skyed::Settings.branch)
       .to eq("devel-#{hash}")
+  end
+end
+
+describe 'Skyed::Init.git_remote_data' do
+  let(:remote)      { double('Git::Remote') }
+  let(:remote_name) { 'name' }
+  let(:remote_url)  { 'git@github.com/test/test.git' }
+  let(:repository)  { double('repository') }
+  before(:each) do
+    expect(remote)
+      .to receive(:name)
+      .and_return(remote_name)
+    expect(remote)
+      .to receive(:url)
+      .and_return(remote_url)
+    expect(repository)
+      .to receive(:remotes)
+      .twice
+      .and_return([remote])
+  end
+  it 'stores the name and url of the remote' do
+    Skyed::Init.git_remote_data(repository)
+    expect(Skyed::Settings.remote_name)
+      .to eq('name')
+    expect(Skyed::Settings.remote_url)
+      .to eq('git@github.com/test/test.git')
   end
 end
 
