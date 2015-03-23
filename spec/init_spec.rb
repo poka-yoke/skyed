@@ -22,7 +22,6 @@ describe 'Skyed::Init.execute' do
         .and_return(path)
       expect(Skyed::Init)
         .to receive(:branch)
-        .and_return('devel-1')
       expect(Skyed::Init)
         .to receive(:credentials)
         .and_return(%w( 'a', 'a' ))
@@ -301,40 +300,30 @@ describe 'Skyed::Init.branch' do
   let(:repo_path)   { '/home/ifosch/projects/myrepo/.git' }
   let(:branch)      { double('branch') }
   before(:each) do
-    allow(Skyed::Settings)
+    expect(Skyed::Settings)
       .to receive(:repo)
+      .twice
       .and_return(repo_path)
-    allow(Digest::SHA1)
+    expect(Digest::SHA1)
       .to receive(:hexdigest)
       .and_return(hash)
-    allow(Git)
+    expect(Git)
       .to receive(:open)
       .with(repo_path)
       .and_return(repository)
-    allow(repository)
+    expect(repository)
       .to receive(:branch)
       .with("devel-#{hash}")
       .and_return(branch)
-    allow(repository)
-      .to receive(:remotes)
-      .and_return([remote])
-    allow(remote)
-      .to receive(:url)
-      .and_return(remote_url)
-    allow(remote)
-      .to receive(:name)
-      .and_return(remote_name)
-    allow(branch)
+    expect(branch)
       .to receive(:checkout)
+    expect(Skyed::Init)
+      .to receive(:git_remote_data)
   end
   it 'calculates and creates the devel branch' do
     Skyed::Init.branch
     expect(Skyed::Settings.branch)
       .to eq("devel-#{hash}")
-    expect(Skyed::Settings.remote_name)
-      .to eq('name')
-    expect(Skyed::Settings.remote_url)
-      .to eq('git@github.com/test/test.git')
   end
 end
 
