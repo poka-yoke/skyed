@@ -11,7 +11,8 @@ desc 'Deploy current setup'
 long_desc 'Deploys from current repository'
 
 command :deploy do |cmd|
-  cmd.flag :remote, type: String,
+  cmd.flag :remote, default_value: nil,
+                    type: String,
                     desc: 'Remote to use in OpsWorks'
   cmd.action do |global_options, options|
     Skyed::Deploy.execute(global_options, options)
