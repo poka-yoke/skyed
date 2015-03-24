@@ -30,10 +30,10 @@ module Skyed
   # This module encapsulates all the init command steps.
   module Init
     class << self
-      def execute(_global_options)
+      def execute(global_options, options)
         fail 'Already initialized' unless Skyed::Settings.empty?
         Skyed::Settings.repo = repo_path(get_repo).to_s
-        branch
+        branch global_options, options
         credentials
         opsworks_git_key
         opsworks
@@ -152,36 +152,34 @@ module Skyed
         fail "Can't install #{package}" unless $CHILD_STATUS.success?
       end
 
-      def branch
+      def branch(global_options, options)
         branch = "devel-#{Digest::SHA1.hexdigest Skyed::Settings.repo}"
         repo = repo?(Skyed::Settings.repo)
         repo.branch(branch).checkout
         Skyed::Settings.branch = branch
-        git_remote_data repo
+        remote_data = git_remote_data(repo, global_options, options)
+        Skyed::Settings.remote_name = remote_data[:name]
+        Skyed::Settings.remote_url = remote_data[:url]
       end
 
-      def git_remote_data(repo)
-        if repo.remotes.length > 1
-          name, url = select_remote(
-            ask_remote_name(repo.remotes.map(&:name)),
-            repo.remotes)
-        else
-          name, url = single_remote(repo)
-        end
-        Skyed::Settings.remote_name = name
-        Skyed::Settings.remote_url = url
+      def git_remote_data(repo, _global_options, options = {})
+        name ||= options[:remote]
+        name = ask_remote_name(
+          repo.remotes.map(&:name)) if repo.remotes.length > 1 && name.nil?
+        name = repo.remotes[0].name if name.nil?
+        select_remote(name, repo.remotes)
       end
 
       def select_remote(name, remotes)
-        url = ''
+        url = nil
         remotes.each do |remote|
           url = remote.url if remote.name == name
         end
-        [name, url]
-      end
-
-      def single_remote(repo)
-        [repo.remotes[0].name, repo.remotes[0].url]
+        if url.nil?
+          { name: remotes[0].name, url: remotes[0].url }
+        else
+          { name: name, url: url }
+        end
       end
 
       def ask_remote_name(remotes_names)

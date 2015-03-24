@@ -20,8 +20,6 @@ describe 'Skyed::Init.execute' do
         .to receive(:to_s)
         .and_return(path)
       expect(Skyed::Init)
-        .to receive(:branch)
-      expect(Skyed::Init)
         .to receive(:credentials)
         .and_return(%w( 'a', 'a' ))
       expect(Skyed::Init)
@@ -33,8 +31,15 @@ describe 'Skyed::Init.execute' do
       expect(Skyed::Settings)
         .to receive(:save)
     end
-    it 'initializes it' do
-      Skyed::Init.execute(nil)
+    context 'without any option' do
+      before(:each) do
+        expect(Skyed::Init)
+          .to receive(:branch)
+          .with(nil, nil)
+      end
+      it 'initializes it' do
+        Skyed::Init.execute(nil, nil)
+      end
     end
   end
   context 'when skyed is already initialized' do
@@ -42,7 +47,7 @@ describe 'Skyed::Init.execute' do
       expect(Skyed::Settings)
         .to receive(:empty?)
         .and_return(false)
-      expect { Skyed::Init.execute(nil) }
+      expect { Skyed::Init.execute(nil, nil) }
         .to raise_error
     end
   end
@@ -291,100 +296,154 @@ describe 'Skyed::Init.valid_credential?' do
 end
 
 describe 'Skyed::Init.branch' do
-  let(:hash)        { '099f87e8090a09d' }
-  let(:repository)  { double('repository') }
-  let(:repo_path)   { '/home/ifosch/projects/myrepo/.git' }
-  let(:branch)      { double('branch') }
-  before(:each) do
-    expect(Skyed::Settings)
-      .to receive(:repo)
-      .twice
-      .and_return(repo_path)
-    expect(Digest::SHA1)
-      .to receive(:hexdigest)
-      .and_return(hash)
-    expect(Git)
-      .to receive(:open)
-      .with(repo_path)
-      .and_return(repository)
-    expect(repository)
-      .to receive(:branch)
-      .with("devel-#{hash}")
-      .and_return(branch)
-    expect(branch)
-      .to receive(:checkout)
-    expect(Skyed::Init)
-      .to receive(:git_remote_data)
-  end
-  it 'calculates and creates the devel branch' do
-    Skyed::Init.branch
-    expect(Skyed::Settings.branch)
-      .to eq("devel-#{hash}")
-  end
-end
-
-describe 'Skyed::Init.git_remote_data' do
-  context 'with just one remote' do
-    let(:remote)      { double('Git::Remote') }
-    let(:remotes)     { [remote] }
+  context 'invoked without any option' do
     let(:remote_name) { 'name' }
     let(:remote_url)  { 'git@github.com/test/test.git' }
+    let(:hash)        { '099f87e8090a09d' }
     let(:repository)  { double('repository') }
+    let(:repo_path)   { '/home/ifosch/projects/myrepo/.git' }
+    let(:branch)      { double('branch') }
     before(:each) do
-      expect(remote)
-        .to receive(:name)
-        .and_return(remote_name)
-      expect(remote)
-        .to receive(:url)
-        .and_return(remote_url)
+      expect(Skyed::Settings)
+        .to receive(:repo)
+        .twice
+        .and_return(repo_path)
+      expect(Digest::SHA1)
+        .to receive(:hexdigest)
+        .and_return(hash)
+      expect(Git)
+        .to receive(:open)
+        .with(repo_path)
+        .and_return(repository)
       expect(repository)
-        .to receive(:remotes)
-        .at_least(3).times
-        .and_return(remotes)
+        .to receive(:branch)
+        .with("devel-#{hash}")
+        .and_return(branch)
+      expect(branch)
+        .to receive(:checkout)
+      expect(Skyed::Init)
+        .to receive(:git_remote_data)
+        .with(repository, nil, nil)
+        .and_return(name: remote_name, url: remote_url)
     end
-    it 'stores the name and url of the remote' do
-      Skyed::Init.git_remote_data(repository)
+    it 'calculates and creates the devel branch' do
+      Skyed::Init.branch(nil, nil)
+      expect(Skyed::Settings.branch)
+        .to eq("devel-#{hash}")
       expect(Skyed::Settings.remote_name)
         .to eq('name')
       expect(Skyed::Settings.remote_url)
         .to eq('git@github.com/test/test.git')
     end
   end
-  context 'with two remotes' do
-    let(:remote1)      { double('Git::Remote') }
-    let(:remote1_name) { 'name' }
-    let(:remote1_url)  { 'git@github.com/test/test.git' }
-    let(:remote2)      { double('Git::Remote') }
-    let(:remote2_name) { 'name2' }
-    let(:remote2_url)  { 'git@github.com/test2/test.git' }
-    let(:repository)   { double('repository') }
-    before(:each) do
-      expect(remote1)
-        .to receive(:name)
-        .at_least(2).times
-        .and_return(remote1_name)
-      expect(remote2)
-        .to receive(:name)
-        .at_least(2).times
-        .and_return(remote2_name)
-      expect(remote2)
-        .to receive(:url)
-        .and_return(remote2_url)
-      expect(repository)
-        .to receive(:remotes)
-        .at_least(3).times
-        .and_return([remote1, remote2])
-      expect(Skyed::Init)
-        .to receive(:ask_remote_name)
-        .with([remote1_name, remote2_name])
-        .and_return(remote2_name)
+end
+
+describe 'Skyed::Init.git_remote_data' do
+  let(:remote1)      { double('Git::Remote') }
+  let(:remote1_name) { 'name' }
+  let(:remote1_url)  { 'git@github.com/test/test.git' }
+  let(:repository)   { double('repository') }
+  before(:each) do
+    allow(remote1)
+      .to receive(:name)
+      .and_return(remote1_name)
+    allow(remote1)
+      .to receive(:url)
+      .and_return(remote1_url)
+  end
+  context 'without specifying the remote option' do
+    context 'with just one remote' do
+      let(:remotes)     { [remote1] }
+      before(:each) do
+        expect(remote1)
+          .to receive(:name)
+          .and_return(remote1_name)
+        expect(remote1)
+          .to receive(:url)
+          .and_return(remote1_url)
+        expect(repository)
+          .to receive(:remotes)
+          .at_least(3).times
+          .and_return(remotes)
+      end
+      it 'stores the name and url of the remote' do
+        expect(Skyed::Init.git_remote_data(repository, nil, {}))
+          .to eq(name: 'name', url: 'git@github.com/test/test.git')
+      end
     end
-    it 'stores the name and url of the chosen remote' do
-      Skyed::Init.git_remote_data(repository)
-      expect(Skyed::Settings.remote_name)
-        .to eq('name2')
-      expect(Skyed::Settings.remote_url)
-        .to eq('git@github.com/test2/test.git')
+    context 'with two remotes' do
+      let(:remote2)      { double('Git::Remote') }
+      let(:remote2_name) { 'name2' }
+      let(:remote2_url)  { 'git@github.com/test2/test.git' }
+      before(:each) do
+        expect(remote2)
+          .to receive(:name)
+          .at_least(2).times
+          .and_return(remote2_name)
+        expect(remote2)
+          .to receive(:url)
+          .and_return(remote2_url)
+        expect(repository)
+          .to receive(:remotes)
+          .at_least(3).times
+          .and_return([remote1, remote2])
+        expect(Skyed::Init)
+          .to receive(:ask_remote_name)
+          .with([remote1_name, remote2_name])
+          .and_return(remote2_name)
+      end
+      it 'stores the name and url of the chosen remote' do
+        expect(Skyed::Init.git_remote_data(repository, nil, {}))
+          .to eq(name: 'name2', url: 'git@github.com/test2/test.git')
+      end
+    end
+  end
+  context 'when specifying a remote in the options' do
+    context 'and that remote exists' do
+      let(:remote2)      { double('Git::Remote') }
+      let(:remote2_name) { 'origin' }
+      let(:remote2_url)  { 'git@github.com/origin/test.git' }
+      before(:each) do
+        expect(remote2)
+          .to receive(:name)
+          .and_return(remote2_name)
+        expect(remote2)
+          .to receive(:url)
+          .and_return(remote2_url)
+        expect(repository)
+          .to receive(:remotes)
+          .at_least(2).times
+          .and_return([remote1, remote2])
+        expect(Skyed::Init)
+          .not_to receive(:ask_remote_name)
+      end
+      it 'stores the name and url of the remote' do
+        expect(Skyed::Init.git_remote_data(repository, nil, remote: 'origin'))
+          .to eq(name: 'origin', url: 'git@github.com/origin/test.git')
+      end
+    end
+    context 'and that remote does not exist' do
+      let(:remote2)      { double('Git::Remote') }
+      let(:remote2_name) { 'origin2' }
+      let(:remote2_url)  { 'git@github.com/origin/test.git' }
+      before(:each) do
+        expect(remote2)
+          .to receive(:name)
+          .and_return(remote2_name)
+        allow(remote2)
+          .to receive(:url)
+          .and_return(remote2_url)
+        expect(repository)
+          .to receive(:remotes)
+          .at_least(2).times
+          .and_return([remote1, remote2])
+        expect(Skyed::Init)
+          .not_to receive(:ask_remote_name)
+      end
+      it 'stores the name and url of the first remote' do
+        expect(Skyed::Init.git_remote_data(repository, nil, remote: 'origin'))
+          .to eq(name: 'name', url: 'git@github.com/test/test.git')
+      end
     end
   end
 end
