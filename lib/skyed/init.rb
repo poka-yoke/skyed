@@ -186,7 +186,7 @@ module Skyed
 
       def ask_remote_name(remotes_names)
         question = 'Which remote should be used for the git repository? '
-        ask(question + remotes_names)
+        ask(question + remotes_names.to_s)
       end
 
       def opsworks_git_key
