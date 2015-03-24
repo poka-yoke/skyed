@@ -161,8 +161,32 @@ module Skyed
       end
 
       def git_remote_data(repo)
-        Skyed::Settings.remote_name = repo.remotes[0].name
-        Skyed::Settings.remote_url = repo.remotes[0].url
+        if repo.remotes.length > 1
+          name, url = select_remote(
+            ask_remote_name(repo.remotes.map(&:name)),
+            repo.remotes)
+        else
+          name, url = single_remote(repo)
+        end
+        Skyed::Settings.remote_name = name
+        Skyed::Settings.remote_url = url
+      end
+
+      def select_remote(name, remotes)
+        url = ''
+        remotes.each do |remote|
+          url = remote.url if remote.name == name
+        end
+        [name, url]
+      end
+
+      def single_remote(repo)
+        [repo.remotes[0].name, repo.remotes[0].url]
+      end
+
+      def ask_remote_name(remotes_names)
+        question = 'Which remote should be used for the git repository? '
+        ask(question + remotes_names)
       end
 
       def opsworks_git_key
