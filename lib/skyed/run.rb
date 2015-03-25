@@ -6,6 +6,29 @@ module Skyed
         recipes = args.select { |recipe| recipe_in_cookbook(recipe) }
         msg = "Couldn't found #{args - recipes} recipes in repository"
         fail msg unless recipes == args
+        output = `cd #{Skyed::Settings.repo} && vagrant status`
+        msg = 'Vagrant failed'
+        fail msg unless $CHILD_STATUS.success?
+        msg = 'Vagrant machine is not running'
+        fail msg unless output =~ /running/
+        execute_recipes(recipes)
+      end
+
+      def execute_recipes(recipes)
+        ow = ow_client
+        command = { name: 'execute_recipes', args: { 'recipes' => recipes } }
+        puts(command: command)
+        ow.create_deployment(
+          stack_id: Skyed::Settings.stack_id,
+          command: command)
+      end
+
+      def ow_client(
+        access = Skyed::Settings.access_key,
+        secret = Skyed::Settings.secret_key)
+        AWS::OpsWorks::Client.new(
+          access_key_id: access,
+          secret_access_key: secret)
       end
 
       def recipe_in_cookbook(recipe)
