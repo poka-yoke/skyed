@@ -52,17 +52,19 @@ module Skyed
       end
 
       def check_stack(ow, name)
-        stack = ow.describe_stacks.select { |x| x[:name] == name }[0] || return
-        stack_summ = ow.describe_stack_summary(
-          stack_id: stack[:stack_id]) || {
-            instances_count: {} }
-        delete_stack(ow, stack_summ)
+        stacks = ow.describe_stacks[:stacks]
+        stack = stacks.select { |x| x[:name] == name }[0] || return
+        stack_summ = ow.describe_stack_summary(stack_id: stack[:stack_id])
+        delete_stack(ow, stack_summ[:stack_summary])
       end
 
       def delete_stack(ow, stack_summ)
-        deletable = stack_summ[:instances_count].values.inject(:+) == 0
-        error_msg = "Stack with name #{name} exists and contains instances"
-        fail error_msg unless deletable
+        count = stack_summ[:instances_count]
+        total = 0
+        total = count.values.inject(:+) unless count.empty?
+        error_msg = "Stack with name #{stack_summ[:name]}"
+        error_msg += ' exists and contains instances'
+        fail error_msg unless total == 0
         ow.delete_stack(stack_id: stack_summ[:stack_id])
       end
 

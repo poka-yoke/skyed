@@ -68,7 +68,7 @@ describe 'Skyed::Init.opsworks' do
   let(:layer_data)        { { layer_id: layer_id } }
   let(:stack1)            { { stack_id: 1, name: 'Develop' } }
   let(:stack2)            { { stack_id: 2, name: 'Master' } }
-  let(:stacks)            { [stack1, stack2] }
+  let(:stacks)            { { stacks: [stack1, stack2] } }
   let(:ow_git_key) do
     key = "-----BEGIN RSA PRIVATE KEY-----\n"
     key += "ASOCSSDCKLKJERLKJsdxljsdfLJKDSf\n"
@@ -173,7 +173,7 @@ describe 'Skyed::Init.opsworks' do
   end
   context 'when stack exists' do
     let(:stack3)          { { stack_id: 3, name: 'user' } }
-    let(:stacks)          { [stack1, stack2, stack3] }
+    let(:stacks)          { { stacks: [stack1, stack2, stack3] } }
     context 'but contains no instances' do
       let(:instances_count) do
         {
@@ -199,7 +199,10 @@ describe 'Skyed::Init.opsworks' do
         }
       end
       let(:stack3_summary) do
-        { stack_id: 3, name: 'user', instances_count: instances_count }
+        { stack_summary: {
+          stack_id: 3,
+          name: 'user',
+          instances_count: instances_count } }
       end
       before(:each) do
         expect(opsworks)
@@ -278,7 +281,10 @@ describe 'Skyed::Init.opsworks' do
         }
       end
       let(:stack3_summary) do
-        { stack_id: 3, name: 'user', instances_count: instances_count }
+        { stack_summary: {
+          stack_id: 3,
+          name: 'user',
+          instances_count: instances_count } }
       end
       before(:each) do
         expect(opsworks)
