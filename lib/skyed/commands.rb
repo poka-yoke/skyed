@@ -18,3 +18,12 @@ command :deploy do |cmd|
     Skyed::Deploy.execute(global_options)
   end
 end
+
+desc 'Run specific recipes on instance'
+long_desc 'Runs specified recipes on all running instances'
+
+command :run do |cmd|
+  cmd.action do |global_options, options, args|
+    Skyed::Run.execute(global_options, options, args)
+  end
+end
