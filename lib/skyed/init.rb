@@ -66,6 +66,7 @@ module Skyed
         error_msg += ' exists and contains instances'
         fail error_msg unless total == 0
         ow.delete_stack(stack_id: stack_summ[:stack_id])
+        File.delete(vagrantfile) if File.exist?(vagrantfile)
       end
 
       def layer_params(stack_id)
