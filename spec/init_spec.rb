@@ -212,6 +212,17 @@ describe 'Skyed::Init.opsworks' do
         expect(opsworks)
           .to receive(:delete_stack)
           .with(stack_id: 3)
+        expect(Skyed::Init)
+          .to receive(:vagrantfile)
+          .at_least(1).times
+          .and_return('Vagrantfile')
+        expect(File)
+          .to receive(:exist?)
+          .with('Vagrantfile')
+          .and_return(true)
+        expect(File)
+          .to receive(:delete)
+          .with('Vagrantfile')
         expect(opsworks)
           .to receive(:create_stack)
           .with(
