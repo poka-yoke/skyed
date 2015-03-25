@@ -43,10 +43,27 @@ module Skyed
 
       def opsworks
         opsworks = ow_client
-        stack = opsworks.create_stack(stack_params).data[:stack_id]
+        params = stack_params
+        check_stack(opsworks, params[:name])
+        stack = opsworks.create_stack(params).data[:stack_id]
         Skyed::Settings.stack_id = stack
         Skyed::Settings.layer_id = opsworks.create_layer(
           layer_params(stack)).data[:layer_id]
+      end
+
+      def check_stack(ow, name)
+        stack = ow.describe_stacks.select { |x| x[:name] == name }[0] || return
+        stack_summ = ow.describe_stack_summary(
+          stack_id: stack[:stack_id]) || {
+            instances_count: {} }
+        delete_stack(ow, stack_summ)
+      end
+
+      def delete_stack(ow, stack_summ)
+        deletable = stack_summ[:instances_count].values.inject(:+) == 0
+        error_msg = "Stack with name #{name} exists and contains instances"
+        fail error_msg unless deletable
+        ow.delete_stack(stack_id: stack_summ[:stack_id])
       end
 
       def layer_params(stack_id)

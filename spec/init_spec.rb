@@ -66,6 +66,9 @@ describe 'Skyed::Init.opsworks' do
   let(:stack_data)        { { stack_id: stack_id } }
   let(:layer_id)          { 'e1403a56-286e-4b5e-6798-c3406c947b4b' }
   let(:layer_data)        { { layer_id: layer_id } }
+  let(:stack1)            { { stack_id: 1, name: 'Develop' } }
+  let(:stack2)            { { stack_id: 2, name: 'Master' } }
+  let(:stacks)            { [stack1, stack2] }
   let(:ow_git_key) do
     key = "-----BEGIN RSA PRIVATE KEY-----\n"
     key += "ASOCSSDCKLKJERLKJsdxljsdfLJKDSf\n"
@@ -114,50 +117,185 @@ describe 'Skyed::Init.opsworks' do
       .with(access_key_id: access, secret_access_key: secret)
       .and_return(opsworks)
     expect(opsworks)
-      .to receive(:create_stack)
-      .with(
-        name: user,
-        region: region,
-        service_role_arn: service_role_arn,
-        default_instance_profile_arn: instance_profile_arn,
-        default_os: 'Ubuntu 12.04 LTS',
-        configuration_manager: {
-          name: 'Chef',
-          version: '11.10'
-        },
-        use_custom_cookbooks: true,
-        custom_cookbooks_source: {
-          url: 'git@github.com:ifosch/repo',
-          ssh_key: ow_git_key,
-          revision: 'devel-1',
-          type: 'git'
-        },
-        default_ssh_key_name: 'secret',
-        use_opsworks_security_groups: false)
-      .and_return(ow_stack_response)
-    expect(ow_stack_response)
-      .to receive(:data)
-      .and_return(stack_data)
-    expect(opsworks)
-      .to receive(:create_layer)
-      .with(
-        stack_id: stack_id,
-        type: 'custom',
-        name: "test-#{user}",
-        shortname: "test-#{user}",
-        custom_security_group_ids: ['sg-f1cc2498'])
-      .and_return(ow_layer_response)
-    expect(ow_layer_response)
-      .to receive(:data)
-      .and_return(layer_data)
+      .to receive(:describe_stacks)
+      .and_return(stacks)
   end
   after(:each) do
     ENV['USER'] = @olduser
   end
-  it 'sets up opsworks stack' do
-    Skyed::Init.opsworks
-    expect(Skyed::Settings.stack_id).to eq(stack_id)
-    expect(Skyed::Settings.layer_id).to eq(layer_id)
+  context 'when stack does not exist' do
+    before(:each) do
+      expect(opsworks)
+        .not_to receive(:describe_stack_summary)
+      expect(opsworks)
+        .to receive(:create_stack)
+        .with(
+          name: user,
+          region: region,
+          service_role_arn: service_role_arn,
+          default_instance_profile_arn: instance_profile_arn,
+          default_os: 'Ubuntu 12.04 LTS',
+          configuration_manager: {
+            name: 'Chef',
+            version: '11.10'
+          },
+          use_custom_cookbooks: true,
+          custom_cookbooks_source: {
+            url: 'git@github.com:ifosch/repo',
+            ssh_key: ow_git_key,
+            revision: 'devel-1',
+            type: 'git'
+          },
+          default_ssh_key_name: 'secret',
+          use_opsworks_security_groups: false)
+        .and_return(ow_stack_response)
+      expect(ow_stack_response)
+        .to receive(:data)
+        .and_return(stack_data)
+      expect(opsworks)
+        .to receive(:create_layer)
+        .with(
+          stack_id: stack_id,
+          type: 'custom',
+          name: "test-#{user}",
+          shortname: "test-#{user}",
+          custom_security_group_ids: ['sg-f1cc2498'])
+        .and_return(ow_layer_response)
+      expect(ow_layer_response)
+        .to receive(:data)
+        .and_return(layer_data)
+    end
+    it 'sets up opsworks stack' do
+      Skyed::Init.opsworks
+      expect(Skyed::Settings.stack_id).to eq(stack_id)
+      expect(Skyed::Settings.layer_id).to eq(layer_id)
+    end
+  end
+  context 'when stack exists' do
+    let(:stack3)          { { stack_id: 3, name: 'user' } }
+    let(:stacks)          { [stack1, stack2, stack3] }
+    context 'but contains no instances' do
+      let(:instances_count) do
+        {
+          assigning: 0,
+          booting: 0,
+          connection_lost: 0,
+          deregistering: 0,
+          online: 0,
+          pending: 0,
+          rebooting: 0,
+          registered: 0,
+          registering: 0,
+          requested: 0,
+          running_setup: 0,
+          setup_failed: 0,
+          shutting_down: 0,
+          start_failed: 0,
+          stopped: 0,
+          stopping: 0,
+          terminated: 0,
+          terminating: 0,
+          unassigning: 0
+        }
+      end
+      let(:stack3_summary) do
+        { stack_id: 3, name: 'user', instances_count: instances_count }
+      end
+      before(:each) do
+        expect(opsworks)
+          .to receive(:describe_stack_summary)
+          .with(stack_id: 3)
+          .and_return(stack3_summary)
+        expect(opsworks)
+          .to receive(:delete_stack)
+          .with(stack_id: 3)
+        expect(opsworks)
+          .to receive(:create_stack)
+          .with(
+            name: user,
+            region: region,
+            service_role_arn: service_role_arn,
+            default_instance_profile_arn: instance_profile_arn,
+            default_os: 'Ubuntu 12.04 LTS',
+            configuration_manager: {
+              name: 'Chef',
+              version: '11.10'
+            },
+            use_custom_cookbooks: true,
+            custom_cookbooks_source: {
+              url: 'git@github.com:ifosch/repo',
+              ssh_key: ow_git_key,
+              revision: 'devel-1',
+              type: 'git'
+            },
+            default_ssh_key_name: 'secret',
+            use_opsworks_security_groups: false)
+          .and_return(ow_stack_response)
+        expect(ow_stack_response)
+          .to receive(:data)
+          .and_return(stack_data)
+        expect(opsworks)
+          .to receive(:create_layer)
+          .with(
+            stack_id: stack_id,
+            type: 'custom',
+            name: "test-#{user}",
+            shortname: "test-#{user}",
+            custom_security_group_ids: ['sg-f1cc2498'])
+          .and_return(ow_layer_response)
+        expect(ow_layer_response)
+          .to receive(:data)
+          .and_return(layer_data)
+      end
+      it 'sets up opsworks stack' do
+        Skyed::Init.opsworks
+        expect(Skyed::Settings.stack_id).to eq(stack_id)
+        expect(Skyed::Settings.layer_id).to eq(layer_id)
+      end
+    end
+    context 'but contains instances' do
+      let(:instances_count) do
+        {
+          assigning: 1,
+          booting: 0,
+          connection_lost: 0,
+          deregistering: 0,
+          online: 0,
+          pending: 0,
+          rebooting: 0,
+          registered: 0,
+          registering: 0,
+          requested: 0,
+          running_setup: 0,
+          setup_failed: 0,
+          shutting_down: 0,
+          start_failed: 0,
+          stopped: 0,
+          stopping: 0,
+          terminated: 0,
+          terminating: 0,
+          unassigning: 0
+        }
+      end
+      let(:stack3_summary) do
+        { stack_id: 3, name: 'user', instances_count: instances_count }
+      end
+      before(:each) do
+        expect(opsworks)
+          .to receive(:describe_stack_summary)
+          .with(stack_id: 3)
+          .and_return(stack3_summary)
+        expect(opsworks)
+          .not_to receive(:delete_stack)
+          .with(stack_id: 3)
+        expect(opsworks)
+          .not_to receive(:create_stack)
+      end
+      it 'sets up opsworks stack' do
+        expect { Skyed::Init.opsworks }
+          .to raise_error
+      end
+    end
   end
 end
 
