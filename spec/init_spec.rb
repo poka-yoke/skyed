@@ -604,51 +604,107 @@ describe 'Skyed::Init.git_remote_data' do
 end
 
 describe 'Skyed::Init.credentials' do
-  let(:opsworks)       { double('AWS::OpsWorks::Client') }
-  let(:access)         { 'AKIAAKIAAKIA' }
-  let(:secret)         { 'sGe84ofDSkfo' }
-  let(:aws_key_name)   { 'keypair' }
-  let(:sra) do
-    'arn:aws:iam::123098345737:role/aws-opsworks-service-role'
+  context 'when every credential required is in environment variables' do
+    let(:opsworks)       { double('AWS::OpsWorks::Client') }
+    let(:access)         { 'AKIAAKIAAKIA' }
+    let(:secret)         { 'sGe84ofDSkfo' }
+    let(:aws_key_name)   { 'keypair' }
+    let(:sra) do
+      'arn:aws:iam::123098345737:role/aws-opsworks-service-role'
+    end
+    let(:ipa) do
+      'arn:aws:iam::234098345717:instance-profile/aws-opsworks-ec2-role'
+    end
+    before(:each) do
+      @oldaccess                 = ENV['AWS_ACCESS_KEY']
+      @oldsecret                 = ENV['AWS_SECRET_KEY']
+      @oldaws_ssh_key_name       = ENV['AWS_SSH_KEY_NAME']
+      @oldservice_role           = ENV['OW_SERVICE_ROLE']
+      @oldinstance_profile       = ENV['OW_INSTANCE_PROFILE']
+      ENV['AWS_ACCESS_KEY']      = access
+      ENV['AWS_SECRET_KEY']      = secret
+      ENV['AWS_SSH_KEY_NAME']    = aws_key_name
+      ENV['OW_SERVICE_ROLE']     = sra
+      ENV['OW_INSTANCE_PROFILE'] = ipa
+      expect(AWS::OpsWorks::Client)
+        .to receive(:new)
+        .with(access_key_id: access, secret_access_key: secret)
+        .and_return(opsworks)
+    end
+    after(:each) do
+      ENV['AWS_ACCESS_KEY']      = @oldaccess
+      ENV['AWS_SECRET_KEY']      = @oldsecret
+      ENV['AWS_SSH_KEY_NAME']    = @oldaws_ssh_key_name
+      ENV['OW_SERVICE_ROLE']     = @oldservice_role
+      ENV['OW_INSTANCE_PROFILE'] = @oldinstance_profile
+    end
+    it 'recovers credentials from environment variables' do
+      Skyed::Init.credentials
+      expect(Skyed::Settings.access_key)
+        .to eq(access)
+      expect(Skyed::Settings.secret_key)
+        .to eq(secret)
+      expect(Skyed::Settings.aws_key_name)
+        .to eq(aws_key_name)
+      expect(Skyed::Settings.role_arn)
+        .to eq(sra)
+      expect(Skyed::Settings.profile_arn)
+        .to eq(ipa)
+    end
   end
-  let(:ipa) do
-    'arn:aws:iam::234098345717:instance-profile/aws-opsworks-ec2-role'
-  end
-  before(:each) do
-    @oldaccess                 = ENV['AWS_ACCESS_KEY']
-    @oldsecret                 = ENV['AWS_SECRET_KEY']
-    @oldaws_ssh_key_name       = ENV['AWS_SSH_KEY_NAME']
-    @oldservice_role           = ENV['OW_SERVICE_ROLE']
-    @oldinstance_profile       = ENV['OW_INSTANCE_PROFILE']
-    ENV['AWS_ACCESS_KEY']      = access
-    ENV['AWS_SECRET_KEY']      = secret
-    ENV['AWS_SSH_KEY_NAME']    = aws_key_name
-    ENV['OW_SERVICE_ROLE']     = sra
-    ENV['OW_INSTANCE_PROFILE'] = ipa
-    expect(AWS::OpsWorks::Client)
-      .to receive(:new)
-      .with(access_key_id: access, secret_access_key: secret)
-      .and_return(opsworks)
-  end
-  after(:each) do
-    ENV['AWS_ACCESS_KEY']      = @oldaccess
-    ENV['AWS_SECRET_KEY']      = @oldsecret
-    ENV['AWS_SSH_KEY_NAME']    = @oldaws_ssh_key_name
-    ENV['OW_SERVICE_ROLE']     = @oldservice_role
-    ENV['OW_INSTANCE_PROFILE'] = @oldinstance_profile
-  end
-  it 'recovers credentials from environment variables' do
-    Skyed::Init.credentials
-    expect(Skyed::Settings.access_key)
-      .to eq(access)
-    expect(Skyed::Settings.secret_key)
-      .to eq(secret)
-    expect(Skyed::Settings.aws_key_name)
-      .to eq(aws_key_name)
-    expect(Skyed::Settings.role_arn)
-      .to eq(sra)
-    expect(Skyed::Settings.profile_arn)
-      .to eq(ipa)
+  context 'when service role and instance profile were not providen' do
+    let(:opsworks)       { double('AWS::OpsWorks::Client') }
+    let(:access)         { 'AKIAAKIAAKIA' }
+    let(:secret)         { 'sGe84ofDSkfo' }
+    let(:aws_key_name)   { 'keypair' }
+    let(:sra) do
+      'arn:aws:iam::987654321098:role/aws-opsworks-service-role'
+    end
+    let(:ipa) do
+      'arn:aws:iam::987654321098:instance-profile/aws-opsworks-ec2-role'
+    end
+    let(:instance_profile_list) do
+      { instance_profiles: [{
+        arn: ipa,
+        roles: [{
+          arn: sra
+        }]
+      }] }
+    end
+    before(:each) do
+      @oldaccess                 = ENV['AWS_ACCESS_KEY']
+      @oldsecret                 = ENV['AWS_SECRET_KEY']
+      @oldaws_ssh_key_name       = ENV['AWS_SSH_KEY_NAME']
+      ENV['AWS_ACCESS_KEY']      = access
+      ENV['AWS_SECRET_KEY']      = secret
+      ENV['AWS_SSH_KEY_NAME']    = aws_key_name
+      expect(AWS::OpsWorks::Client)
+        .to receive(:new)
+        .with(access_key_id: access, secret_access_key: secret)
+        .and_return(opsworks)
+      expect(opsworks)
+        .to receive(:list_instance_profiles)
+        .at_least(2).times
+        .and_return(instance_profile_list)
+    end
+    after(:each) do
+      ENV['AWS_ACCESS_KEY']      = @oldaccess
+      ENV['AWS_SECRET_KEY']      = @oldsecret
+      ENV['AWS_SSH_KEY_NAME']    = @oldaws_ssh_key_name
+    end
+    it 'calculates them from OW environment' do
+      Skyed::Init.credentials
+      expect(Skyed::Settings.access_key)
+        .to eq(access)
+      expect(Skyed::Settings.secret_key)
+        .to eq(secret)
+      expect(Skyed::Settings.aws_key_name)
+        .to eq(aws_key_name)
+      expect(Skyed::Settings.role_arn)
+        .to eq(sra)
+      expect(Skyed::Settings.profile_arn)
+        .to eq(ipa)
+    end
   end
 end
 

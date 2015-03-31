@@ -218,18 +218,25 @@ module Skyed
         role_arn     = ENV['OW_SERVICE_ROLE'],
         profile_arn  = ENV['OW_INSTANCE_PROFILE'],
         aws_key_name = ENV['AWS_SSH_KEY_NAME'])
-        aws_access_key(access, secret)
-        Skyed::Settings.role_arn     = role_arn
-        Skyed::Settings.profile_arn  = profile_arn
+        ow = aws_access_key(access, secret)
+        set_arns(ow, profile_arn, role_arn)
         Skyed::Settings.aws_key_name = aws_key_name
+      end
+
+      def set_arns(ow, profile_arn, role_arn)
+        Skyed::Settings.profile_arn  = profile_arn || ow
+          .list_instance_profiles[:instance_profiles][0][:arn]
+        Skyed::Settings.role_arn     = role_arn || ow
+          .list_instance_profiles[:instance_profiles][0][:roles][0][:arn]
       end
 
       def aws_access_key(access, secret)
         access = ask(ACCESS_QUESTION) unless valid_credential?('AWS_ACCESS_KEY')
         secret = ask(SECRET_QUESTION) unless valid_credential?('AWS_SECRET_KEY')
-        ow_client(access, secret)
+        ow = ow_client(access, secret)
         Skyed::Settings.access_key = access
         Skyed::Settings.secret_key = secret
+        ow
       end
 
       def valid_credential?(env_name)
