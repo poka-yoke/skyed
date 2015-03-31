@@ -230,8 +230,6 @@ module Skyed
         Skyed::Settings.profile_arn  = profile_arn || iam
           .get_instance_profile(
             instance_profile_name: 'aws-opsworks-ec2-role')[key][:arn]
-        puts Skyed::Settings.role_arn
-        puts Skyed::Settings.profile_arn
       end
 
       def aws_access_key(access, secret)

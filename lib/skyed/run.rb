@@ -1,5 +1,5 @@
 module Skyed
-  # This module encapsulates all the deploy command steps.
+  # This module encapsulates all the run command steps.
   module Run
     class << self
       def execute(_global_options, _options, args)
@@ -17,7 +17,6 @@ module Skyed
       def execute_recipes(recipes)
         ow = ow_client
         command = { name: 'execute_recipes', args: { 'recipes' => recipes } }
-        puts(command: command)
         ow.create_deployment(
           stack_id: Skyed::Settings.stack_id,
           command: command)
