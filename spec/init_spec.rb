@@ -605,10 +605,10 @@ end
 
 describe 'Skyed::Init.credentials' do
   context 'when every credential required is in environment variables' do
-    let(:opsworks)       { double('AWS::OpsWorks::Client') }
-    let(:access)         { 'AKIAAKIAAKIA' }
-    let(:secret)         { 'sGe84ofDSkfo' }
-    let(:aws_key_name)   { 'keypair' }
+    let(:iam)          { double('AWS::IAM::Client') }
+    let(:access)       { 'AKIAAKIAAKIA' }
+    let(:secret)       { 'sGe84ofDSkfo' }
+    let(:aws_key_name) { 'keypair' }
     let(:sra) do
       'arn:aws:iam::123098345737:role/aws-opsworks-service-role'
     end
@@ -626,10 +626,10 @@ describe 'Skyed::Init.credentials' do
       ENV['AWS_SSH_KEY_NAME']    = aws_key_name
       ENV['OW_SERVICE_ROLE']     = sra
       ENV['OW_INSTANCE_PROFILE'] = ipa
-      expect(AWS::OpsWorks::Client)
+      expect(AWS::IAM::Client)
         .to receive(:new)
         .with(access_key_id: access, secret_access_key: secret)
-        .and_return(opsworks)
+        .and_return(iam)
     end
     after(:each) do
       ENV['AWS_ACCESS_KEY']      = @oldaccess
@@ -653,10 +653,10 @@ describe 'Skyed::Init.credentials' do
     end
   end
   context 'when service role and instance profile were not providen' do
-    let(:opsworks)       { double('AWS::OpsWorks::Client') }
-    let(:access)         { 'AKIAAKIAAKIA' }
-    let(:secret)         { 'sGe84ofDSkfo' }
-    let(:aws_key_name)   { 'keypair' }
+    let(:iam)          { double('AWS::IAM::Client') }
+    let(:access)       { 'AKIAAKIAAKIA' }
+    let(:secret)       { 'sGe84ofDSkfo' }
+    let(:aws_key_name) { 'keypair' }
     let(:sra) do
       'arn:aws:iam::987654321098:role/aws-opsworks-service-role'
     end
@@ -678,11 +678,11 @@ describe 'Skyed::Init.credentials' do
       ENV['AWS_ACCESS_KEY']      = access
       ENV['AWS_SECRET_KEY']      = secret
       ENV['AWS_SSH_KEY_NAME']    = aws_key_name
-      expect(AWS::OpsWorks::Client)
+      expect(AWS::IAM::Client)
         .to receive(:new)
         .with(access_key_id: access, secret_access_key: secret)
-        .and_return(opsworks)
-      expect(opsworks)
+        .and_return(iam)
+      expect(iam)
         .to receive(:list_instance_profiles)
         .at_least(2).times
         .and_return(instance_profile_list)
