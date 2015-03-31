@@ -653,23 +653,17 @@ describe 'Skyed::Init.credentials' do
     end
   end
   context 'when service role and instance profile were not providen' do
-    let(:iam)          { double('AWS::IAM::Client') }
-    let(:access)       { 'AKIAAKIAAKIA' }
-    let(:secret)       { 'sGe84ofDSkfo' }
-    let(:aws_key_name) { 'keypair' }
+    let(:iam)              { double('AWS::IAM::Client') }
+    let(:access)           { 'AKIAAKIAAKIA' }
+    let(:secret)           { 'sGe84ofDSkfo' }
+    let(:aws_key_name)     { 'keypair' }
+    let(:instance_profile) { { instance_profile: { arn: ipa } } }
+    let(:role)             { { role: { arn: sra } } }
     let(:sra) do
       'arn:aws:iam::987654321098:role/aws-opsworks-service-role'
     end
     let(:ipa) do
       'arn:aws:iam::987654321098:instance-profile/aws-opsworks-ec2-role'
-    end
-    let(:instance_profile_list) do
-      { instance_profiles: [{
-        arn: ipa,
-        roles: [{
-          arn: sra
-        }]
-      }] }
     end
     before(:each) do
       @oldaccess                 = ENV['AWS_ACCESS_KEY']
@@ -683,9 +677,11 @@ describe 'Skyed::Init.credentials' do
         .with(access_key_id: access, secret_access_key: secret)
         .and_return(iam)
       expect(iam)
-        .to receive(:list_instance_profiles)
-        .at_least(2).times
-        .and_return(instance_profile_list)
+        .to receive(:get_instance_profile)
+        .and_return(instance_profile)
+      expect(iam)
+        .to receive(:get_role)
+        .and_return(role)
     end
     after(:each) do
       ENV['AWS_ACCESS_KEY']      = @oldaccess
