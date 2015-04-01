@@ -17,7 +17,7 @@ describe 'Skyed::Run.execute' do
         .and_return(repo_path)
     end
     context 'when vagrant is running' do
-      let(:opsworks)      { double('AWS::OpsWorks::Client') }
+      let(:opsworks)      { double('Aws::OpsWorks::Client') }
       let(:access)        { 'AKIAAKIAAKIA' }
       let(:secret)        { 'sGe84ofDSkfo' }
       let(:stack_id)      { 'df345d54-75b4-431b-adb2-eb6b9e549283' }
@@ -29,9 +29,8 @@ describe 'Skyed::Run.execute' do
           .to receive(:`)
           .with("cd #{repo_path} && vagrant status")
           .and_return('Any output containing running')
-        expect(AWS::OpsWorks::Client)
-          .to receive(:new)
-          .with(access_key_id: access, secret_access_key: secret)
+        expect(Skyed::Init)
+          .to receive(:ow_client)
           .and_return(opsworks)
         expect(Skyed::Settings)
           .to receive(:stack_id)

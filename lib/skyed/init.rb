@@ -108,10 +108,13 @@ module Skyed
 
       def ow_client(
         access = Skyed::Settings.access_key,
-        secret = Skyed::Settings.secret_key)
-        AWS::OpsWorks::Client.new(
+        secret = Skyed::Settings.secret_key,
+        region = ENV['AWS_REGION'])
+        region ||= 'us-east-1'
+        Aws::OpsWorks::Client.new(
           access_key_id: access,
-          secret_access_key: secret)
+          secret_access_key: secret,
+          region: region)
       end
 
       def vagrantfile
@@ -243,10 +246,13 @@ module Skyed
 
       def iam_client(
         access = Skyed::Settings.access_key,
-        secret = Skyed::Settings.secret_key)
-        AWS::IAM::Client.new(
+        secret = Skyed::Settings.secret_key,
+        region = ENV['AWS_REGION'])
+        region ||= 'us-east-1'
+        Aws::IAM::Client.new(
           access_key_id: access,
-          secret_access_key: secret)
+          secret_access_key: secret,
+          region: region)
       end
 
       def valid_credential?(env_name)

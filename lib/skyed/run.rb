@@ -15,19 +15,11 @@ module Skyed
       end
 
       def execute_recipes(recipes)
-        ow = ow_client
+        ow = Skyed::Init.ow_client
         command = { name: 'execute_recipes', args: { 'recipes' => recipes } }
         ow.create_deployment(
           stack_id: Skyed::Settings.stack_id,
           command: command)
-      end
-
-      def ow_client(
-        access = Skyed::Settings.access_key,
-        secret = Skyed::Settings.secret_key)
-        AWS::OpsWorks::Client.new(
-          access_key_id: access,
-          secret_access_key: secret)
       end
 
       def recipe_in_cookbook(recipe)

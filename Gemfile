@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'git', '1.2.8'
-gem 'aws-sdk', '1.61.0'
+gem 'aws-sdk', '~> 2.0.0'
 gem 'gli', '2.12.2'
 gem 'highline', '1.6.21'
 

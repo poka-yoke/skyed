@@ -54,7 +54,7 @@ describe 'Skyed::Init.execute' do
 end
 
 describe 'Skyed::Init.opsworks' do
-  let(:opsworks)          { double('AWS::OpsWorks::Client') }
+  let(:opsworks)          { double('Aws::OpsWorks::Client') }
   let(:ow_stack_response) { double('Core::Response') }
   let(:ow_layer_response) { double('Core::Response') }
   let(:ow_git_key_file)   { '/home/user/.ssh/private_key' }
@@ -112,9 +112,12 @@ describe 'Skyed::Init.opsworks' do
     expect(Skyed::Settings)
       .to receive(:branch)
       .and_return('devel-1')
-    expect(AWS::OpsWorks::Client)
+    expect(Aws::OpsWorks::Client)
       .to receive(:new)
-      .with(access_key_id: access, secret_access_key: secret)
+      .with(
+        access_key_id: access,
+        secret_access_key: secret,
+        region: 'us-east-1')
       .and_return(opsworks)
     expect(opsworks)
       .to receive(:describe_stacks)
@@ -605,7 +608,7 @@ end
 
 describe 'Skyed::Init.credentials' do
   context 'when every credential required is in environment variables' do
-    let(:iam)          { double('AWS::IAM::Client') }
+    let(:iam)          { double('Aws::IAM::Client') }
     let(:access)       { 'AKIAAKIAAKIA' }
     let(:secret)       { 'sGe84ofDSkfo' }
     let(:aws_key_name) { 'keypair' }
@@ -626,7 +629,7 @@ describe 'Skyed::Init.credentials' do
       ENV['AWS_SSH_KEY_NAME']    = aws_key_name
       ENV['OW_SERVICE_ROLE']     = sra
       ENV['OW_INSTANCE_PROFILE'] = ipa
-      expect(AWS::IAM::Client)
+      expect(Aws::IAM::Client)
         .to receive(:new)
         .with(access_key_id: access, secret_access_key: secret)
         .and_return(iam)
@@ -653,7 +656,7 @@ describe 'Skyed::Init.credentials' do
     end
   end
   context 'when service role and instance profile were not providen' do
-    let(:iam)              { double('AWS::IAM::Client') }
+    let(:iam)              { double('Aws::IAM::Client') }
     let(:access)           { 'AKIAAKIAAKIA' }
     let(:secret)           { 'sGe84ofDSkfo' }
     let(:aws_key_name)     { 'keypair' }
@@ -672,7 +675,7 @@ describe 'Skyed::Init.credentials' do
       ENV['AWS_ACCESS_KEY']      = access
       ENV['AWS_SECRET_KEY']      = secret
       ENV['AWS_SSH_KEY_NAME']    = aws_key_name
-      expect(AWS::IAM::Client)
+      expect(Aws::IAM::Client)
         .to receive(:new)
         .with(access_key_id: access, secret_access_key: secret)
         .and_return(iam)
