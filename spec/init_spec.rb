@@ -631,7 +631,10 @@ describe 'Skyed::Init.credentials' do
       ENV['OW_INSTANCE_PROFILE'] = ipa
       expect(Aws::IAM::Client)
         .to receive(:new)
-        .with(access_key_id: access, secret_access_key: secret)
+        .with(
+          access_key_id: access,
+          secret_access_key: secret,
+          region: 'us-east-1')
         .and_return(iam)
     end
     after(:each) do
@@ -677,7 +680,10 @@ describe 'Skyed::Init.credentials' do
       ENV['AWS_SSH_KEY_NAME']    = aws_key_name
       expect(Aws::IAM::Client)
         .to receive(:new)
-        .with(access_key_id: access, secret_access_key: secret)
+        .with(
+          access_key_id: access,
+          secret_access_key: secret,
+          region: 'us-east-1')
         .and_return(iam)
       expect(iam)
         .to receive(:get_instance_profile)
