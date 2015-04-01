@@ -27,3 +27,12 @@ command :run do |cmd|
     Skyed::Run.execute(global_options, options, args)
   end
 end
+
+desc 'Destroy instance'
+long_desc 'Destroy instance'
+
+command :destroy do |cmd|
+  cmd.action do |global_options, options, args|
+    Skyed::Destroy.execute(global_options, options, args)
+  end
+end
