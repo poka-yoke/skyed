@@ -2,7 +2,8 @@ module Skyed
   # This module encapsulates all the run command steps.
   module Run
     class << self
-      def execute(_global_options, _options, args)
+      def execute(global_options, options, args)
+        run(global_options, options, args) unless Skyed::Settings.empty?
         recipes = args.select { |recipe| recipe_in_cookbook(recipe) }
         msg = "Couldn't found #{args - recipes} recipes in repository"
         fail msg unless recipes == args
@@ -12,6 +13,9 @@ module Skyed
         msg = 'Vagrant machine is not running'
         fail msg unless output =~ /running/
         execute_recipes(recipes)
+      end
+
+      def run(_global_options, _options, _args)
       end
 
       def execute_recipes(recipes)
