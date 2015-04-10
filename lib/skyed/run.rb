@@ -3,7 +3,6 @@ module Skyed
   module Run
     class << self
       def execute(global_options, options, args)
-        puts options
         if !options.nil? && options.key?(:stack) && !options[:stack].nil?
           run(global_options, options, args)
         else

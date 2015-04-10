@@ -3,10 +3,10 @@ require 'skyed'
 require 'highline/import'
 
 describe 'Skyed::Run.execute' do
+  let(:recipe1) { 'recipe1' }
+  let(:args)    { [recipe1] }
   context 'when initialized' do
     let(:opsworks) { double('Aws::OpsWorks::Client') }
-    let(:recipe1) { 'recipe1' }
-    let(:args)    { [recipe1] }
     context 'and no stack given' do
       before(:each) do
         expect(Skyed::Run)
@@ -49,15 +49,13 @@ describe 'Skyed::Run.execute' do
     end
   end
   context 'when not initialized' do
+    let(:options) { { stack: '1234-1234-1234-2134' } }
     before(:each) do
-      expect(Skyed::Settings)
-        .to receive(:empty?)
-        .and_return(true)
       expect(Skyed::Run)
         .to receive(:run)
     end
     it 'uses run method' do
-      Skyed::Run.execute(nil, nil, nil)
+      Skyed::Run.execute(nil, options, args)
     end
   end
 end
