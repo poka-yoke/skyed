@@ -59,9 +59,8 @@ module Skyed
       end
 
       def delete_stack(ow, stack_summ)
-        count = stack_summ[:instances_count]
-        total = 0
-        total = count.values.inject(:+) unless count.empty?
+        total = stack_summ[:instances_count].values.compact.inject(:+)
+        total ||= 0
         error_msg = "Stack with name #{stack_summ[:name]}"
         error_msg += ' exists and contains instances'
         fail error_msg unless total == 0
