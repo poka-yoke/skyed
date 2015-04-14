@@ -1,12 +1,12 @@
 Gem::Specification.new do |s|
   s.name        = 'skyed'
-  s.version     = '0.1.0'
+  s.version     = '0.1.1'
   s.date        = '2015-04-14'
   s.summary     = 'Are you surrounded by sky?'
   s.description = 'A cloudy gem'
   s.authors     = ['Ignasi Fosch']
   s.email       = 'natx@y10k.ws'
-  s.files       = ['lib/skyed.rb']
+  s.files       =  Dir['{bin/*,lib/**/*,templates/*}']
   s.executables << 'skyed'
   s.homepage    = 'http://rubygems.org/gems/skyed'
   s.add_runtime_dependency 'git', ['= 1.2.8']
