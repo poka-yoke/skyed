@@ -79,7 +79,7 @@ module Skyed
       end
 
       def login
-        Skyed::Init.credentials
+        Skyed::Init.credentials if Skyed::Settings.empty?
         Skyed::Init.ow_client
       end
 
