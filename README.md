@@ -1,30 +1,50 @@
 # skyed
 
-**THIS TOOL IS WORK IN PROGRESS - DO NOT USE IT YET!**
+**THIS TOOL IS WORK IN PROGRESS - USE IT CAREFULLY!**
 
 [![Build Status](https://travis-ci.org/ifosch/skyed.svg)](https://travis-ci.org/ifosch/skyed)
 [![Coverage Status](https://img.shields.io/coveralls/ifosch/skyed/master.svg)](https://coveralls.io/r/ifosch/skyed)
+[![Gem Version](https://badge.fury.io/rb/skyed.svg)](http://badge.fury.io/rb/skyed)
 
-## Set up
+## Description
 
-If you'll need a repository containing all your chef opsworks-enabled recipes. If you don't have one, you can create doing the following:
+This is an automation tool to organize deploys.
+Currently, it considers you're using AWS OpsWorks.
+
+Currently, skyed provides two ways to operate it:
+
+* Operations engineer: With which you can run things.
+* Infrastructure developer mode: With which you can test your cookbooks.
+
+## Operations engineer mode
+
+### Run
+
+This tool allows you to execute recipes on your layers by using the run command with the -s and -l options:
+
+    skyed run -s 21097823987-2232-234234-234234234234 -l 23423423423-234234-234234-2342342342 snmp
+
+## Infrastructure developer mode
+
+### Set up
+
+You'll need a repository containing all your chef opsworks-enabled recipes cloned into your system.
+If you don't have one, you can create doing the following:
 
     git init recipes
 
-Or you can clone your existing one.
+Then, add the following line to your Gemfile, creating it if you don't have one:
 
-Then, add the following line to you Gemfile, creating it if you don't have one:
-
-    gem 'skyed', git: 'https://github.com/ifosch/skyed.git'
-
-Now, commit the Gemfile:
-
-    git add Gemfile
-    git commit -m "Initial commit"
+    gem 'skyed'
 
 And then, run:
 
     bundle install
+
+Now, commit the Gemfile, and the Gemfile.lock:
+
+    git add Gemfile*
+    git commit -m "Initial commit"
 
 Once the gem is installed, run:
 
