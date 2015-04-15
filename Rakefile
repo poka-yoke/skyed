@@ -58,6 +58,8 @@ end
 
 def publish(version)
   require 'fileutils'
+  require 'rubygems'
+  require 'gems'
   puts 'Publishing'
   Gems.push File.new "skyed-#{version}.gem" unless ENV['FAKE']
   FileUtils.rm "skyed-#{version}.gem"
