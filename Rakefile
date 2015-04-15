@@ -73,6 +73,8 @@ task :release do
   gemspec = File.open('skyed.gemspec').read
   current = gemspec.match(gemspec_re)[1]
   fail 'Update your CHANGELOG first, please' if current == new_version
+  repo = Git.open('.')
+  fail 'Switch to master and merge' unless repo.current_branch == 'master'
   version_re = /version(\s+)=(\s+)'#{current}'/
   new_gemspec = gemspec.gsub(version_re, "version\\1=\\2'#{new_version}'")
   date_re = /date(\s+)=(\s+)'.*'/
@@ -80,8 +82,6 @@ task :release do
   puts 'Updating gemspec'
   File.open('skyed.gemspec', 'w') { |f| f.puts new_gemspec } unless ENV['FAKE']
   puts 'Tagging'
-  repo = Git.open('.')
-  fail 'Switch to master and merge' unless repo.current_branch == 'master'
   repo.add_tag(
     "v#{new_version}",
     a: "v#{new_version}",
