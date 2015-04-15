@@ -1,3 +1,9 @@
+## 0.1.4 (2015-04-15)
+
+Features:
+
+  - Fixes release process
+
 ## 0.1.3 (2015-04-15)
 
 Features:

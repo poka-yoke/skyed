@@ -83,6 +83,8 @@ task :release do
   new_gemspec = new_gemspec.gsub(date_re, "date\\1=\\2'#{new_date}'")
   puts 'Updating gemspec'
   File.open('skyed.gemspec', 'w') { |f| f.puts new_gemspec } unless ENV['FAKE']
+  repo.add('skyed.gemspec')
+  repo.commit('Updates gemspec')
   puts 'Tagging'
   repo.add_tag(
     "v#{new_version}",
