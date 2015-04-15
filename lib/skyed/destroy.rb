@@ -6,7 +6,7 @@ module Skyed
         repo_path = Skyed::Settings.repo
         hostname = `cd #{repo_path} && vagrant ssh -c hostname`.strip
         `cd #{repo_path} && vagrant destroy -f`
-        ow = Skyed::Init.ow_client
+        ow = Skyed::AWS::OpsWorks.login
         instances = ow.describe_instances(stack_id: Skyed::Settings.stack_id)
         instances[:instances].each do |instance|
           if instance[:hostname] == hostname

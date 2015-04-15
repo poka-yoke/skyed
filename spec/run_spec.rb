@@ -15,8 +15,8 @@ describe 'Skyed::Run.execute' do
           .and_return([recipe1])
         expect(Skyed::Run)
           .to receive(:check_vagrant)
-        expect(Skyed::Init)
-          .to receive(:ow_client)
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:login)
           .and_return(opsworks)
         expect(Skyed::Run)
           .to receive(:execute_recipes)
@@ -34,8 +34,8 @@ describe 'Skyed::Run.execute' do
           .with(args)
         expect(Skyed::Run)
           .to_not receive(:check_vagrant)
-        expect(Skyed::Init)
-          .to_not receive(:ow_client)
+        expect(Skyed::AWS::OpsWorks)
+          .to_not receive(:login)
         expect(Skyed::Run)
           .to_not receive(:execute_recipes)
           .with(opsworks, args)
@@ -94,8 +94,8 @@ describe 'Skyed::Run.run' do
           .and_return(true)
         expect(Skyed::Init)
           .to receive(:credentials)
-        expect(Skyed::Init)
-          .to receive(:ow_client)
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:login)
           .and_return(opsworks)
       end
       context 'and stack does not exist' do
@@ -228,8 +228,8 @@ describe 'Skyed::Run.run' do
           .and_return(false)
         expect(Skyed::Init)
           .not_to receive(:credentials)
-        expect(Skyed::Init)
-          .to receive(:ow_client)
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:login)
           .and_return(opsworks)
       end
       context 'and stack does not exist' do

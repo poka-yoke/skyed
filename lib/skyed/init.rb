@@ -42,7 +42,7 @@ module Skyed
       end
 
       def opsworks
-        opsworks = ow_client
+        opsworks = Skyed::AWS::OpsWorks.login
         params = stack_params
         check_stack(opsworks, params[:name])
         stack = opsworks.create_stack(params).data[:stack_id]
@@ -103,17 +103,6 @@ module Skyed
 
       def region
         ENV['DEFAULT_REGION'] || 'us-east-1'
-      end
-
-      def ow_client(
-        access = Skyed::Settings.access_key,
-        secret = Skyed::Settings.secret_key,
-        region = ENV['AWS_REGION'])
-        region ||= 'us-east-1'
-        Aws::OpsWorks::Client.new(
-          access_key_id: access,
-          secret_access_key: secret,
-          region: region)
       end
 
       def vagrantfile

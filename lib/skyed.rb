@@ -1,3 +1,4 @@
+require 'skyed/aws'
 require 'skyed/destroy'
 require 'skyed/run'
 require 'skyed/deploy'

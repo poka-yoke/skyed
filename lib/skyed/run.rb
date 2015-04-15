@@ -8,7 +8,7 @@ module Skyed
         else
           recipes = check_recipes_exist(args)
           check_vagrant
-          execute_recipes(Skyed::Init.ow_client, recipes)
+          execute_recipes(Skyed::AWS::OpsWorks.login, recipes)
         end
       end
 
@@ -80,7 +80,7 @@ module Skyed
 
       def login
         Skyed::Init.credentials if Skyed::Settings.empty?
-        Skyed::Init.ow_client
+        Skyed::AWS::OpsWorks.login
       end
 
       def check_run_options(options)
