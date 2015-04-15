@@ -331,13 +331,6 @@ describe 'Skyed::Run.run' do
               deployment_ids: [deploy_id1])
             .and_return(deployments: [deploy_status_success])
           expect(opsworks)
-            .to receive(:create_deployment)
-            .with(
-              stack_id: stack_id,
-              instance_ids: ['4321-4321-4321-4323'],
-              command: { name: 'execute_recipes', args: cmd_args })
-            .and_return(deployment_id: deploy_id2)
-          expect(opsworks)
             .to receive(:describe_deployments)
             .with(
               deployment_ids: [deploy_id2])
@@ -348,8 +341,43 @@ describe 'Skyed::Run.run' do
               deployment_ids: [deploy_id2])
             .and_return(deployments: [deploy_status_success])
         end
-        it 'runs' do
-          Skyed::Run.run(nil, options, args)
+        context 'and no custom json was provided' do
+          before(:each) do
+            expect(opsworks)
+              .to receive(:create_deployment)
+              .with(
+                stack_id: stack_id,
+                instance_ids: ['4321-4321-4321-4323'],
+                command: { name: 'execute_recipes', args: cmd_args })
+              .and_return(deployment_id: deploy_id2)
+          end
+          it 'runs' do
+            Skyed::Run.run(nil, options, args)
+          end
+        end
+        context 'and custom json was provided' do
+          let(:custom_json_str) { '{"property": "value"}' }
+          let(:options) do
+            {
+              stack: stack_id,
+              layer: layer_id,
+              wait_interval: 0,
+              custom_json: custom_json_str
+            }
+          end
+          before(:each) do
+            expect(opsworks)
+              .to receive(:create_deployment)
+              .with(
+                stack_id: stack_id,
+                instance_ids: ['4321-4321-4321-4323'],
+                command: { name: 'execute_recipes', args: cmd_args },
+                custom_json: custom_json_str)
+              .and_return(deployment_id: deploy_id2)
+          end
+          it 'runs' do
+            Skyed::Run.run(nil, options, args)
+          end
         end
       end
     end
@@ -373,10 +401,6 @@ describe 'Skyed::Run.execute_recipes' do
       .to receive(:stack_id)
       .and_return(stack_id)
     expect(opsworks)
-      .to receive(:create_deployment)
-      .with(stack_id: stack_id, command: cmd)
-      .and_return(deployment_id: deployment_id)
-    expect(opsworks)
       .to receive(:describe_deployments)
       .with(deployment_ids: [deployment_id])
       .and_return(deployments: [deploy_status_run])
@@ -385,8 +409,35 @@ describe 'Skyed::Run.execute_recipes' do
       .with(deployment_ids: [deployment_id])
       .and_return(deployments: [deploy_status_success])
   end
-  it 'runs the recipe' do
-    Skyed::Run.execute_recipes(opsworks, [recipe1])
+  context 'without custom_json' do
+    before(:each) do
+      expect(opsworks)
+        .to receive(:create_deployment)
+        .with(stack_id: stack_id, command: cmd)
+        .and_return(deployment_id: deployment_id)
+    end
+    it 'runs the recipe' do
+      Skyed::Run.execute_recipes(opsworks, [recipe1])
+    end
+  end
+  context 'with custom_json' do
+    let(:custom_json) { '{"property": "value"}' }
+    before(:each) do
+      expect(opsworks)
+        .to receive(:create_deployment)
+        .with(
+          stack_id: stack_id,
+          command: cmd,
+          custom_json: custom_json)
+        .and_return(deployment_id: deployment_id)
+    end
+    it 'runs the recipe' do
+      Skyed::Run.execute_recipes(
+        opsworks,
+        [recipe1],
+        nil,
+        custom_json: custom_json)
+    end
   end
 end
 

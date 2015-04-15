@@ -20,7 +20,7 @@ module Skyed
         instances = running_instances(ow, Skyed::Settings.layer_id)
         update_custom_cookbooks(ow, Skyed::Settings.stack_id, instances,
                                 options[:wait_interval])
-        execute_recipes(ow, args, instances, options[:wait_interval])
+        execute_recipes(ow, args, instances, options)
       end
 
       def deploy_status(ow, id)
@@ -103,12 +103,24 @@ module Skyed
         recipes
       end
 
-      def execute_recipes(ow, recipes, instances = nil, wait = 0)
+      def execute_recipes(
+        ow,
+        recipes,
+        instances = nil,
+        options = {})
+        options[:wait_interval] ||= 0
+        options[:custom_json] ||= ''
+        deploy_id = ow.create_deployment(
+          execute_params(recipes, instances, options[:custom_json]))
+        wait_for_deploy(ow, deploy_id, options[:wait_interval])
+      end
+
+      def execute_params(recipes, instances, custom_json)
         command = { name: 'execute_recipes', args: { recipes: recipes } }
         deploy_params = { stack_id: Skyed::Settings.stack_id, command: command }
+        deploy_params[:custom_json] = custom_json unless custom_json.empty?
         deploy_params[:instance_ids] = instances unless instances.nil?
-        deploy_id = ow.create_deployment(deploy_params)
-        wait_for_deploy(ow, deploy_id, wait)
+        deploy_params
       end
 
       def recipe_in_cookbook(recipe)

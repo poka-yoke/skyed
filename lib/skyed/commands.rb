@@ -34,6 +34,9 @@ command :run do |cmd|
   cmd.flag [:w, :wait_interval], default_value: 30,
                                  type: Integer,
                                  desc: 'Time to wait for AWS responses'
+  cmd.flag [:j, :custom_json], default_value: '',
+                               type: String,
+                               desc: 'Custom JSON to pass to OW'
   cmd.action do |global_options, options, args|
     Skyed::Run.execute(global_options, options, args)
   end
