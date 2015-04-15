@@ -18,5 +18,20 @@ module Skyed
         end
       end
     end
+    # This module encapsulates all the IAM related functions.
+    module IAM
+      class << self
+        def login(
+          access = Skyed::Settings.access_key,
+          secret = Skyed::Settings.secret_key,
+          region = ENV['AWS_REGION'])
+          region ||= 'us-east-1'
+          Aws::IAM::Client.new(
+            access_key_id: access,
+            secret_access_key: secret,
+            region: region)
+        end
+      end
+    end
   end
 end

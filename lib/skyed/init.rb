@@ -226,21 +226,10 @@ module Skyed
       def aws_access_key(access, secret)
         access = ask(ACCESS_QUESTION) unless valid_credential?('AWS_ACCESS_KEY')
         secret = ask(SECRET_QUESTION) unless valid_credential?('AWS_SECRET_KEY')
-        iam = iam_client(access, secret)
+        iam = Skyed::AWS::IAM.login(access: access, secret: secret)
         Skyed::Settings.access_key = access
         Skyed::Settings.secret_key = secret
         iam
-      end
-
-      def iam_client(
-        access = Skyed::Settings.access_key,
-        secret = Skyed::Settings.secret_key,
-        region = ENV['AWS_REGION'])
-        region ||= 'us-east-1'
-        Aws::IAM::Client.new(
-          access_key_id: access,
-          secret_access_key: secret,
-          region: region)
       end
 
       def valid_credential?(env_name)
