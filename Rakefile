@@ -35,3 +35,60 @@ task :'build-tmp' do
   puts "Adding remote #{user} with url: #{user_remote}"
   repo.add_remote(user, user_remote) unless repo.remote(user).url
 end
+
+task :build do
+  require 'rubygems'
+  require 'gems'
+  puts 'Comparing versions'
+  gemspec_re = /version\s+=\s+'([^']*)'$/
+  current = File.open('skyed.gemspec').read.match(gemspec_re)[1]
+  versions = Gems.versions('skyed').collect { |g| g['number'] }
+  versions.each do |v|
+    msg = "Gemspec version (#{current}) is the last version"
+    msg += " (#{v}). Try release"
+    fail msg if v == current
+  end
+  build
+end
+
+def build
+  puts 'Building'
+  `gem build skyed.gemspec`
+end
+
+def publish(version)
+  require 'fileutils'
+  puts 'Publishing'
+  Gems.push File.new "skyed-#{version}.gem" unless ENV['FAKE']
+  puts 'gem push' unless ENV['FAKE']
+  FileUtils.rm "skyed-#{version}.gem"
+end
+
+task :release do
+  require 'git'
+  changelog_re = /## (\d+\.\d+\.\d+) \((\d+-\d+-\d+)\)/
+  changelog_matches = File.open('CHANGELOG.md', &:readline).match(changelog_re)
+  new_version = changelog_matches[1]
+  new_date = changelog_matches[2]
+  gemspec_re = /version\s+=\s+'([^']*)'$/
+  gemspec = File.open('skyed.gemspec').read
+  current = gemspec.match(gemspec_re)[1]
+  fail 'Update your CHANGELOG first, please' if current == new_version
+  version_re = /version(\s+)=(\s+)'#{current}'/
+  new_gemspec = gemspec.gsub(version_re, "version\\1=\\2'#{new_version}'")
+  date_re = /date(\s+)=(\s+)'.*'/
+  new_gemspec = new_gemspec.gsub(date_re, "date\\1=\\2'#{new_date}'")
+  puts 'Updating gemspec'
+  File.open('skyed.gemspec', 'w') { |f| f.puts new_gemspec } unless ENV['FAKE']
+  puts 'Tagging'
+  repo = Git.open('.')
+  repo.add_tag(
+    "v#{new_version}",
+    a: "v#{new_version}",
+    m: "Releasing #{new_version}") unless ENV['FAKE']
+  puts 'Pushing'
+  repo.push(repo.remote('ifosch')) unless ENV['FAKE']
+  puts 'git push' unless ENV['FAKE']
+  build
+  publish(new_version)
+end
