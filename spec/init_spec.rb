@@ -92,12 +92,6 @@ describe 'Skyed::Init.opsworks' do
       .with(ow_git_key_file)
       .and_return(ow_git_key)
     expect(Skyed::Settings)
-      .to receive(:access_key)
-      .and_return(access)
-    expect(Skyed::Settings)
-      .to receive(:secret_key)
-      .and_return(secret)
-    expect(Skyed::Settings)
       .to receive(:role_arn)
       .and_return(service_role_arn)
     expect(Skyed::Settings)
@@ -112,12 +106,8 @@ describe 'Skyed::Init.opsworks' do
     expect(Skyed::Settings)
       .to receive(:branch)
       .and_return('devel-1')
-    expect(Aws::OpsWorks::Client)
-      .to receive(:new)
-      .with(
-        access_key_id: access,
-        secret_access_key: secret,
-        region: 'us-east-1')
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:login)
       .and_return(opsworks)
     expect(opsworks)
       .to receive(:describe_stacks)
