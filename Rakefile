@@ -60,7 +60,6 @@ def publish(version)
   require 'fileutils'
   puts 'Publishing'
   Gems.push File.new "skyed-#{version}.gem" unless ENV['FAKE']
-  puts 'gem push' unless ENV['FAKE']
   FileUtils.rm "skyed-#{version}.gem"
 end
 
@@ -82,13 +81,13 @@ task :release do
   File.open('skyed.gemspec', 'w') { |f| f.puts new_gemspec } unless ENV['FAKE']
   puts 'Tagging'
   repo = Git.open('.')
+  fail 'Switch to master and merge' unless repo.current_branch == 'master'
   repo.add_tag(
     "v#{new_version}",
     a: "v#{new_version}",
     m: "Releasing #{new_version}") unless ENV['FAKE']
   puts 'Pushing'
-  repo.push(repo.remote('ifosch')) unless ENV['FAKE']
-  puts 'git push' unless ENV['FAKE']
+  repo.push(repo.remote('ifosch'), 'master', tags: true) unless ENV['FAKE']
   build
   publish(new_version)
 end
