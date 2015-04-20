@@ -219,7 +219,8 @@ module Skyed
           'AWS_ACCESS_KEY')
         secret = ask(SECRET_QUESTION) unless Skyed::AWS.valid_credential?(
           'AWS_SECRET_KEY')
-        Skyed::AWS::IAM.login(access: access, secret: secret)
+        aws_access_key(access, secret) unless Skyed::AWS.confirm_credentials?(
+          access, secret)
         Skyed::Settings.access_key = access
         Skyed::Settings.secret_key = secret
       end

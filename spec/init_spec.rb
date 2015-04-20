@@ -623,12 +623,10 @@ describe 'Skyed::Init.credentials' do
         .to receive(:valid_credential?)
         .with('AWS_SECRET_KEY')
         .and_return(true)
-      expect(Skyed::AWS::IAM)
-        .to receive(:login)
-        .with(
-          access: access,
-          secret: secret)
-        .and_return(iam)
+      expect(Skyed::AWS)
+        .to receive(:confirm_credentials?)
+        .with(access, secret)
+        .and_return(true)
       expect(Skyed::AWS::OpsWorks)
         .to receive(:set_arns)
         .with(ipa, sra) do
@@ -664,12 +662,10 @@ describe 'Skyed::Init.credentials' do
         .to receive(:valid_credential?)
         .at_least(2)
         .and_return(true)
-      expect(Skyed::AWS::IAM)
-        .to receive(:login)
-        .with(
-          access: access,
-          secret: secret)
-        .and_return(iam)
+      expect(Skyed::AWS)
+        .to receive(:confirm_credentials?)
+        .with(access, secret)
+        .and_return(true)
       expect(Skyed::AWS::OpsWorks)
         .to receive(:set_arns) do
           Skyed::Settings.role_arn = sra

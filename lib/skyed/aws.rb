@@ -7,6 +7,14 @@ module Skyed
       def valid_credential?(env_var_name)
         ENV[env_var_name] != '' && !ENV[env_var_name].nil?
       end
+
+      def confirm_credentials?(access, secret)
+        client = Skyed::AWS::IAM.login(access, secret)
+        client.get_account_summary
+        true
+      rescue Aws::IAM::Errors::InvalidClientTokenId
+        false
+      end
     end
 
     # This module encapsulates all the OpsWorks related functions.

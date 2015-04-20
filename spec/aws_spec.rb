@@ -29,6 +29,50 @@ describe 'Skyed::AWS.valid_credential?' do
     end
   end
   context 'when the environment variable is not null and is not empty' do
+    before do
+      expect(ENV)
+        .to receive(:[])
+        .twice
+        .with(varname)
+        .and_return('AKIAKKK')
+    end
+    it 'returns true' do
+      expect(Skyed::AWS.valid_credential?(varname))
+        .to eq(true)
+    end
+  end
+end
+
+describe 'Skyed::AWS.confirm_credentials?' do
+  let(:iam)        { double('Aws::IAM::Client') }
+  let(:access_key) { 'AKIAASASASASASAS' }
+  let(:secret_key) { 'zMdiopqw0923pojsdfklhjdesa09213' }
+  before(:each) do
+    expect(Skyed::AWS::IAM)
+      .to receive(:login)
+      .and_return(iam)
+  end
+  context 'when credentials are correct' do
+    before do
+      expect(iam)
+        .to receive(:get_account_summary)
+        .and_return(summary_map: {})
+    end
+    it 'returns true' do
+      expect(Skyed::AWS.confirm_credentials?(access_key, secret_key))
+        .to eq(true)
+    end
+  end
+  context 'when credentials are incorrect' do
+    before do
+      expect(iam)
+        .to receive(:get_account_summary)
+        .and_raise(Aws::IAM::Errors::InvalidClientTokenId.new(nil, nil))
+    end
+    it 'returns true' do
+      expect(Skyed::AWS.confirm_credentials?(access_key, secret_key))
+        .to eq(false)
+    end
   end
 end
 
