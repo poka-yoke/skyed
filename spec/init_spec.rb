@@ -581,6 +581,16 @@ describe 'Skyed::Init.git_remote_data' do
 end
 
 describe 'Skyed::Init.credentials' do
+  let(:iam)              { double('Aws::IAM::Client') }
+  let(:access)           { 'AKIAAKIAAKIA' }
+  let(:secret)           { 'sGe84ofDSkfo' }
+  let(:aws_key_name)     { 'keypair' }
+  let(:sra) do
+    'arn:aws:iam::123098345737:role/aws-opsworks-service-role'
+  end
+  let(:ipa) do
+    'arn:aws:iam::234098345717:instance-profile/aws-opsworks-ec2-role'
+  end
   before(:each) do
     expect(ENV)
       .to receive(:[])
@@ -596,16 +606,6 @@ describe 'Skyed::Init.credentials' do
       .and_return(aws_key_name)
   end
   context 'when every credential required is in environment variables' do
-    let(:iam)          { double('Aws::IAM::Client') }
-    let(:access)       { 'AKIAAKIAAKIA' }
-    let(:secret)       { 'sGe84ofDSkfo' }
-    let(:aws_key_name) { 'keypair' }
-    let(:sra) do
-      'arn:aws:iam::123098345737:role/aws-opsworks-service-role'
-    end
-    let(:ipa) do
-      'arn:aws:iam::234098345717:instance-profile/aws-opsworks-ec2-role'
-    end
     before(:each) do
       expect(ENV)
         .to receive(:[])
@@ -631,7 +631,10 @@ describe 'Skyed::Init.credentials' do
         .and_return(iam)
       expect(Skyed::AWS::OpsWorks)
         .to receive(:set_arns)
-        .with(ipa, sra)
+        .with(ipa, sra) do
+          Skyed::Settings.role_arn = sra
+          Skyed::Settings.profile_arn = ipa
+        end
     end
     it 'recovers credentials from environment variables' do
       Skyed::Init.credentials
@@ -639,17 +642,15 @@ describe 'Skyed::Init.credentials' do
         .to eq(access)
       expect(Skyed::Settings.secret_key)
         .to eq(secret)
+      expect(Skyed::Settings.role_arn)
+        .to eq(sra)
+      expect(Skyed::Settings.profile_arn)
+        .to eq(ipa)
       expect(Skyed::Settings.aws_key_name)
         .to eq(aws_key_name)
     end
   end
   context 'when service role and instance profile were not providen' do
-    let(:iam)              { double('Aws::IAM::Client') }
-    let(:access)           { 'AKIAAKIAAKIA' }
-    let(:secret)           { 'sGe84ofDSkfo' }
-    let(:aws_key_name)     { 'keypair' }
-    let(:instance_profile) { { instance_profile: { arn: ipa } } }
-    let(:role)             { { role: { arn: sra } } }
     before(:each) do
       expect(ENV)
         .to receive(:[])
@@ -670,7 +671,10 @@ describe 'Skyed::Init.credentials' do
           secret: secret)
         .and_return(iam)
       expect(Skyed::AWS::OpsWorks)
-        .to receive(:set_arns)
+        .to receive(:set_arns) do
+          Skyed::Settings.role_arn = sra
+          Skyed::Settings.profile_arn = ipa
+        end
     end
     it 'calculates them from OW environment' do
       Skyed::Init.credentials
@@ -678,6 +682,10 @@ describe 'Skyed::Init.credentials' do
         .to eq(access)
       expect(Skyed::Settings.secret_key)
         .to eq(secret)
+      expect(Skyed::Settings.role_arn)
+        .to eq(sra)
+      expect(Skyed::Settings.profile_arn)
+        .to eq(ipa)
       expect(Skyed::Settings.aws_key_name)
         .to eq(aws_key_name)
     end
