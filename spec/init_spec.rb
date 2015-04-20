@@ -609,29 +609,40 @@ describe 'Skyed::Init.credentials' do
       'arn:aws:iam::234098345717:instance-profile/aws-opsworks-ec2-role'
     end
     before(:each) do
-      @oldaccess                 = ENV['AWS_ACCESS_KEY']
-      @oldsecret                 = ENV['AWS_SECRET_KEY']
-      @oldaws_ssh_key_name       = ENV['AWS_SSH_KEY_NAME']
-      @oldservice_role           = ENV['OW_SERVICE_ROLE']
-      @oldinstance_profile       = ENV['OW_INSTANCE_PROFILE']
-      ENV['AWS_ACCESS_KEY']      = access
-      ENV['AWS_SECRET_KEY']      = secret
-      ENV['AWS_SSH_KEY_NAME']    = aws_key_name
-      ENV['OW_SERVICE_ROLE']     = sra
-      ENV['OW_INSTANCE_PROFILE'] = ipa
+      expect(ENV)
+        .to receive(:[])
+        .with('AWS_ACCESS_KEY')
+        .and_return(access)
+      expect(ENV)
+        .to receive(:[])
+        .with('AWS_SECRET_KEY')
+        .and_return(secret)
+      expect(ENV)
+        .to receive(:[])
+        .with('OW_SERVICE_ROLE')
+        .and_return(sra)
+      expect(ENV)
+        .to receive(:[])
+        .with('OW_INSTANCE_PROFILE')
+        .and_return(ipa)
+      expect(ENV)
+        .to receive(:[])
+        .with('AWS_SSH_KEY_NAME')
+        .and_return(aws_key_name)
+      expect(Skyed::AWS)
+        .to receive(:valid_credential?)
+        .with('AWS_ACCESS_KEY')
+        .and_return(true)
+      expect(Skyed::AWS)
+        .to receive(:valid_credential?)
+        .with('AWS_SECRET_KEY')
+        .and_return(true)
       expect(Skyed::AWS::IAM)
         .to receive(:login)
         .with(
           access: access,
           secret: secret)
         .and_return(iam)
-    end
-    after(:each) do
-      ENV['AWS_ACCESS_KEY']      = @oldaccess
-      ENV['AWS_SECRET_KEY']      = @oldsecret
-      ENV['AWS_SSH_KEY_NAME']    = @oldaws_ssh_key_name
-      ENV['OW_SERVICE_ROLE']     = @oldservice_role
-      ENV['OW_INSTANCE_PROFILE'] = @oldinstance_profile
     end
     it 'recovers credentials from environment variables' do
       Skyed::Init.credentials

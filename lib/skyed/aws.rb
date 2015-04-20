@@ -3,6 +3,12 @@ require 'aws-sdk'
 module Skyed
   # This module encapsulates all the AWS related functions.
   module AWS
+    class << self
+      def valid_credential?(env_var_name)
+        ENV[env_var_name] != '' && !ENV[env_var_name].nil?
+      end
+    end
+
     # This module encapsulates all the OpsWorks related functions.
     module OpsWorks
       class << self
@@ -18,6 +24,7 @@ module Skyed
         end
       end
     end
+
     # This module encapsulates all the IAM related functions.
     module IAM
       class << self
