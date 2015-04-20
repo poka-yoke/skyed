@@ -427,22 +427,6 @@ describe 'Skyed::Init.easy_install' do
   end
 end
 
-describe 'Skyed::Init.valid_credential?' do
-  before(:all) do
-    ENV['SKYED1'] = 'test'
-    ENV['SKYED2'] = ''
-    ENV['SKYED3'] = nil
-  end
-  it 'validates normal environment variable' do
-    expect(Skyed::Init.valid_credential?('SKYED1'))
-      .to eq(true)
-    expect(Skyed::Init.valid_credential?('SKYED2'))
-      .to eq(false)
-    expect(Skyed::Init.valid_credential?('SKYED3'))
-      .to eq(false)
-  end
-end
-
 describe 'Skyed::Init.branch' do
   context 'invoked without any option' do
     let(:remote_name) { 'name' }

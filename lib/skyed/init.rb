@@ -234,10 +234,6 @@ module Skyed
         iam
       end
 
-      def valid_credential?(env_name)
-        ENV[env_name] != '' && !ENV[env_name].nil?
-      end
-
       def repo_path(repo)
         Pathname.new(repo.repo.path).dirname
       end
