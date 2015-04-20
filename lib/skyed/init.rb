@@ -6,9 +6,6 @@ require 'aws-sdk'
 require 'highline/import'
 require 'digest/sha1'
 
-ACCESS_QUESTION = 'What is your AWS Access Key? '
-SECRET_QUESTION = 'What is your AWS Secret Key? '
-
 STACK = { name: '',
           region: '',
           service_role_arn: '',
@@ -209,20 +206,9 @@ module Skyed
         role_arn     = ENV['OW_SERVICE_ROLE'],
         profile_arn  = ENV['OW_INSTANCE_PROFILE'],
         aws_key_name = ENV['AWS_SSH_KEY_NAME'])
-        aws_access_key(access, secret)
+        Skyed::AWS.set_credentials(access, secret)
         Skyed::AWS::OpsWorks.set_arns(profile_arn, role_arn)
         Skyed::Settings.aws_key_name = aws_key_name
-      end
-
-      def aws_access_key(access, secret)
-        access = ask(ACCESS_QUESTION) unless Skyed::AWS.valid_credential?(
-          'AWS_ACCESS_KEY')
-        secret = ask(SECRET_QUESTION) unless Skyed::AWS.valid_credential?(
-          'AWS_SECRET_KEY')
-        aws_access_key(access, secret) unless Skyed::AWS.confirm_credentials?(
-          access, secret)
-        Skyed::Settings.access_key = access
-        Skyed::Settings.secret_key = secret
       end
 
       def repo_path(repo)

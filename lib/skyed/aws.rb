@@ -1,9 +1,26 @@
 require 'aws-sdk'
+require 'highline/import'
+
+ACCESS_QUESTION = 'What is your AWS Access Key? '
+SECRET_QUESTION = 'What is your AWS Secret Key? '
 
 module Skyed
   # This module encapsulates all the AWS related functions.
   module AWS
     class << self
+      def set_credentials(access, secret, force_question = false)
+        access = ask(ACCESS_QUESTION) unless Skyed::AWS.valid_credential?(
+          'AWS_ACCESS_KEY') || force_question
+        secret = ask(SECRET_QUESTION) unless Skyed::AWS.valid_credential?(
+          'AWS_SECRET_KEY') || force_question
+        if Skyed::AWS.confirm_credentials?(access, secret)
+          Skyed::Settings.access_key = access
+          Skyed::Settings.secret_key = secret
+        else
+          set_credentials(access, secret, true)
+        end
+      end
+
       def valid_credential?(env_var_name)
         ENV[env_var_name] != '' && !ENV[env_var_name].nil?
       end

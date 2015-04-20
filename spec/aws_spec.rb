@@ -1,6 +1,32 @@
 require 'spec_helper'
 require 'skyed'
 
+describe 'Skyed::AWS.set_credentials' do
+  let(:access) { 'AKIAAAAAA' }
+  let(:secret) { 'zMLdko39fj' }
+  before(:each) do
+    expect(Skyed::AWS)
+      .to receive(:valid_credential?)
+      .with('AWS_ACCESS_KEY')
+      .and_return(true)
+    expect(Skyed::AWS)
+      .to receive(:valid_credential?)
+      .with('AWS_SECRET_KEY')
+      .and_return(true)
+    expect(Skyed::AWS)
+      .to receive(:confirm_credentials?)
+      .with(access, secret)
+      .and_return(true)
+  end
+  it 'sets settings for access and secret' do
+    Skyed::AWS.set_credentials(access, secret)
+    expect(Skyed::Settings.access_key)
+      .to eq(access)
+    expect(Skyed::Settings.secret_key)
+      .to eq(secret)
+  end
+end
+
 describe 'Skyed::AWS.valid_credential?' do
   let(:varname) { 'AWS_ACCESS_KEY' }
   context 'when the environment variable is nil' do

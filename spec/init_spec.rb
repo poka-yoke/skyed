@@ -616,17 +616,11 @@ describe 'Skyed::Init.credentials' do
         .with('OW_INSTANCE_PROFILE')
         .and_return(ipa)
       expect(Skyed::AWS)
-        .to receive(:valid_credential?)
-        .with('AWS_ACCESS_KEY')
-        .and_return(true)
-      expect(Skyed::AWS)
-        .to receive(:valid_credential?)
-        .with('AWS_SECRET_KEY')
-        .and_return(true)
-      expect(Skyed::AWS)
-        .to receive(:confirm_credentials?)
-        .with(access, secret)
-        .and_return(true)
+        .to receive(:set_credentials)
+        .with(access, secret) do
+          Skyed::Settings.access_key = access
+          Skyed::Settings.secret_key = secret
+        end
       expect(Skyed::AWS::OpsWorks)
         .to receive(:set_arns)
         .with(ipa, sra) do
@@ -659,13 +653,11 @@ describe 'Skyed::Init.credentials' do
         .with('OW_INSTANCE_PROFILE')
         .and_return(nil)
       expect(Skyed::AWS)
-        .to receive(:valid_credential?)
-        .at_least(2)
-        .and_return(true)
-      expect(Skyed::AWS)
-        .to receive(:confirm_credentials?)
-        .with(access, secret)
-        .and_return(true)
+        .to receive(:set_credentials)
+        .with(access, secret) do
+          Skyed::Settings.access_key = access
+          Skyed::Settings.secret_key = secret
+        end
       expect(Skyed::AWS::OpsWorks)
         .to receive(:set_arns) do
           Skyed::Settings.role_arn = sra
