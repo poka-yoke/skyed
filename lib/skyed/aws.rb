@@ -8,16 +8,16 @@ module Skyed
   # This module encapsulates all the AWS related functions.
   module AWS
     class << self
-      def set_credentials(access, secret, force_question = false)
+      def set_credentials(access, secret, skip_question = true)
         access = ask(ACCESS_QUESTION) unless Skyed::AWS.valid_credential?(
-          'AWS_ACCESS_KEY') || force_question
+          'AWS_ACCESS_KEY') && skip_question
         secret = ask(SECRET_QUESTION) unless Skyed::AWS.valid_credential?(
-          'AWS_SECRET_KEY') || force_question
+          'AWS_SECRET_KEY') && skip_question
         if Skyed::AWS.confirm_credentials?(access, secret)
           Skyed::Settings.access_key = access
           Skyed::Settings.secret_key = secret
         else
-          set_credentials(access, secret, true)
+          set_credentials(access, secret, false)
         end
       end
 
