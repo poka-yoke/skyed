@@ -581,6 +581,20 @@ describe 'Skyed::Init.git_remote_data' do
 end
 
 describe 'Skyed::Init.credentials' do
+  before(:each) do
+    expect(ENV)
+      .to receive(:[])
+      .with('AWS_ACCESS_KEY')
+      .and_return(access)
+    expect(ENV)
+      .to receive(:[])
+      .with('AWS_SECRET_KEY')
+      .and_return(secret)
+    expect(ENV)
+      .to receive(:[])
+      .with('AWS_SSH_KEY_NAME')
+      .and_return(aws_key_name)
+  end
   context 'when every credential required is in environment variables' do
     let(:iam)          { double('Aws::IAM::Client') }
     let(:access)       { 'AKIAAKIAAKIA' }
@@ -595,24 +609,12 @@ describe 'Skyed::Init.credentials' do
     before(:each) do
       expect(ENV)
         .to receive(:[])
-        .with('AWS_ACCESS_KEY')
-        .and_return(access)
-      expect(ENV)
-        .to receive(:[])
-        .with('AWS_SECRET_KEY')
-        .and_return(secret)
-      expect(ENV)
-        .to receive(:[])
         .with('OW_SERVICE_ROLE')
         .and_return(sra)
       expect(ENV)
         .to receive(:[])
         .with('OW_INSTANCE_PROFILE')
         .and_return(ipa)
-      expect(ENV)
-        .to receive(:[])
-        .with('AWS_SSH_KEY_NAME')
-        .and_return(aws_key_name)
       expect(Skyed::AWS)
         .to receive(:valid_credential?)
         .with('AWS_ACCESS_KEY')
@@ -627,6 +629,9 @@ describe 'Skyed::Init.credentials' do
           access: access,
           secret: secret)
         .and_return(iam)
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:set_arns)
+        .with(ipa, sra)
     end
     it 'recovers credentials from environment variables' do
       Skyed::Init.credentials
@@ -636,10 +641,6 @@ describe 'Skyed::Init.credentials' do
         .to eq(secret)
       expect(Skyed::Settings.aws_key_name)
         .to eq(aws_key_name)
-      expect(Skyed::Settings.role_arn)
-        .to eq(sra)
-      expect(Skyed::Settings.profile_arn)
-        .to eq(ipa)
     end
   end
   context 'when service role and instance profile were not providen' do
@@ -649,36 +650,27 @@ describe 'Skyed::Init.credentials' do
     let(:aws_key_name)     { 'keypair' }
     let(:instance_profile) { { instance_profile: { arn: ipa } } }
     let(:role)             { { role: { arn: sra } } }
-    let(:sra) do
-      'arn:aws:iam::987654321098:role/aws-opsworks-service-role'
-    end
-    let(:ipa) do
-      'arn:aws:iam::987654321098:instance-profile/aws-opsworks-ec2-role'
-    end
     before(:each) do
-      @oldaccess                 = ENV['AWS_ACCESS_KEY']
-      @oldsecret                 = ENV['AWS_SECRET_KEY']
-      @oldaws_ssh_key_name       = ENV['AWS_SSH_KEY_NAME']
-      ENV['AWS_ACCESS_KEY']      = access
-      ENV['AWS_SECRET_KEY']      = secret
-      ENV['AWS_SSH_KEY_NAME']    = aws_key_name
+      expect(ENV)
+        .to receive(:[])
+        .with('OW_SERVICE_ROLE')
+        .and_return(nil)
+      expect(ENV)
+        .to receive(:[])
+        .with('OW_INSTANCE_PROFILE')
+        .and_return(nil)
+      expect(Skyed::AWS)
+        .to receive(:valid_credential?)
+        .at_least(2)
+        .and_return(true)
       expect(Skyed::AWS::IAM)
         .to receive(:login)
         .with(
           access: access,
           secret: secret)
         .and_return(iam)
-      expect(iam)
-        .to receive(:get_instance_profile)
-        .and_return(instance_profile)
-      expect(iam)
-        .to receive(:get_role)
-        .and_return(role)
-    end
-    after(:each) do
-      ENV['AWS_ACCESS_KEY']      = @oldaccess
-      ENV['AWS_SECRET_KEY']      = @oldsecret
-      ENV['AWS_SSH_KEY_NAME']    = @oldaws_ssh_key_name
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:set_arns)
     end
     it 'calculates them from OW environment' do
       Skyed::Init.credentials
@@ -688,10 +680,6 @@ describe 'Skyed::Init.credentials' do
         .to eq(secret)
       expect(Skyed::Settings.aws_key_name)
         .to eq(aws_key_name)
-      expect(Skyed::Settings.role_arn)
-        .to eq(sra)
-      expect(Skyed::Settings.profile_arn)
-        .to eq(ipa)
     end
   end
 end

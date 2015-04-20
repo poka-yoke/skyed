@@ -209,18 +209,9 @@ module Skyed
         role_arn     = ENV['OW_SERVICE_ROLE'],
         profile_arn  = ENV['OW_INSTANCE_PROFILE'],
         aws_key_name = ENV['AWS_SSH_KEY_NAME'])
-        iam = aws_access_key(access, secret)
-        set_arns(iam, profile_arn, role_arn)
+        aws_access_key(access, secret)
+        Skyed::AWS::OpsWorks.set_arns(profile_arn, role_arn)
         Skyed::Settings.aws_key_name = aws_key_name
-      end
-
-      def set_arns(iam, profile_arn, role_arn)
-        Skyed::Settings.role_arn     = role_arn || iam
-          .get_role(role_name: 'aws-opsworks-service-role')[:role][:arn]
-        key = :instance_profile
-        Skyed::Settings.profile_arn  = profile_arn || iam
-          .get_instance_profile(
-            instance_profile_name: 'aws-opsworks-ec2-role')[key][:arn]
       end
 
       def aws_access_key(access, secret)
@@ -228,10 +219,9 @@ module Skyed
           'AWS_ACCESS_KEY')
         secret = ask(SECRET_QUESTION) unless Skyed::AWS.valid_credential?(
           'AWS_SECRET_KEY')
-        iam = Skyed::AWS::IAM.login(access: access, secret: secret)
+        Skyed::AWS::IAM.login(access: access, secret: secret)
         Skyed::Settings.access_key = access
         Skyed::Settings.secret_key = secret
-        iam
       end
 
       def repo_path(repo)
