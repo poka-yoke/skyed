@@ -8,6 +8,10 @@ module Skyed
   # This module encapsulates all the AWS related functions.
   module AWS
     class << self
+      def region
+        ENV['AWS_DEFAULT_REGION'] || 'us-east-1'
+      end
+
       def set_credentials(access, secret, skip_question = true)
         access = ask(ACCESS_QUESTION) unless Skyed::AWS.valid_credential?(
           'AWS_ACCESS_KEY') && skip_question
@@ -40,8 +44,7 @@ module Skyed
         def login(
           access = Skyed::Settings.access_key,
           secret = Skyed::Settings.secret_key,
-          region = ENV['AWS_REGION'])
-          region ||= 'us-east-1'
+          region = Skyed::AWS.region)
           Aws::OpsWorks::Client.new(
             access_key_id: access,
             secret_access_key: secret,
@@ -66,8 +69,7 @@ module Skyed
         def login(
           access = Skyed::Settings.access_key,
           secret = Skyed::Settings.secret_key,
-          region = ENV['AWS_REGION'])
-          region ||= 'us-east-1'
+          region = Skyed::AWS.region)
           Aws::IAM::Client.new(
             access_key_id: access,
             secret_access_key: secret,
