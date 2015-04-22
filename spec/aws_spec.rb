@@ -131,6 +131,206 @@ describe 'Skyed::AWS.confirm_credentials?' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.delete_stack' do
+  let(:opsworks)       { double('Aws::OpsWorks::Client') }
+  let(:stack1)         { { stack_id: 1, name: 'My First Stack' } }
+  context 'when there is no instances in the stack' do
+    before do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:count_instances)
+        .with('My First Stack', opsworks)
+        .and_return(0)
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:stack_by_name)
+        .with('My First Stack', opsworks)
+        .and_return(stack1)
+      expect(opsworks)
+        .to receive(:delete_stack)
+        .with(stack_id: 1)
+    end
+    it 'deletes the stack' do
+      Skyed::AWS::OpsWorks.delete_stack('My First Stack', opsworks)
+    end
+  end
+  context 'when there is any instance in the stack' do
+    before do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:count_instances)
+        .with('My Used Stack', opsworks)
+        .and_return(5)
+    end
+    it 'fails to delete the stack' do
+      expect { Skyed::AWS::OpsWorks.delete_stack('My Used Stack', opsworks) }
+        .to raise_error
+    end
+  end
+end
+
+describe 'Skyed::AWS::OpsWorks.count_instances' do
+  let(:opsworks)       { double('Aws::OpsWorks::Client') }
+  let(:instances_count0) do
+    {
+      assigning: 0,
+      booting: 0,
+      connection_lost: 0,
+      deregistering: 0,
+      online: 0,
+      pending: 0,
+      rebooting: 0,
+      registered: 0,
+      registering: 0,
+      requested: 0,
+      running_setup: 0,
+      setup_failed: 0,
+      shutting_down: 0,
+      start_failed: 0,
+      stopped: 0,
+      stopping: 0,
+      terminated: 0,
+      terminating: 0,
+      unassigning: 0
+    }
+  end
+  let(:instances_count1) do
+    {
+      assigning: 0,
+      booting: 0,
+      connection_lost: 0,
+      deregistering: 0,
+      online: 1,
+      pending: 0,
+      rebooting: 0,
+      registered: 0,
+      registering: 0,
+      requested: 0,
+      running_setup: 0,
+      setup_failed: 0,
+      shutting_down: 0,
+      start_failed: 0,
+      stopped: 0,
+      stopping: 0,
+      terminated: 0,
+      terminating: 0,
+      unassigning: 0
+    }
+  end
+  let(:stack1_summary) do
+    {
+      stack_id: 1,
+      name: 'My First Stack',
+      instances_count: instances_count1
+    }
+  end
+  let(:stack2_summary) do
+    {
+      stack_id: 2,
+      name: 'My Empty Stack',
+      instances_count: instances_count0
+    }
+  end
+  before do
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:stack_summary_by_name)
+      .with('My First Stack', opsworks)
+      .and_return(stack1_summary)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:stack_summary_by_name)
+      .with('My Empty Stack', opsworks)
+      .and_return(stack2_summary)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:stack_summary_by_name)
+      .with('Non-existant Stack', opsworks)
+      .and_return(nil)
+  end
+  it 'returns the instances count in the stack with the specified name' do
+    expect(Skyed::AWS::OpsWorks.count_instances('My First Stack', opsworks))
+      .to eq(1)
+    expect(Skyed::AWS::OpsWorks.count_instances('My Empty Stack', opsworks))
+      .to eq(0)
+    expect(Skyed::AWS::OpsWorks.count_instances('Non-existant Stack', opsworks))
+      .to eq(nil)
+  end
+end
+
+describe 'Skyed::AWS::OpsWorks.stack_summary_by_name' do
+  let(:opsworks)       { double('Aws::OpsWorks::Client') }
+  let(:stack1)         { { stack_id: 1, name: 'My First Stack' } }
+  let(:stack1_summary) { { stack_id: 1, name: 'My First Stack' } }
+  let(:stack1_summary_response) do
+    {
+      stack_summary: stack1_summary
+    }
+  end
+  context 'when the stack exists' do
+    before do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:stack_by_name)
+        .with('My First Stack', opsworks)
+        .and_return(stack1)
+      expect(opsworks)
+        .to receive(:describe_stack_summary)
+        .with(stack_id: 1)
+        .and_return(stack1_summary_response)
+    end
+    it 'returns the stack summary for the stack with the specified name' do
+      expect(Skyed::AWS::OpsWorks
+               .stack_summary_by_name('My First Stack', opsworks))
+        .to eq(stack1_summary)
+    end
+  end
+  context 'when the stack does not exist' do
+    before do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:stack_by_name)
+        .with('Non-existant Stack', opsworks)
+        .and_return(nil)
+    end
+    it 'returns nil' do
+      expect(Skyed::AWS::OpsWorks
+               .stack_summary_by_name('Non-existant Stack', opsworks))
+        .to eq(nil)
+    end
+  end
+end
+
+describe 'Skyed::AWS::OpsWorks.stack_by_name' do
+  let(:opsworks) { double('Aws::OpsWorks::Client') }
+  let(:stack1)   { { stack_id: 1, name: 'My First Stack' } }
+  let(:stack2)   { { stack_id: 2, name: 'My Second Stack' } }
+  let(:stacks)   { [stack1, stack2] }
+  before do
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:stacks)
+      .at_least(1)
+      .with(opsworks)
+      .and_return(stacks)
+  end
+  it 'returns the stack with the specified name' do
+    expect(Skyed::AWS::OpsWorks.stack_by_name('My First Stack', opsworks))
+      .to eq(stack1)
+    expect(Skyed::AWS::OpsWorks.stack_by_name('My Second Stack', opsworks))
+      .to eq(stack2)
+    expect(Skyed::AWS::OpsWorks.stack_by_name('Non-existant Stack', opsworks))
+      .to eq(nil)
+  end
+end
+
+describe 'Skyed::AWS::OpsWorks.stacks' do
+  let(:opsworks) { double('Aws::OpsWorks::Client') }
+  let(:stack1)   { { stack_id: 1, name: 'My First Stack' } }
+  let(:stack2)   { { stack_id: 2, name: 'My Second Stack' } }
+  let(:stacks)   { { stacks: [stack1, stack2] } }
+  before do
+    expect(opsworks)
+      .to receive(:describe_stacks)
+      .and_return(stacks)
+  end
+  it 'returns a list of all stacks' do
+    expect(Skyed::AWS::OpsWorks.stacks(opsworks))
+      .to eq([stack1, stack2])
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.read_key_file' do
   let(:file_path)  { '/home/user/.ssh/id_rsa' }
   let(:fd)         { double('File') }
@@ -185,62 +385,86 @@ end
 
 describe 'Skyed::AWS::OpsWorks.generate_params' do
   let(:username)         { 'ubuntu' }
-  let(:region)           { 'us-east-1' }
-  let(:ssh_key_name)     { 'devex-keypair2' }
-  let(:custom_cookbooks_source) do
-    {
-      remote_url: 'git@github.com:user/repo',
-      branch: 'master',
-      fd_content: 'ssh-rsa ASDASFDFSFSDSF'
-    }
-  end
-  let(:service_role_ARN) do
-    'arn:aws:iam::123098345737:role/aws-opsworks-service-role'
-  end
-  let(:instance_profile_ARN) do
-    'arn:aws:iam::234098345717:instance-profile/aws-opsworks-ec2-role'
-  end
   before(:each) do
     expect(ENV)
       .to receive(:[])
+      .at_least(1)
       .with('USER')
       .and_return(username)
-    expect(Skyed::AWS)
-      .to receive(:region)
-      .and_return(region)
-    expect(Skyed::Settings)
-      .to receive(:role_arn)
-      .and_return(service_role_ARN)
-    expect(Skyed::Settings)
-      .to receive(:profile_arn)
-      .and_return(instance_profile_ARN)
-    expect(Skyed::Settings)
-      .to receive(:aws_key_name)
-      .and_return(ssh_key_name)
-    expect(Skyed::AWS::OpsWorks)
-      .to receive(:custom_cookbooks_source)
-      .with(Skyed::AWS::OpsWorks::STACK[:custom_cookbooks_source])
-      .and_return(custom_cookbooks_source)
   end
-  it 'generates the stack parameters with current settings' do
-    params = Skyed::AWS::OpsWorks.generate_params
-    expect(params).to be_a(Hash)
-    expect(params).to have_key(:name)
-    expect(params).to have_key(:region)
-    expect(params).to have_key(:service_role_arn)
-    expect(params).to have_key(:default_instance_profile_arn)
-    expect(params).to have_key(:default_os)
-    expect(params).to have_key(:default_ssh_key_name)
-    expect(params).to have_key(:custom_cookbooks_source)
-    expect(params).to have_key(:configuration_manager)
-    expect(params).to have_key(:use_custom_cookbooks)
-    expect(params).to have_key(:use_opsworks_security_groups)
-    expect(params[:name]).to eq(username)
-    expect(params[:region]).to eq(region)
-    expect(params[:service_role_arn]).to eq(service_role_ARN)
-    expect(params[:default_instance_profile_arn]).to eq(instance_profile_ARN)
-    expect(params[:default_ssh_key_name]).to eq(ssh_key_name)
-    expect(params[:custom_cookbooks_source]).to eq(custom_cookbooks_source)
+  context 'when these are for a stack' do
+    let(:region)           { 'us-east-1' }
+    let(:ssh_key_name)     { 'devex-keypair2' }
+    let(:custom_cookbooks_source) do
+      {
+        remote_url: 'git@github.com:user/repo',
+        branch: 'master',
+        fd_content: 'ssh-rsa ASDASFDFSFSDSF'
+      }
+    end
+    let(:service_role_ARN) do
+      'arn:aws:iam::123098345737:role/aws-opsworks-service-role'
+    end
+    let(:instance_profile_ARN) do
+      'arn:aws:iam::234098345717:instance-profile/aws-opsworks-ec2-role'
+    end
+    before(:each) do
+      expect(Skyed::AWS)
+        .to receive(:region)
+        .and_return(region)
+      expect(Skyed::Settings)
+        .to receive(:role_arn)
+        .and_return(service_role_ARN)
+      expect(Skyed::Settings)
+        .to receive(:profile_arn)
+        .and_return(instance_profile_ARN)
+      expect(Skyed::Settings)
+        .to receive(:aws_key_name)
+        .and_return(ssh_key_name)
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:custom_cookbooks_source)
+        .with(Skyed::AWS::OpsWorks::STACK[:custom_cookbooks_source])
+        .and_return(custom_cookbooks_source)
+    end
+    it 'generates the stack parameters with current settings' do
+      params = Skyed::AWS::OpsWorks.generate_params
+      expect(params).to be_a(Hash)
+      expect(params).to have_key(:name)
+      expect(params).to have_key(:region)
+      expect(params).to have_key(:service_role_arn)
+      expect(params).to have_key(:default_instance_profile_arn)
+      expect(params).to have_key(:default_os)
+      expect(params).to have_key(:default_ssh_key_name)
+      expect(params).to have_key(:custom_cookbooks_source)
+      expect(params).to have_key(:configuration_manager)
+      expect(params).to have_key(:use_custom_cookbooks)
+      expect(params).to have_key(:use_opsworks_security_groups)
+      expect(params[:name]).to eq(username)
+      expect(params[:region]).to eq(region)
+      expect(params[:service_role_arn]).to eq(service_role_ARN)
+      expect(params[:default_instance_profile_arn]).to eq(instance_profile_ARN)
+      expect(params[:default_ssh_key_name]).to eq(ssh_key_name)
+      expect(params[:custom_cookbooks_source]).to eq(custom_cookbooks_source)
+    end
+  end
+  context 'when these are for a layer' do
+    let(:stack_id) { 1 }
+    before(:each) do
+    end
+    it 'generates the layer parameters with current settings' do
+      params = Skyed::AWS::OpsWorks.generate_params(stack_id)
+      expect(params).to be_a(Hash)
+      expect(params).to have_key(:stack_id)
+      expect(params).to have_key(:type)
+      expect(params).to have_key(:name)
+      expect(params).to have_key(:shortname)
+      expect(params).to have_key(:custom_security_group_ids)
+      expect(params[:stack_id]).to eq(stack_id)
+      expect(params[:type]).to eq('custom')
+      expect(params[:name]).to eq('test-ubuntu')
+      expect(params[:shortname]).to eq('test-ubuntu')
+      expect(params[:custom_security_group_ids]).to eq(['sg-f1cc2498'])
+    end
   end
 end
 

@@ -57,8 +57,45 @@ module Skyed
         use_custom_cookbooks: true,
         use_opsworks_security_groups: false
       }
+      LAYER = {
+        stack_id: nil,
+        type: 'custom',
+        name: '',
+        shortname: '',
+        custom_security_group_ids: []
+      }
 
       class << self
+        def delete_stack(stack_name, opsworks)
+          total = count_instances(stack_name, opsworks)
+          error_msg = "Stack with name #{stack_name}"
+          error_msg += ' exists and contains instances'
+          fail error_msg unless total == 0
+          stack = stack_by_name(stack_name, opsworks)
+          opsworks.delete_stack(stack_id: stack[:stack_id])
+        end
+
+        def count_instances(stack_name, opsworks)
+          stack_summary = stack_summary_by_name(stack_name, opsworks)
+          stack_summary = { instances_count: {} } if stack_summary.nil?
+          total = stack_summary[:instances_count].values.compact.inject(:+)
+          total
+        end
+
+        def stack_summary_by_name(stack_name, opsworks)
+          stack = stack_by_name(stack_name, opsworks)
+          opsworks.describe_stack_summary(
+            stack_id: stack[:stack_id])[:stack_summary] unless stack.nil?
+        end
+
+        def stack_by_name(stack_name, opsworks)
+          stacks(opsworks).select { |x| x[:name] == stack_name }[0] || nil
+        end
+
+        def stacks(opsworks)
+          opsworks.describe_stacks[:stacks]
+        end
+
         def read_key_file(key_file)
           File.open(key_file, 'rb').read
         end
@@ -71,7 +108,22 @@ module Skyed
           base_source
         end
 
-        def generate_params
+        def generate_params(stack_id = nil)
+          params = generate_layer_params(stack_id) unless stack_id.nil?
+          params = generate_stack_params if stack_id.nil?
+          params
+        end
+
+        def generate_layer_params(stack_id)
+          params = LAYER
+          params[:stack_id] = stack_id
+          params[:name] = "test-#{ENV['USER']}"
+          params[:shortname] = "test-#{ENV['USER']}"
+          params[:custom_security_group_ids] = ['sg-f1cc2498']
+          params
+        end
+
+        def generate_stack_params
           params = STACK
           params[:name] = ENV['USER']
           params[:region] = Skyed::AWS.region

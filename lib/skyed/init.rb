@@ -28,33 +28,13 @@ module Skyed
         stack = opsworks.create_stack(params).data[:stack_id]
         Skyed::Settings.stack_id = stack
         Skyed::Settings.layer_id = opsworks.create_layer(
-          layer_params(stack)).data[:layer_id]
+          Skyed::AWS::OpsWorks.generate_params(stack)).data[:layer_id]
       end
 
       def check_stack(ow, name)
-        stacks = ow.describe_stacks[:stacks]
-        stack = stacks.select { |x| x[:name] == name }[0] || return
-        stack_summ = ow.describe_stack_summary(stack_id: stack[:stack_id])
-        delete_stack(ow, stack_summ[:stack_summary])
-      end
-
-      def delete_stack(ow, stack_summ)
-        total = stack_summ[:instances_count].values.compact.inject(:+)
-        total ||= 0
-        error_msg = "Stack with name #{stack_summ[:name]}"
-        error_msg += ' exists and contains instances'
-        fail error_msg unless total == 0
-        ow.delete_stack(stack_id: stack_summ[:stack_id])
+        stack = Skyed::AWS::OpsWorks.stack_summary_by_name name
+        Skyed::AWS::OpsWorks.delete_stack(stack[:name], ow) unless stack.nil?
         File.delete(vagrantfile) if File.exist?(vagrantfile)
-      end
-
-      def layer_params(stack_id)
-        # TODO: Include extra layer parameters
-        { stack_id: stack_id,
-          type: 'custom',
-          name: "test-#{ENV['USER']}",
-          shortname: "test-#{ENV['USER']}",
-          custom_security_group_ids: ['sg-f1cc2498'] }
       end
 
       def vagrantfile

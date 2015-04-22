@@ -57,8 +57,6 @@ describe 'Skyed::Init.opsworks' do
   let(:opsworks)          { double('Aws::OpsWorks::Client') }
   let(:ow_stack_response) { double('Core::Response') }
   let(:ow_layer_response) { double('Core::Response') }
-  let(:access)            { 'AKIAAKIAAKIA' }
-  let(:secret)            { 'sGe84ofDSkfo' }
   let(:stack_id)          { 'e1403a56-286e-4b5e-6798-c3406c947b4a' }
   let(:stack_data)        { { stack_id: stack_id } }
   let(:layer_id)          { 'e1403a56-286e-4b5e-6798-c3406c947b4b' }
@@ -88,6 +86,15 @@ describe 'Skyed::Init.opsworks' do
       use_opsworks_security_groups: false
     }
   end
+  let(:layer_params) do
+    {
+      stack_id: stack_id,
+      type: 'custom',
+      name: 'test-user',
+      shortname: 'test-user',
+      custom_security_group_ids: ['sg-f1cc2498']
+    }
+  end
   let(:service_role_ARN) do
     'arn:aws:iam::234098234027:role/aws-opsworks-service-role'
   end
@@ -95,24 +102,18 @@ describe 'Skyed::Init.opsworks' do
     'arn:aws:iam::234098234027:instance-profile/aws-opsworks-ec2-role'
   end
   before(:each) do
-    allow(ENV)
-      .to receive(:[])
-      .with('USER')
-      .and_return('user')
     expect(Skyed::AWS::OpsWorks)
       .to receive(:login)
       .and_return(opsworks)
     expect(Skyed::AWS::OpsWorks)
       .to receive(:generate_params)
       .and_return(stack_params)
-    expect(opsworks)
-      .to receive(:describe_stacks)
-      .and_return(stacks)
   end
   context 'when stack does not exist' do
     before(:each) do
-      expect(opsworks)
-        .not_to receive(:describe_stack_summary)
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:stack_summary_by_name)
+        .and_return(nil)
       expect(opsworks)
         .to receive(:create_stack)
         .with(stack_params)
@@ -120,14 +121,13 @@ describe 'Skyed::Init.opsworks' do
       expect(ow_stack_response)
         .to receive(:data)
         .and_return(stack_data)
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:generate_params)
+        .with(stack_id)
+        .and_return(layer_params)
       expect(opsworks)
         .to receive(:create_layer)
-        .with(
-          stack_id: stack_id,
-          type: 'custom',
-          name: 'test-user',
-          shortname: 'test-user',
-          custom_security_group_ids: ['sg-f1cc2498'])
+        .with(layer_params)
         .and_return(ow_layer_response)
       expect(ow_layer_response)
         .to receive(:data)
@@ -140,128 +140,53 @@ describe 'Skyed::Init.opsworks' do
     end
   end
   context 'when stack exists' do
-    let(:stack3)          { { stack_id: 3, name: 'user' } }
-    let(:stacks)          { { stacks: [stack1, stack2, stack3] } }
-    context 'but contains no instances' do
-      let(:instances_count) do
-        {
-          assigning: 0,
-          booting: 0,
-          connection_lost: 0,
-          deregistering: 0,
-          online: 0,
-          pending: 0,
-          rebooting: 0,
-          registered: 0,
-          registering: 0,
-          requested: 0,
-          running_setup: 0,
-          setup_failed: 0,
-          shutting_down: 0,
-          start_failed: 0,
-          stopped: 0,
-          stopping: 0,
-          terminated: 0,
-          terminating: 0,
-          unassigning: 0
-        }
-      end
-      let(:stack3_summary) do
-        { stack_summary: {
-          stack_id: 3,
-          name: 'user',
-          instances_count: instances_count } }
-      end
-      before(:each) do
-        expect(opsworks)
-          .to receive(:describe_stack_summary)
-          .with(stack_id: 3)
-          .and_return(stack3_summary)
-        expect(opsworks)
-          .to receive(:delete_stack)
-          .with(stack_id: 3)
-        expect(Skyed::Init)
-          .to receive(:vagrantfile)
-          .at_least(1).times
-          .and_return('Vagrantfile')
-        expect(File)
-          .to receive(:exist?)
-          .with('Vagrantfile')
-          .and_return(true)
-        expect(File)
-          .to receive(:delete)
-          .with('Vagrantfile')
-        expect(opsworks)
-          .to receive(:create_stack)
-          .with(stack_params)
-          .and_return(ow_stack_response)
-        expect(ow_stack_response)
-          .to receive(:data)
-          .and_return(stack_data)
-        expect(opsworks)
-          .to receive(:create_layer)
-          .with(
-            stack_id: stack_id,
-            type: 'custom',
-            name: 'test-user',
-            shortname: 'test-user',
-            custom_security_group_ids: ['sg-f1cc2498'])
-          .and_return(ow_layer_response)
-        expect(ow_layer_response)
-          .to receive(:data)
-          .and_return(layer_data)
-      end
-      it 'sets up opsworks stack' do
-        Skyed::Init.opsworks
-        expect(Skyed::Settings.stack_id).to eq(stack_id)
-        expect(Skyed::Settings.layer_id).to eq(layer_id)
-      end
+    let(:stack3_summary) do
+      {
+        stack_id: 3,
+        name: 'user'
+      }
     end
-    context 'but contains instances' do
-      let(:instances_count) do
-        {
-          assigning: 1,
-          booting: 0,
-          connection_lost: 0,
-          deregistering: 0,
-          online: 0,
-          pending: 0,
-          rebooting: 0,
-          registered: 0,
-          registering: 0,
-          requested: 0,
-          running_setup: 0,
-          setup_failed: 0,
-          shutting_down: 0,
-          start_failed: 0,
-          stopped: 0,
-          stopping: 0,
-          terminated: 0,
-          terminating: 0,
-          unassigning: 0
-        }
-      end
-      let(:stack3_summary) do
-        { stack_summary: {
-          stack_id: 3,
-          name: 'user',
-          instances_count: instances_count } }
-      end
-      before(:each) do
-        expect(opsworks)
-          .to receive(:describe_stack_summary)
-          .with(stack_id: 3)
-          .and_return(stack3_summary)
-        expect(opsworks)
-          .not_to receive(:delete_stack)
-          .with(stack_id: 3)
-        expect(opsworks)
-          .not_to receive(:create_stack)
-      end
-      it 'sets up opsworks stack' do
-        expect { Skyed::Init.opsworks }
-          .to raise_error
-      end
+    before(:each) do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:stack_summary_by_name)
+        .and_return(stack3_summary)
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:delete_stack)
+        .with('user', opsworks)
+      expect(Skyed::Init)
+        .to receive(:vagrantfile)
+        .at_least(1).times
+        .and_return('Vagrantfile')
+      expect(File)
+        .to receive(:exist?)
+        .with('Vagrantfile')
+        .and_return(true)
+      expect(File)
+        .to receive(:delete)
+        .with('Vagrantfile')
+      expect(opsworks)
+        .to receive(:create_stack)
+        .with(stack_params)
+        .and_return(ow_stack_response)
+      expect(ow_stack_response)
+        .to receive(:data)
+        .and_return(stack_data)
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:generate_params)
+        .with(stack_id)
+        .and_return(layer_params)
+      expect(opsworks)
+        .to receive(:create_layer)
+        .with(layer_params)
+        .and_return(ow_layer_response)
+      expect(ow_layer_response)
+        .to receive(:data)
+        .and_return(layer_data)
+    end
+    it 'sets up opsworks stack' do
+      Skyed::Init.opsworks
+      expect(Skyed::Settings.stack_id).to eq(stack_id)
+      expect(Skyed::Settings.layer_id).to eq(layer_id)
     end
   end
 end
