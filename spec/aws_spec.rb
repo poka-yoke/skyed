@@ -1,6 +1,35 @@
 require 'spec_helper'
 require 'skyed'
 
+describe 'Skyed::AWS.region' do
+  let(:default_region) { 'us-east-1' }
+  context 'when no environment variable is set' do
+    before do
+      expect(ENV)
+        .to receive(:[])
+        .with('AWS_DEFAULT_REGION')
+        .and_return(nil)
+    end
+    it 'uses the default region' do
+      expect(Skyed::AWS.region)
+        .to eq(default_region)
+    end
+  end
+  context 'when environment variable is set' do
+    let(:another_region) { 'zMLdko39fj' }
+    before(:each) do
+      expect(ENV)
+        .to receive(:[])
+        .with('AWS_DEFAULT_REGION')
+        .and_return(another_region)
+    end
+    it 'sets settings for access and secret' do
+      expect(Skyed::AWS.region)
+        .to eq(another_region)
+    end
+  end
+end
+
 describe 'Skyed::AWS.set_credentials' do
   let(:access) { 'AKIAAAAAA' }
   let(:secret) { 'zMLdko39fj' }
@@ -99,6 +128,119 @@ describe 'Skyed::AWS.confirm_credentials?' do
       expect(Skyed::AWS.confirm_credentials?(access_key, secret_key))
         .to eq(false)
     end
+  end
+end
+
+describe 'Skyed::AWS::OpsWorks.read_key_file' do
+  let(:file_path)  { '/home/user/.ssh/id_rsa' }
+  let(:fd)         { double('File') }
+  let(:fd_content) { 'ssh-rsa ASDASFQASDFGRTGVW' }
+  before(:each) do
+    expect(File)
+      .to receive(:open)
+      .with(file_path, 'rb')
+      .and_return(fd)
+    expect(fd)
+      .to receive(:read)
+      .and_return(fd_content)
+  end
+  it 'returns the content of the key file' do
+    expect(Skyed::AWS::OpsWorks.read_key_file(file_path))
+      .to eq(fd_content)
+  end
+end
+
+describe 'Skyed::AWS::OpsWorks.custom_cookbooks_source' do
+  let(:remote_url)       { 'git@github.com:user/repo' }
+  let(:branch)           { 'master' }
+  let(:opsworks_git_key) { '/home/user/.ssh/id_rsa' }
+  let(:fd)               { double('File') }
+  let(:fd_content)       { 'ssh-rsa ASDASFDFSFSDSF' }
+  before(:each) do
+    expect(Skyed::Settings)
+      .to receive(:remote_url)
+      .and_return(remote_url)
+    expect(Skyed::Settings)
+      .to receive(:branch)
+      .and_return(branch)
+    expect(Skyed::Settings)
+      .to receive(:opsworks_git_key)
+      .and_return(opsworks_git_key)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:read_key_file)
+      .with(opsworks_git_key)
+      .and_return(fd_content)
+  end
+  it 'returns a custom_cookbooks_source hash' do
+    custom_cookbooks_source = Skyed::AWS::OpsWorks.custom_cookbooks_source({})
+    expect(custom_cookbooks_source).to be_a(Hash)
+    expect(custom_cookbooks_source).to have_key(:url)
+    expect(custom_cookbooks_source).to have_key(:revision)
+    expect(custom_cookbooks_source).to have_key(:ssh_key)
+    expect(custom_cookbooks_source[:url]).to eq(remote_url)
+    expect(custom_cookbooks_source[:revision]).to eq(branch)
+    expect(custom_cookbooks_source[:ssh_key]).to eq(fd_content)
+  end
+end
+
+describe 'Skyed::AWS::OpsWorks.generate_params' do
+  let(:username)         { 'ubuntu' }
+  let(:region)           { 'us-east-1' }
+  let(:ssh_key_name)     { 'devex-keypair2' }
+  let(:custom_cookbooks_source) do
+    {
+      remote_url: 'git@github.com:user/repo',
+      branch: 'master',
+      fd_content: 'ssh-rsa ASDASFDFSFSDSF'
+    }
+  end
+  let(:service_role_ARN) do
+    'arn:aws:iam::123098345737:role/aws-opsworks-service-role'
+  end
+  let(:instance_profile_ARN) do
+    'arn:aws:iam::234098345717:instance-profile/aws-opsworks-ec2-role'
+  end
+  before(:each) do
+    expect(ENV)
+      .to receive(:[])
+      .with('USER')
+      .and_return(username)
+    expect(Skyed::AWS)
+      .to receive(:region)
+      .and_return(region)
+    expect(Skyed::Settings)
+      .to receive(:role_arn)
+      .and_return(service_role_ARN)
+    expect(Skyed::Settings)
+      .to receive(:profile_arn)
+      .and_return(instance_profile_ARN)
+    expect(Skyed::Settings)
+      .to receive(:aws_key_name)
+      .and_return(ssh_key_name)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:custom_cookbooks_source)
+      .with(Skyed::AWS::OpsWorks::STACK[:custom_cookbooks_source])
+      .and_return(custom_cookbooks_source)
+  end
+  it 'generates the stack parameters with current settings' do
+    params = Skyed::AWS::OpsWorks.generate_params
+    expect(params).to be_a(Hash)
+    expect(params).to have_key(:name)
+    expect(params).to have_key(:region)
+    expect(params).to have_key(:service_role_arn)
+    expect(params).to have_key(:default_instance_profile_arn)
+    expect(params).to have_key(:default_os)
+    expect(params).to have_key(:default_ssh_key_name)
+    expect(params).to have_key(:custom_cookbooks_source)
+    expect(params).to have_key(:configuration_manager)
+    expect(params).to have_key(:use_custom_cookbooks)
+    expect(params).to have_key(:use_opsworks_security_groups)
+    expect(params[:name]).to eq(username)
+    expect(params[:region]).to eq(region)
+    expect(params[:service_role_arn]).to eq(service_role_ARN)
+    expect(params[:default_instance_profile_arn]).to eq(instance_profile_ARN)
+    expect(params[:default_ssh_key_name]).to eq(ssh_key_name)
+    expect(params[:custom_cookbooks_source]).to eq(custom_cookbooks_source)
   end
 end
 

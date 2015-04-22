@@ -57,11 +57,8 @@ describe 'Skyed::Init.opsworks' do
   let(:opsworks)          { double('Aws::OpsWorks::Client') }
   let(:ow_stack_response) { double('Core::Response') }
   let(:ow_layer_response) { double('Core::Response') }
-  let(:ow_git_key_file)   { '/home/user/.ssh/private_key' }
   let(:access)            { 'AKIAAKIAAKIA' }
   let(:secret)            { 'sGe84ofDSkfo' }
-  let(:user)              { 'user' }
-  let(:region)            { 'us-east-1' }
   let(:stack_id)          { 'e1403a56-286e-4b5e-6798-c3406c947b4a' }
   let(:stack_data)        { { stack_id: stack_id } }
   let(:layer_id)          { 'e1403a56-286e-4b5e-6798-c3406c947b4b' }
@@ -69,52 +66,48 @@ describe 'Skyed::Init.opsworks' do
   let(:stack1)            { { stack_id: 1, name: 'Develop' } }
   let(:stack2)            { { stack_id: 2, name: 'Master' } }
   let(:stacks)            { { stacks: [stack1, stack2] } }
-  let(:ow_git_key) do
-    key = "-----BEGIN RSA PRIVATE KEY-----\n"
-    key += "ASOCSSDCKLKJERLKJsdxljsdfLJKDSf\n"
-    key += '-----END RSA PRIVATE KEY-----'
-    key
+  let(:stack_params) do
+    {
+      name: 'user',
+      region: 'us-east-1',
+      service_role_arn: service_role_ARN,
+      default_instance_profile_arn: instance_profile_ARN,
+      default_os: 'Ubuntu 12.04 LTS',
+      configuration_manager: {
+        name: 'Chef',
+        version: '11.10'
+      },
+      use_custom_cookbooks: true,
+      default_ssh_key_name: 'key-pair',
+      custom_cookbooks_source: {
+        url: 'git@github.com:user/repo',
+        revision: 'devel-1',
+        ssh_key: 'ASDDFSASDFASDF',
+        type: 'git'
+      },
+      use_opsworks_security_groups: false
+    }
   end
-  let(:service_role_arn) do
+  let(:service_role_ARN) do
     'arn:aws:iam::234098234027:role/aws-opsworks-service-role'
   end
-  let(:instance_profile_arn) do
+  let(:instance_profile_ARN) do
     'arn:aws:iam::234098234027:instance-profile/aws-opsworks-ec2-role'
   end
   before(:each) do
-    @olduser = ENV['USER']
-    ENV['USER'] = user
-    expect(Skyed::Settings)
-      .to receive(:opsworks_git_key)
-      .and_return(ow_git_key_file)
-    expect(Skyed::Init)
-      .to receive(:read_key_file)
-      .with(ow_git_key_file)
-      .and_return(ow_git_key)
-    expect(Skyed::Settings)
-      .to receive(:role_arn)
-      .and_return(service_role_arn)
-    expect(Skyed::Settings)
-      .to receive(:profile_arn)
-      .and_return(instance_profile_arn)
-    expect(Skyed::Settings)
-      .to receive(:aws_key_name)
-      .and_return('secret')
-    expect(Skyed::Settings)
-      .to receive(:remote_url)
-      .and_return('git@github.com:ifosch/repo')
-    expect(Skyed::Settings)
-      .to receive(:branch)
-      .and_return('devel-1')
+    allow(ENV)
+      .to receive(:[])
+      .with('USER')
+      .and_return('user')
     expect(Skyed::AWS::OpsWorks)
       .to receive(:login)
       .and_return(opsworks)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:generate_params)
+      .and_return(stack_params)
     expect(opsworks)
       .to receive(:describe_stacks)
       .and_return(stacks)
-  end
-  after(:each) do
-    ENV['USER'] = @olduser
   end
   context 'when stack does not exist' do
     before(:each) do
@@ -122,25 +115,7 @@ describe 'Skyed::Init.opsworks' do
         .not_to receive(:describe_stack_summary)
       expect(opsworks)
         .to receive(:create_stack)
-        .with(
-          name: user,
-          region: region,
-          service_role_arn: service_role_arn,
-          default_instance_profile_arn: instance_profile_arn,
-          default_os: 'Ubuntu 12.04 LTS',
-          configuration_manager: {
-            name: 'Chef',
-            version: '11.10'
-          },
-          use_custom_cookbooks: true,
-          custom_cookbooks_source: {
-            url: 'git@github.com:ifosch/repo',
-            ssh_key: ow_git_key,
-            revision: 'devel-1',
-            type: 'git'
-          },
-          default_ssh_key_name: 'secret',
-          use_opsworks_security_groups: false)
+        .with(stack_params)
         .and_return(ow_stack_response)
       expect(ow_stack_response)
         .to receive(:data)
@@ -150,8 +125,8 @@ describe 'Skyed::Init.opsworks' do
         .with(
           stack_id: stack_id,
           type: 'custom',
-          name: "test-#{user}",
-          shortname: "test-#{user}",
+          name: 'test-user',
+          shortname: 'test-user',
           custom_security_group_ids: ['sg-f1cc2498'])
         .and_return(ow_layer_response)
       expect(ow_layer_response)
@@ -218,25 +193,7 @@ describe 'Skyed::Init.opsworks' do
           .with('Vagrantfile')
         expect(opsworks)
           .to receive(:create_stack)
-          .with(
-            name: user,
-            region: region,
-            service_role_arn: service_role_arn,
-            default_instance_profile_arn: instance_profile_arn,
-            default_os: 'Ubuntu 12.04 LTS',
-            configuration_manager: {
-              name: 'Chef',
-              version: '11.10'
-            },
-            use_custom_cookbooks: true,
-            custom_cookbooks_source: {
-              url: 'git@github.com:ifosch/repo',
-              ssh_key: ow_git_key,
-              revision: 'devel-1',
-              type: 'git'
-            },
-            default_ssh_key_name: 'secret',
-            use_opsworks_security_groups: false)
+          .with(stack_params)
           .and_return(ow_stack_response)
         expect(ow_stack_response)
           .to receive(:data)
@@ -246,8 +203,8 @@ describe 'Skyed::Init.opsworks' do
           .with(
             stack_id: stack_id,
             type: 'custom',
-            name: "test-#{user}",
-            shortname: "test-#{user}",
+            name: 'test-user',
+            shortname: 'test-user',
             custom_security_group_ids: ['sg-f1cc2498'])
           .and_return(ow_layer_response)
         expect(ow_layer_response)

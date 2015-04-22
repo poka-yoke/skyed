@@ -40,7 +40,49 @@ module Skyed
 
     # This module encapsulates all the OpsWorks related functions.
     module OpsWorks
+      STACK = {
+        name: '',
+        region: '',
+        service_role_arn: '',
+        default_instance_profile_arn: '',
+        default_os: 'Ubuntu 12.04 LTS',
+        default_ssh_key_name: '',
+        custom_cookbooks_source: {
+          type: 'git'
+        },
+        configuration_manager: {
+          name: 'Chef',
+          version: '11.10'
+        },
+        use_custom_cookbooks: true,
+        use_opsworks_security_groups: false
+      }
+
       class << self
+        def read_key_file(key_file)
+          File.open(key_file, 'rb').read
+        end
+
+        def custom_cookbooks_source(base_source)
+          base_source[:url] = Skyed::Settings.remote_url
+          base_source[:revision] = Skyed::Settings.branch
+          base_source[:ssh_key] = read_key_file(
+            Skyed::Settings.opsworks_git_key)
+          base_source
+        end
+
+        def generate_params
+          params = STACK
+          params[:name] = ENV['USER']
+          params[:region] = Skyed::AWS.region
+          params[:service_role_arn] = Skyed::Settings.role_arn
+          params[:default_instance_profile_arn] = Skyed::Settings.profile_arn
+          params[:default_ssh_key_name] = Skyed::Settings.aws_key_name
+          params[:custom_cookbooks_source] = custom_cookbooks_source(
+            STACK[:custom_cookbooks_source])
+          params
+        end
+
         def login(
           access = Skyed::Settings.access_key,
           secret = Skyed::Settings.secret_key,

@@ -6,23 +6,6 @@ require 'aws-sdk'
 require 'highline/import'
 require 'digest/sha1'
 
-STACK = { name: '',
-          region: '',
-          service_role_arn: '',
-          default_instance_profile_arn: '',
-          default_os: 'Ubuntu 12.04 LTS',
-          default_ssh_key_name: '',
-          custom_cookbooks_source: {
-            type: 'git'
-          },
-          configuration_manager: {
-            name: 'Chef',
-            version: '11.10'
-          },
-          use_custom_cookbooks: true,
-          use_opsworks_security_groups: false
-        }
-
 module Skyed
   # This module encapsulates all the init command steps.
   module Init
@@ -40,7 +23,7 @@ module Skyed
 
       def opsworks
         opsworks = Skyed::AWS::OpsWorks.login
-        params = stack_params
+        params = Skyed::AWS::OpsWorks.generate_params
         check_stack(opsworks, params[:name])
         stack = opsworks.create_stack(params).data[:stack_id]
         Skyed::Settings.stack_id = stack
@@ -72,34 +55,6 @@ module Skyed
           name: "test-#{ENV['USER']}",
           shortname: "test-#{ENV['USER']}",
           custom_security_group_ids: ['sg-f1cc2498'] }
-      end
-
-      def stack_params
-        # TODO: Include extra stack parameters
-        result = STACK
-        result[:name]                         = ENV['USER']
-        result[:region]                       = region
-        result[:service_role_arn]             = Skyed::Settings.role_arn
-        result[:default_instance_profile_arn] = Skyed::Settings.profile_arn
-        result[:default_ssh_key_name]         = Skyed::Settings.aws_key_name
-        result[:custom_cookbooks_source]      = custom_cookbooks_source(
-          STACK[:custom_cookbooks_source])
-        result
-      end
-
-      def custom_cookbooks_source(base_source)
-        base_source[:url] = Skyed::Settings.remote_url
-        base_source[:revision] = Skyed::Settings.branch
-        base_source[:ssh_key] = read_key_file(Skyed::Settings.opsworks_git_key)
-        base_source
-      end
-
-      def read_key_file(key_file)
-        File.open(key_file, 'rb').read
-      end
-
-      def region
-        ENV['DEFAULT_REGION'] || 'us-east-1'
       end
 
       def vagrantfile
