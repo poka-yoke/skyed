@@ -66,6 +66,11 @@ module Skyed
       }
 
       class << self
+        def create_layer(layer_params, opsworks)
+          layer = opsworks.create_layer(layer_params)
+          Skyed::Settings.layer_id = layer.data[:layer_id]
+        end
+
         def create_stack(stack_params, opsworks)
           stack = opsworks.create_stack(stack_params)
           Skyed::Settings.stack_id = stack.data[:stack_id]
@@ -82,8 +87,8 @@ module Skyed
 
         def count_instances(stack_name, opsworks)
           stack_summary = stack_summary_by_name(stack_name, opsworks)
-          stack_summary = { instances_count: {} } if stack_summary.nil?
-          total = stack_summary[:instances_count].values.compact.inject(:+)
+          return nil if stack_summary.nil?
+          total = stack_summary[:instances_count].values.compact.inject(:+) || 0
           total
         end
 

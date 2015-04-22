@@ -27,11 +27,11 @@ module Skyed
         check_stack(opsworks, params[:name])
         Skyed::AWS::OpsWorks.create_stack(params, opsworks)
         params = Skyed::AWS::OpsWorks.generate_params(Skyed::Settings.stack_id)
-        Skyed::Settings.layer_id = opsworks.create_layer(params).data[:layer_id]
+        Skyed::AWS::OpsWorks.create_layer(params, opsworks)
       end
 
       def check_stack(ow, name)
-        stack = Skyed::AWS::OpsWorks.stack_summary_by_name name
+        stack = Skyed::AWS::OpsWorks.stack_summary_by_name(name, ow)
         Skyed::AWS::OpsWorks.delete_stack(stack[:name], ow) unless stack.nil?
         File.delete(vagrantfile) if File.exist?(vagrantfile)
       end

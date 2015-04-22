@@ -131,6 +131,37 @@ describe 'Skyed::AWS.confirm_credentials?' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.create_layer' do
+  let(:opsworks)       { double('Aws::OpsWorks::Client') }
+  let(:ow_layer_response) { double('Core::Response') }
+  let(:stack_id)          { 'e1403a56-286e-4b5e-6798-c3406c947b4a' }
+  let(:layer_id)          { 'e1403a56-286e-4b5e-6798-c3406c947b4b' }
+  let(:layer_data)        { { layer_id: layer_id } }
+  let(:layer_params) do
+    {
+      stack_id: stack_id,
+      type: 'asdasdas',
+      name: 'test-user',
+      shortname: 'test-user',
+      custom_security_group_ids: ['sg-f1cc2498']
+    }
+  end
+  before do
+    expect(opsworks)
+      .to receive(:create_layer)
+      .with(layer_params)
+      .and_return(ow_layer_response)
+    expect(ow_layer_response)
+      .to receive(:data)
+      .and_return(layer_data)
+  end
+  it 'creates the layer and sets the id' do
+    Skyed::AWS::OpsWorks.create_layer(layer_params, opsworks)
+    expect(Skyed::Settings.layer_id)
+      .to eq(layer_id)
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.create_stack' do
   let(:opsworks)       { double('Aws::OpsWorks::Client') }
   let(:stack_params) do
@@ -213,25 +244,25 @@ describe 'Skyed::AWS::OpsWorks.count_instances' do
   let(:opsworks)       { double('Aws::OpsWorks::Client') }
   let(:instances_count0) do
     {
-      assigning: 0,
-      booting: 0,
-      connection_lost: 0,
-      deregistering: 0,
-      online: 0,
-      pending: 0,
-      rebooting: 0,
-      registered: 0,
-      registering: 0,
-      requested: 0,
-      running_setup: 0,
-      setup_failed: 0,
-      shutting_down: 0,
-      start_failed: 0,
-      stopped: 0,
-      stopping: 0,
-      terminated: 0,
-      terminating: 0,
-      unassigning: 0
+      assigning: nil,
+      booting: nil,
+      connection_lost: nil,
+      deregistering: nil,
+      online: nil,
+      pending: nil,
+      rebooting: nil,
+      registered: nil,
+      registering: nil,
+      requested: nil,
+      running_setup: nil,
+      setup_failed: nil,
+      shutting_down: nil,
+      start_failed: nil,
+      stopped: nil,
+      stopping: nil,
+      terminated: nil,
+      terminating: nil,
+      unassigning: nil
     }
   end
   let(:instances_count1) do

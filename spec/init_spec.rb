@@ -55,12 +55,8 @@ end
 
 describe 'Skyed::Init.opsworks' do
   let(:opsworks)          { double('Aws::OpsWorks::Client') }
-  let(:ow_stack_response) { double('Core::Response') }
-  let(:ow_layer_response) { double('Core::Response') }
   let(:stack_id)          { 'e1403a56-286e-4b5e-6798-c3406c947b4a' }
-  let(:stack_data)        { { stack_id: stack_id } }
   let(:layer_id)          { 'e1403a56-286e-4b5e-6798-c3406c947b4b' }
-  let(:layer_data)        { { layer_id: layer_id } }
   let(:stack1)            { { stack_id: 1, name: 'Develop' } }
   let(:stack2)            { { stack_id: 2, name: 'Master' } }
   let(:stacks)            { { stacks: [stack1, stack2] } }
@@ -124,17 +120,12 @@ describe 'Skyed::Init.opsworks' do
       expect(Skyed::Settings)
         .to receive(:stack_id)
         .and_return(stack_id)
-      expect(opsworks)
+      expect(Skyed::AWS::OpsWorks)
         .to receive(:create_layer)
-        .with(layer_params)
-        .and_return(ow_layer_response)
-      expect(ow_layer_response)
-        .to receive(:data)
-        .and_return(layer_data)
+        .with(layer_params, opsworks)
     end
     it 'sets up opsworks stack' do
       Skyed::Init.opsworks
-      expect(Skyed::Settings.layer_id).to eq(layer_id)
     end
   end
   context 'when stack exists' do
@@ -162,29 +153,22 @@ describe 'Skyed::Init.opsworks' do
       expect(File)
         .to receive(:delete)
         .with('Vagrantfile')
-      expect(opsworks)
+      expect(Skyed::AWS::OpsWorks)
         .to receive(:create_stack)
-        .with(stack_params)
-        .and_return(ow_stack_response)
-      expect(ow_stack_response)
-        .to receive(:data)
-        .and_return(stack_data)
+        .with(stack_params, opsworks)
+      expect(Skyed::Settings)
+        .to receive(:stack_id)
+        .and_return(stack_id)
       expect(Skyed::AWS::OpsWorks)
         .to receive(:generate_params)
         .with(stack_id)
         .and_return(layer_params)
-      expect(opsworks)
+      expect(Skyed::AWS::OpsWorks)
         .to receive(:create_layer)
-        .with(layer_params)
-        .and_return(ow_layer_response)
-      expect(ow_layer_response)
-        .to receive(:data)
-        .and_return(layer_data)
+        .with(layer_params, opsworks)
     end
     it 'sets up opsworks stack' do
       Skyed::Init.opsworks
-      expect(Skyed::Settings.stack_id).to eq(stack_id)
-      expect(Skyed::Settings.layer_id).to eq(layer_id)
     end
   end
 end
