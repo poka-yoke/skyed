@@ -25,10 +25,9 @@ module Skyed
         opsworks = Skyed::AWS::OpsWorks.login
         params = Skyed::AWS::OpsWorks.generate_params
         check_stack(opsworks, params[:name])
-        stack = opsworks.create_stack(params).data[:stack_id]
-        Skyed::Settings.stack_id = stack
-        Skyed::Settings.layer_id = opsworks.create_layer(
-          Skyed::AWS::OpsWorks.generate_params(stack)).data[:layer_id]
+        Skyed::AWS::OpsWorks.create_stack(params, opsworks)
+        params = Skyed::AWS::OpsWorks.generate_params(Skyed::Settings.stack_id)
+        Skyed::Settings.layer_id = opsworks.create_layer(params).data[:layer_id]
       end
 
       def check_stack(ow, name)

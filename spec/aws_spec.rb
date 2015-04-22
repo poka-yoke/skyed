@@ -131,6 +131,49 @@ describe 'Skyed::AWS.confirm_credentials?' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.create_stack' do
+  let(:opsworks)       { double('Aws::OpsWorks::Client') }
+  let(:stack_params) do
+    {
+      name: 'user',
+      region: 'us-east-1',
+      service_role_arn: 'asdasdas',
+      default_instance_profile_arn: 'asdasasd',
+      default_os: 'Ubuntu 12.04 LTS',
+      configuration_manager: {
+        name: 'Chef',
+        version: '11.10'
+      },
+      use_custom_cookbooks: true,
+      default_ssh_key_name: 'key-pair',
+      custom_cookbooks_source: {
+        url: 'git@github.com:user/repo',
+        revision: 'devel-1',
+        ssh_key: 'ASDDFSASDFASDF',
+        type: 'git'
+      },
+      use_opsworks_security_groups: false
+    }
+  end
+  let(:ow_stack_response) { double('Core::Response') }
+  let(:stack_id)          { 'e1403a56-286e-4b5e-6798-c3406c947b4a' }
+  let(:stack_data)        { { stack_id: stack_id } }
+  before do
+    expect(opsworks)
+      .to receive(:create_stack)
+      .with(stack_params)
+      .and_return(ow_stack_response)
+    expect(ow_stack_response)
+      .to receive(:data)
+      .and_return(stack_data)
+  end
+  it 'creates the stack and sets the id' do
+    Skyed::AWS::OpsWorks.create_stack(stack_params, opsworks)
+    expect(Skyed::Settings.stack_id)
+      .to eq(stack_id)
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.delete_stack' do
   let(:opsworks)       { double('Aws::OpsWorks::Client') }
   let(:stack1)         { { stack_id: 1, name: 'My First Stack' } }
@@ -449,8 +492,6 @@ describe 'Skyed::AWS::OpsWorks.generate_params' do
   end
   context 'when these are for a layer' do
     let(:stack_id) { 1 }
-    before(:each) do
-    end
     it 'generates the layer parameters with current settings' do
       params = Skyed::AWS::OpsWorks.generate_params(stack_id)
       expect(params).to be_a(Hash)

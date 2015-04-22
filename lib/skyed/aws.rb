@@ -66,6 +66,11 @@ module Skyed
       }
 
       class << self
+        def create_stack(stack_params, opsworks)
+          stack = opsworks.create_stack(stack_params)
+          Skyed::Settings.stack_id = stack.data[:stack_id]
+        end
+
         def delete_stack(stack_name, opsworks)
           total = count_instances(stack_name, opsworks)
           error_msg = "Stack with name #{stack_name}"

@@ -114,17 +114,16 @@ describe 'Skyed::Init.opsworks' do
       expect(Skyed::AWS::OpsWorks)
         .to receive(:stack_summary_by_name)
         .and_return(nil)
-      expect(opsworks)
+      expect(Skyed::AWS::OpsWorks)
         .to receive(:create_stack)
-        .with(stack_params)
-        .and_return(ow_stack_response)
-      expect(ow_stack_response)
-        .to receive(:data)
-        .and_return(stack_data)
+        .with(stack_params, opsworks)
       expect(Skyed::AWS::OpsWorks)
         .to receive(:generate_params)
         .with(stack_id)
         .and_return(layer_params)
+      expect(Skyed::Settings)
+        .to receive(:stack_id)
+        .and_return(stack_id)
       expect(opsworks)
         .to receive(:create_layer)
         .with(layer_params)
@@ -135,7 +134,6 @@ describe 'Skyed::Init.opsworks' do
     end
     it 'sets up opsworks stack' do
       Skyed::Init.opsworks
-      expect(Skyed::Settings.stack_id).to eq(stack_id)
       expect(Skyed::Settings.layer_id).to eq(layer_id)
     end
   end
