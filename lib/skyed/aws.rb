@@ -106,14 +106,10 @@ module Skyed
           opsworks.describe_stacks[:stacks]
         end
 
-        def read_key_file(key_file)
-          File.open(key_file, 'rb').read
-        end
-
         def custom_cookbooks_source(base_source)
           base_source[:url] = Skyed::Settings.remote_url
           base_source[:revision] = Skyed::Settings.branch
-          base_source[:ssh_key] = read_key_file(
+          base_source[:ssh_key] = Skyed::Utils.read_key_file(
             Skyed::Settings.opsworks_git_key)
           base_source
         end

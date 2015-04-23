@@ -405,25 +405,6 @@ describe 'Skyed::AWS::OpsWorks.stacks' do
   end
 end
 
-describe 'Skyed::AWS::OpsWorks.read_key_file' do
-  let(:file_path)  { '/home/user/.ssh/id_rsa' }
-  let(:fd)         { double('File') }
-  let(:fd_content) { 'ssh-rsa ASDASFQASDFGRTGVW' }
-  before(:each) do
-    expect(File)
-      .to receive(:open)
-      .with(file_path, 'rb')
-      .and_return(fd)
-    expect(fd)
-      .to receive(:read)
-      .and_return(fd_content)
-  end
-  it 'returns the content of the key file' do
-    expect(Skyed::AWS::OpsWorks.read_key_file(file_path))
-      .to eq(fd_content)
-  end
-end
-
 describe 'Skyed::AWS::OpsWorks.custom_cookbooks_source' do
   let(:remote_url)       { 'git@github.com:user/repo' }
   let(:branch)           { 'master' }
@@ -440,7 +421,7 @@ describe 'Skyed::AWS::OpsWorks.custom_cookbooks_source' do
     expect(Skyed::Settings)
       .to receive(:opsworks_git_key)
       .and_return(opsworks_git_key)
-    expect(Skyed::AWS::OpsWorks)
+    expect(Skyed::Utils)
       .to receive(:read_key_file)
       .with(opsworks_git_key)
       .and_return(fd_content)
