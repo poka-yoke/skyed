@@ -9,7 +9,7 @@
     aws_opsworks_layer_id: ´{{ aws_opsworks_layer_id }}´
   tasks:
     - name: Install pip
-      apt: name=python-pip
+      apt: name=python-pip update_cache=yes
     - name: Install AWS CLI
       pip: name=awscli
     - name: Prepare directory for AWS credentials
