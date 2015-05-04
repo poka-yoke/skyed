@@ -1,3 +1,9 @@
+## 0.1.6 (2015-05-04)
+
+Bug Fix:
+
+  - Fails with error when a deployment finished with anything but sucessful.
+
 ## 0.1.5 (2015-05-04)
 
 Features:
