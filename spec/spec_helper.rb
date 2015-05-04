@@ -13,4 +13,4 @@ RSpec.configure do |config|
     $stderr = original_stderr
     $stdout = original_stdout
   end
-end
+end unless ENV['TEST_OUTPUT']
