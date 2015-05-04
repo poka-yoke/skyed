@@ -106,6 +106,16 @@ module Skyed
           opsworks.describe_stacks[:stacks]
         end
 
+        def basic_stack_params
+          params = STACK
+          params[:name] = ENV['USER']
+          params[:region] = Skyed::AWS.region
+          params[:service_role_arn] = Skyed::Settings.role_arn
+          params[:default_instance_profile_arn] = Skyed::Settings.profile_arn
+          params[:default_ssh_key_name] = Skyed::Settings.aws_key_name
+          params
+        end
+
         def custom_cookbooks_source(base_source)
           base_source[:url] = Skyed::Settings.remote_url
           base_source[:revision] = Skyed::Settings.branch
@@ -114,9 +124,15 @@ module Skyed
           base_source
         end
 
-        def generate_params(stack_id = nil)
+        def configuration_manager(base_config, options)
+          base_config[:name] = 'Chef'
+          base_config[:version] = options[:chef_version] || '11.10'
+          base_config
+        end
+
+        def generate_params(stack_id = nil, options = {})
           params = generate_layer_params(stack_id) unless stack_id.nil?
-          params = generate_stack_params if stack_id.nil?
+          params = generate_stack_params(options) if stack_id.nil?
           params
         end
 
@@ -129,15 +145,13 @@ module Skyed
           params
         end
 
-        def generate_stack_params
-          params = STACK
-          params[:name] = ENV['USER']
-          params[:region] = Skyed::AWS.region
-          params[:service_role_arn] = Skyed::Settings.role_arn
-          params[:default_instance_profile_arn] = Skyed::Settings.profile_arn
-          params[:default_ssh_key_name] = Skyed::Settings.aws_key_name
+        def generate_stack_params(options)
+          params = basic_stack_params
           params[:custom_cookbooks_source] = custom_cookbooks_source(
             STACK[:custom_cookbooks_source])
+          params[:configuration_manager] = configuration_manager(
+            STACK[:configuration_manager], options)
+          puts params
           params
         end
 

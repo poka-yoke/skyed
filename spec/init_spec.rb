@@ -101,18 +101,12 @@ describe 'Skyed::Init.opsworks' do
     expect(Skyed::AWS::OpsWorks)
       .to receive(:login)
       .and_return(opsworks)
-    expect(Skyed::AWS::OpsWorks)
-      .to receive(:generate_params)
-      .and_return(stack_params)
   end
   context 'when stack does not exist' do
     before(:each) do
       expect(Skyed::AWS::OpsWorks)
         .to receive(:stack_summary_by_name)
         .and_return(nil)
-      expect(Skyed::AWS::OpsWorks)
-        .to receive(:create_stack)
-        .with(stack_params, opsworks)
       expect(Skyed::AWS::OpsWorks)
         .to receive(:generate_params)
         .with(stack_id)
@@ -124,8 +118,55 @@ describe 'Skyed::Init.opsworks' do
         .to receive(:create_layer)
         .with(layer_params, opsworks)
     end
-    it 'sets up opsworks stack' do
-      Skyed::Init.opsworks
+    context 'and no options have been issued' do
+      before(:each) do
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:generate_params)
+          .and_return(stack_params)
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:create_stack)
+          .with(stack_params, opsworks)
+      end
+      it 'sets up opsworks stack' do
+        Skyed::Init.opsworks
+      end
+    end
+    context 'and chef-version option have been issued' do
+      let(:options) { { chef_version: '11.04' } }
+      let(:stack_params2) do
+        {
+          name: 'user',
+          region: 'us-east-1',
+          service_role_arn: service_role_ARN,
+          default_instance_profile_arn: instance_profile_ARN,
+          default_os: 'Ubuntu 12.04 LTS',
+          configuration_manager: {
+            name: 'Chef',
+            version: '11.04'
+          },
+          use_custom_cookbooks: true,
+          default_ssh_key_name: 'key-pair',
+          custom_cookbooks_source: {
+            url: 'git@github.com:user/repo',
+            revision: 'devel-1',
+            ssh_key: 'ASDDFSASDFASDF',
+            type: 'git'
+          },
+          use_opsworks_security_groups: false
+        }
+      end
+      before(:each) do
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:generate_params)
+          .with(nil, chef_version: '11.04')
+          .and_return(stack_params2)
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:create_stack)
+          .with(stack_params2, opsworks)
+      end
+      it 'sets up opsworks stack' do
+        Skyed::Init.opsworks options
+      end
     end
   end
   context 'when stack exists' do
@@ -153,6 +194,9 @@ describe 'Skyed::Init.opsworks' do
       expect(File)
         .to receive(:delete)
         .with('Vagrantfile')
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:generate_params)
+        .and_return(stack_params)
       expect(Skyed::AWS::OpsWorks)
         .to receive(:create_stack)
         .with(stack_params, opsworks)

@@ -16,14 +16,14 @@ module Skyed
         branch global_options, options
         credentials
         opsworks_git_key
-        opsworks
+        opsworks options
         vagrant
         Skyed::Settings.save
       end
 
-      def opsworks
+      def opsworks(options = {})
         opsworks = Skyed::AWS::OpsWorks.login
-        params = Skyed::AWS::OpsWorks.generate_params
+        params = Skyed::AWS::OpsWorks.generate_params nil, options
         check_stack(opsworks, params[:name])
         Skyed::AWS::OpsWorks.create_stack(params, opsworks)
         params = Skyed::AWS::OpsWorks.generate_params(Skyed::Settings.stack_id)

@@ -5,6 +5,9 @@ command :init do |cmd|
   cmd.flag :remote, default_value: nil,
                     type: String,
                     desc: 'Remote to use in OpsWorks'
+  cmd.flag :chef_version, default_value: '11.10',
+                          type: String,
+                          desc: 'Chef version to use in OpsWorks'
   cmd.action do |global_options, options|
     Skyed::Init.execute(global_options, options)
   end
