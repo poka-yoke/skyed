@@ -1,3 +1,13 @@
+## 0.1.5 (2015-05-04)
+
+Features:
+
+  - Adds options to force Chef version used in stack
+
+Other changes:
+
+  - All AWS code moved to separate modules
+
 ## 0.1.4 (2015-04-15)
 
 Features:
