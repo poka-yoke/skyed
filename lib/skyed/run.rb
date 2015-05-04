@@ -36,6 +36,7 @@ module Skyed
           sleep(wait)
           status = deploy_status(ow, deploy_id)
         end
+        fail 'Deployment failed' unless status[0] == 'successful'
         status
       end
 

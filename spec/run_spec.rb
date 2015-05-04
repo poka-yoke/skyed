@@ -384,6 +384,60 @@ describe 'Skyed::Run.run' do
   end
 end
 
+describe 'Skyed::Run.update_custom_cookbooks' do
+  let(:opsworks)      { double('Aws::OpsWorks::Client') }
+  let(:access)        { 'AKIAAKIAAKIA' }
+  let(:secret)        { 'sGe84ofDSkfo' }
+  let(:stack_id)      { 'df345d54-75b4-431b-adb2-eb6b9e549283' }
+  let(:layer_id)      { 'e1403a56-286e-4b5e-adb2-eb6b9e549283' }
+  let(:cmd)           { { name: 'update_custom_cookbooks' } }
+  let(:deployment_id) { 'de305d54-75b4-431b-adb2-eb6b9e546013' }
+  let(:instances)     { ['4321-4321-4321-4321'] }
+  let(:deploy_status_run)      { { status: 'running' } }
+  let(:deploy_status_success)  { { status: 'successful' } }
+  let(:deploy_status_fail)     { { status: 'failed' } }
+  before(:each) do
+    expect(opsworks)
+      .to receive(:create_deployment)
+      .with(
+        stack_id: stack_id,
+        instance_ids: ['4321-4321-4321-4321'],
+        command: cmd)
+      .and_return(deployment_id: deployment_id)
+    expect(opsworks)
+      .to receive(:describe_deployments)
+      .with(deployment_ids: [deployment_id])
+      .and_return(deployments: [deploy_status_run])
+  end
+  context 'when deploy is successful' do
+    before(:each) do
+      expect(opsworks)
+        .to receive(:describe_deployments)
+        .with(deployment_ids: [deployment_id])
+        .and_return(deployments: [deploy_status_success])
+    end
+    it 'runs the command' do
+      Skyed::Run.update_custom_cookbooks(opsworks, stack_id, instances)
+    end
+  end
+  context 'when deploy is failed' do
+    before(:each) do
+      expect(opsworks)
+        .to receive(:describe_deployments)
+        .with(deployment_ids: [deployment_id])
+        .and_return(deployments: [deploy_status_fail])
+    end
+    it 'fails' do
+      expect do
+        Skyed::Run.update_custom_cookbooks(
+          opsworks,
+          stack_id,
+          instances)
+      end.to raise_error
+    end
+  end
+end
+
 describe 'Skyed::Run.execute_recipes' do
   let(:recipe1)       { 'recipe1' }
   let(:opsworks)      { double('Aws::OpsWorks::Client') }
@@ -396,6 +450,7 @@ describe 'Skyed::Run.execute_recipes' do
   let(:deployment_id) { 'de305d54-75b4-431b-adb2-eb6b9e546013' }
   let(:deploy_status_run)      { { status: 'running' } }
   let(:deploy_status_success)  { { status: 'successful' } }
+  let(:deploy_status_fail)     { { status: 'failed' } }
   before(:each) do
     expect(Skyed::Settings)
       .to receive(:stack_id)
@@ -404,10 +459,6 @@ describe 'Skyed::Run.execute_recipes' do
       .to receive(:describe_deployments)
       .with(deployment_ids: [deployment_id])
       .and_return(deployments: [deploy_status_run])
-    expect(opsworks)
-      .to receive(:describe_deployments)
-      .with(deployment_ids: [deployment_id])
-      .and_return(deployments: [deploy_status_success])
   end
   context 'without custom_json' do
     before(:each) do
@@ -415,6 +466,10 @@ describe 'Skyed::Run.execute_recipes' do
         .to receive(:create_deployment)
         .with(stack_id: stack_id, command: cmd)
         .and_return(deployment_id: deployment_id)
+      expect(opsworks)
+        .to receive(:describe_deployments)
+        .with(deployment_ids: [deployment_id])
+        .and_return(deployments: [deploy_status_success])
     end
     it 'runs the recipe' do
       Skyed::Run.execute_recipes(opsworks, [recipe1])
@@ -430,6 +485,10 @@ describe 'Skyed::Run.execute_recipes' do
           command: cmd,
           custom_json: custom_json)
         .and_return(deployment_id: deployment_id)
+      expect(opsworks)
+        .to receive(:describe_deployments)
+        .with(deployment_ids: [deployment_id])
+        .and_return(deployments: [deploy_status_success])
     end
     it 'runs the recipe' do
       Skyed::Run.execute_recipes(
@@ -437,6 +496,25 @@ describe 'Skyed::Run.execute_recipes' do
         [recipe1],
         nil,
         custom_json: custom_json)
+    end
+  end
+  context 'when deploy is failed' do
+    before(:each) do
+      expect(opsworks)
+        .to receive(:create_deployment)
+        .with(stack_id: stack_id, command: cmd)
+        .and_return(deployment_id: deployment_id)
+      expect(opsworks)
+        .to receive(:describe_deployments)
+        .with(deployment_ids: [deployment_id])
+        .and_return(deployments: [deploy_status_fail])
+    end
+    it 'fails' do
+      expect do
+        Skyed::Run.execute_recipes(
+          opsworks,
+          [recipe1])
+      end.to raise_error
     end
   end
 end
