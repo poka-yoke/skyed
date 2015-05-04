@@ -151,7 +151,6 @@ module Skyed
             STACK[:custom_cookbooks_source])
           params[:configuration_manager] = configuration_manager(
             STACK[:configuration_manager], options)
-          puts params
           params
         end
 
