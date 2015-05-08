@@ -397,6 +397,10 @@ describe 'Skyed::Run.update_custom_cookbooks' do
   let(:deploy_status_success)  { { status: 'successful' } }
   let(:deploy_status_fail)     { { status: 'failed' } }
   before(:each) do
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:generate_command_params)
+      .with(name: 'update_custom_cookbooks')
+      .and_return(cmd)
     expect(opsworks)
       .to receive(:create_deployment)
       .with(
@@ -455,6 +459,12 @@ describe 'Skyed::Run.execute_recipes' do
     expect(Skyed::Settings)
       .to receive(:stack_id)
       .and_return(stack_id)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:generate_command_params)
+      .with(
+        name: 'execute_recipes',
+        recipes: [recipe1])
+      .and_return(cmd)
     expect(opsworks)
       .to receive(:describe_deployments)
       .with(deployment_ids: [deployment_id])

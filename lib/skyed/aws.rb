@@ -66,6 +66,15 @@ module Skyed
       }
 
       class << self
+        def generate_command_params(options = {})
+          response = options
+          response = {
+            name: options[:name],
+            args: options.reject { |k, _v| k == :name }
+          } unless options[:name] != 'execute_recipes'
+          response
+        end
+
         def create_layer(layer_params, opsworks)
           layer = opsworks.create_layer(layer_params)
           Skyed::Settings.layer_id = layer.data[:layer_id]

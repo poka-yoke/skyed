@@ -131,6 +131,35 @@ describe 'Skyed::AWS.confirm_credentials?' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.generate_command_params' do
+  context 'for update_custom_cookbooks command' do
+    let(:options) { { name: 'update_custom_cookbooks' } }
+    it 'returns the update_custom_cookbooks params' do
+      expect(Skyed::AWS::OpsWorks.generate_command_params options)
+        .to eq(options)
+    end
+  end
+  context 'for execute_recipes command' do
+    let(:recipes) { ['cookbook::recipe'] }
+    let(:options) do
+      {
+        name: 'execute_recipes',
+        recipes: recipes
+      }
+    end
+    let(:response) do
+      {
+        name: 'execute_recipes',
+        args: { recipes: recipes }
+      }
+    end
+    it 'returns the execute_recipes params' do
+      expect(Skyed::AWS::OpsWorks.generate_command_params options)
+        .to eq(response)
+    end
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.create_layer' do
   let(:opsworks)       { double('Aws::OpsWorks::Client') }
   let(:ow_layer_response) { double('Core::Response') }
