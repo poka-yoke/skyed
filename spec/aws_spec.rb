@@ -131,6 +131,27 @@ describe 'Skyed::AWS.confirm_credentials?' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.generate_deploy_params' do
+  context 'for update_custom_cookbooks command' do
+    let(:stack_id) { '57225c7f-1c06-4fd2-98d5-f39d9a484d62' }
+    let(:command) { 'update_custom_cookbvooks' }
+    it 'returns the create_deployment arguments' do
+      expect(Skyed::AWS::OpsWorks.generate_deploy_params stack_id, command)
+        .to eq(stack_id: stack_id, command: command)
+    end
+    context 'when including instance IDs list' do
+      let(:instances) { ['i-23456', 'i-65432'] }
+      it 'returns the create_deployment arguments' do
+        expect(Skyed::AWS::OpsWorks.generate_deploy_params(
+          stack_id,
+          command,
+          instance_ids: instances))
+          .to eq(stack_id: stack_id, command: command, instance_ids: instances)
+      end
+    end
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.generate_command_params' do
   context 'for update_custom_cookbooks command' do
     let(:options) { { name: 'update_custom_cookbooks' } }

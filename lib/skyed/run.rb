@@ -44,9 +44,10 @@ module Skyed
         command = Skyed::AWS::OpsWorks.generate_command_params(
           name: 'update_custom_cookbooks')
         wait_for_deploy(ow, ow.create_deployment(
-          stack_id: stack_id,
-          instance_ids: instances,
-          command: command), wait)
+          Skyed::AWS::OpsWorks.generate_deploy_params(
+            stack_id,
+            command,
+            instance_ids: instances)), wait)
       end
 
       def running_instances(ow, layer_id)
@@ -121,9 +122,12 @@ module Skyed
         command = Skyed::AWS::OpsWorks.generate_command_params(
           name: 'execute_recipes',
           recipes: recipes)
-        deploy_params = { stack_id: Skyed::Settings.stack_id, command: command }
+        instances = { instance_ids: instances } unless instances.nil?
+        deploy_params = Skyed::AWS::OpsWorks.generate_deploy_params(
+          Skyed::Settings.stack_id,
+          command,
+          instances)
         deploy_params[:custom_json] = custom_json unless custom_json.empty?
-        deploy_params[:instance_ids] = instances unless instances.nil?
         deploy_params
       end
 

@@ -66,6 +66,12 @@ module Skyed
       }
 
       class << self
+        def generate_deploy_params(stack_id, command, options = {})
+          options = {} if options.nil?
+          params = { stack_id: stack_id, command: command }
+          params.merge(options)
+        end
+
         def generate_command_params(options = {})
           response = options
           response = {

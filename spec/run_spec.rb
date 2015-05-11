@@ -401,6 +401,13 @@ describe 'Skyed::Run.update_custom_cookbooks' do
       .to receive(:generate_command_params)
       .with(name: 'update_custom_cookbooks')
       .and_return(cmd)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:generate_deploy_params)
+      .with(stack_id, cmd, instance_ids: instances)
+      .and_return(
+        stack_id: stack_id,
+        command: cmd,
+        instance_ids: instances)
     expect(opsworks)
       .to receive(:create_deployment)
       .with(
@@ -472,6 +479,10 @@ describe 'Skyed::Run.execute_recipes' do
   end
   context 'without custom_json' do
     before(:each) do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:generate_deploy_params)
+        .with(stack_id, cmd, nil)
+        .and_return(stack_id: stack_id, command: cmd)
       expect(opsworks)
         .to receive(:create_deployment)
         .with(stack_id: stack_id, command: cmd)
@@ -488,6 +499,10 @@ describe 'Skyed::Run.execute_recipes' do
   context 'with custom_json' do
     let(:custom_json) { '{"property": "value"}' }
     before(:each) do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:generate_deploy_params)
+        .with(stack_id, cmd, nil)
+        .and_return(stack_id: stack_id, command: cmd)
       expect(opsworks)
         .to receive(:create_deployment)
         .with(
