@@ -66,6 +66,14 @@ module Skyed
       }
 
       class << self
+        def deploy_status(deploy, opsworks)
+          deploy = opsworks.describe_deployments(
+            deployment_ids: [deploy[:deployment_id]])
+          deploy[:deployments].map do |s|
+            s[:status]
+          end.compact
+        end
+
         def generate_deploy_params(stack_id, command, options = {})
           options = {} if options.nil?
           params = { stack_id: stack_id, command: command }

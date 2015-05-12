@@ -23,18 +23,11 @@ module Skyed
         execute_recipes(ow, args, instances, options)
       end
 
-      def deploy_status(ow, id)
-        deploy = ow.describe_deployments(deployment_ids: [id[:deployment_id]])
-        deploy[:deployments].map do |s|
-          s[:status]
-        end.compact
-      end
-
       def wait_for_deploy(ow, deploy_id, wait = 0)
-        status = deploy_status(ow, deploy_id)
+        status = Skyed::AWS::OpsWorks.deploy_status(deploy_id, ow)
         while status[0] == 'running'
           sleep(wait)
-          status = deploy_status(ow, deploy_id)
+          status = Skyed::AWS::OpsWorks.deploy_status(deploy_id, ow)
         end
         fail 'Deployment failed' unless status[0] == 'successful'
         status

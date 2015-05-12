@@ -131,6 +131,22 @@ describe 'Skyed::AWS.confirm_credentials?' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.deploy_status' do
+  let(:opsworks)  { double('Aws::OpsWorks::Client') }
+  let(:deploy_id) { '57225c7f-1c06-4fd2-98d5-f39d9a484d62' }
+  let(:deploy)    { { deployment_id: deploy_id } }
+  before(:each) do
+    expect(opsworks)
+      .to receive(:describe_deployments)
+      .with(deployment_ids: [deploy_id])
+      .and_return(deployments: [{ status: 'running' }])
+  end
+  it 'returns the deploy status' do
+    expect(Skyed::AWS::OpsWorks.deploy_status deploy, opsworks)
+      .to eq(['running'])
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.generate_deploy_params' do
   context 'for update_custom_cookbooks command' do
     let(:stack_id) { '57225c7f-1c06-4fd2-98d5-f39d9a484d62' }
