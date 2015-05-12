@@ -66,6 +66,15 @@ module Skyed
       }
 
       class << self
+        def wait_for_deploy(deploy, opsworks, wait = 0)
+          status = Skyed::AWS::OpsWorks.deploy_status(deploy, opsworks)
+          while status[0] == 'running'
+            sleep(wait)
+            status = Skyed::AWS::OpsWorks.deploy_status(deploy, opsworks)
+          end
+          status
+        end
+
         def deploy_status(deploy, opsworks)
           deploy = opsworks.describe_deployments(
             deployment_ids: [deploy[:deployment_id]])

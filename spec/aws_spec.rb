@@ -131,6 +131,27 @@ describe 'Skyed::AWS.confirm_credentials?' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.wait_for_deploy' do
+  let(:opsworks)  { double('Aws::OpsWorks::Client') }
+  let(:deploy_id) { '57225c7f-1c06-4fd2-98d5-f39d9a484d62' }
+  let(:deploy)    { { deployment_id: deploy_id } }
+  before(:each) do
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:deploy_status)
+      .with(deploy, opsworks)
+      .once
+      .and_return(['running'])
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:deploy_status)
+      .with(deploy, opsworks)
+      .and_return(['successful'])
+  end
+  it 'returns the deploy status' do
+    expect(Skyed::AWS::OpsWorks.wait_for_deploy deploy, opsworks)
+      .to eq(['successful'])
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.deploy_status' do
   let(:opsworks)  { double('Aws::OpsWorks::Client') }
   let(:deploy_id) { '57225c7f-1c06-4fd2-98d5-f39d9a484d62' }

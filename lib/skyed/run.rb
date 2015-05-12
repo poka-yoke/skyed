@@ -23,24 +23,15 @@ module Skyed
         execute_recipes(ow, args, instances, options)
       end
 
-      def wait_for_deploy(ow, deploy_id, wait = 0)
-        status = Skyed::AWS::OpsWorks.deploy_status(deploy_id, ow)
-        while status[0] == 'running'
-          sleep(wait)
-          status = Skyed::AWS::OpsWorks.deploy_status(deploy_id, ow)
-        end
-        fail 'Deployment failed' unless status[0] == 'successful'
-        status
-      end
-
       def update_custom_cookbooks(ow, stack_id, instances, wait = 0)
         command = Skyed::AWS::OpsWorks.generate_command_params(
           name: 'update_custom_cookbooks')
-        wait_for_deploy(ow, ow.create_deployment(
+        status = Skyed::AWS::OpsWorks.wait_for_deploy(ow.create_deployment(
           Skyed::AWS::OpsWorks.generate_deploy_params(
             stack_id,
             command,
-            instance_ids: instances)), wait)
+            instance_ids: instances)), ow, wait)
+        fail 'Deployment failed' unless status[0] == 'successful'
       end
 
       def running_instances(ow, layer_id)
@@ -104,11 +95,12 @@ module Skyed
         recipes,
         instances = nil,
         options = {})
-        options[:wait_interval] ||= 0
         options[:custom_json] ||= ''
         deploy_id = ow.create_deployment(
           execute_params(recipes, instances, options[:custom_json]))
-        wait_for_deploy(ow, deploy_id, options[:wait_interval])
+        status = Skyed::AWS::OpsWorks.wait_for_deploy(
+          deploy_id, ow, options[:wait_interval] || 0)
+        fail 'Deployment failed' unless status[0] == 'successful'
       end
 
       def execute_params(recipes, instances, custom_json)
