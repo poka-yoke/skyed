@@ -481,7 +481,7 @@ describe 'Skyed::Run.execute_recipes' do
     before(:each) do
       expect(Skyed::AWS::OpsWorks)
         .to receive(:generate_deploy_params)
-        .with(stack_id, cmd, nil)
+        .with(stack_id, cmd, {})
         .and_return(stack_id: stack_id, command: cmd)
       expect(opsworks)
         .to receive(:create_deployment)
@@ -501,8 +501,8 @@ describe 'Skyed::Run.execute_recipes' do
     before(:each) do
       expect(Skyed::AWS::OpsWorks)
         .to receive(:generate_deploy_params)
-        .with(stack_id, cmd, nil)
-        .and_return(stack_id: stack_id, command: cmd)
+        .with(stack_id, cmd, custom_json: custom_json)
+        .and_return(stack_id: stack_id, command: cmd, custom_json: custom_json)
       expect(opsworks)
         .to receive(:create_deployment)
         .with(

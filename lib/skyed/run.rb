@@ -122,13 +122,13 @@ module Skyed
         command = Skyed::AWS::OpsWorks.generate_command_params(
           name: 'execute_recipes',
           recipes: recipes)
-        instances = { instance_ids: instances } unless instances.nil?
-        deploy_params = Skyed::AWS::OpsWorks.generate_deploy_params(
+        options = {}
+        options[:instance_ids] = instances unless instances.nil?
+        options[:custom_json] = custom_json unless custom_json.empty?
+        Skyed::AWS::OpsWorks.generate_deploy_params(
           Skyed::Settings.stack_id,
           command,
-          instances)
-        deploy_params[:custom_json] = custom_json unless custom_json.empty?
-        deploy_params
+          options)
       end
 
       def recipe_in_cookbook(recipe)
