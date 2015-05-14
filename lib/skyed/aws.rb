@@ -66,6 +66,13 @@ module Skyed
       }
 
       class << self
+        def instance_by_name(instance_name, stack_id, opsworks)
+          opsworks.describe_instances(
+            stack_id: stack_id)[:instances].each do |instance|
+            return instance if instance[:hostname] == instance_name
+          end
+        end
+
         def create_layer(layer_params, opsworks)
           layer = opsworks.create_layer(layer_params)
           Skyed::Settings.layer_id = layer.data[:layer_id]

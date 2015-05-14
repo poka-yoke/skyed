@@ -7,11 +7,19 @@ module Skyed
         hostname = `cd #{repo_path} && vagrant ssh -c hostname`.strip
         `cd #{repo_path} && vagrant destroy -f`
         ow = Skyed::AWS::OpsWorks.login
-        instances = ow.describe_instances(stack_id: Skyed::Settings.stack_id)
-        instances[:instances].each do |instance|
-          if instance[:hostname] == hostname
-            ow.deregister_instance(instance_id: instance[:instance_id])
-          end
+        instance = Skyed::AWS::OpsWorks.instance_by_name(
+          hostname, Skyed::Settings.stack_id, ow)
+        ow.deregister_instance(instance_id: instance[:instance_id])
+        wait_for_instance(hostname, Skyed::Settings.stack_id, ow)
+      end
+
+      def wait_for_instance(hostname, stack_id, opsworks)
+        instance = Skyed::AWS::OpsWorks.instance_by_name(
+          hostname, stack_id, opsworks)
+        while instance[:status] != 'terminated'
+          sleep(0)
+          instance = Skyed::AWS::OpsWorks.instance_by_name(
+            hostname, stack_id, opsworks)
         end
       end
     end

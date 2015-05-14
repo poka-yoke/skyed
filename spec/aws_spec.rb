@@ -131,6 +131,36 @@ describe 'Skyed::AWS.confirm_credentials?' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.instance_by_name' do
+  let(:opsworks)      { double('Aws::OpsWorks::Client') }
+  let(:instance_name) { 'test-user1' }
+  let(:stack_id)      { '654654-654654-654654-654654' }
+  let(:instances)     { { instances: [instance2, instance1] } }
+  let(:instance1) do
+    {
+      instance_id: '9876-9876-9876-9876',
+      hostname: instance_name
+    }
+  end
+  let(:instance2) do
+    {
+      instance_id: '9876-9876-9876-9877',
+      hostname: 'test-user2'
+    }
+  end
+  before do
+    expect(opsworks)
+      .to receive(:describe_instances)
+      .with(stack_id: stack_id)
+      .and_return(instances)
+  end
+  it 'returns the instance with the specified name' do
+    expect(Skyed::AWS::OpsWorks.instance_by_name(
+      instance_name, stack_id, opsworks))
+      .to eq(instance1)
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.create_layer' do
   let(:opsworks)       { double('Aws::OpsWorks::Client') }
   let(:ow_layer_response) { double('Core::Response') }
