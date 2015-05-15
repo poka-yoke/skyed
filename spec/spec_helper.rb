@@ -2,6 +2,9 @@ require 'rspec'
 require 'simplecov'
 SimpleCov.start
 
+Instance = Struct.new(:instance_id, :hostname, :stack_id, :status)
+AccessKey = Struct.new(:access_key_id)
+
 RSpec.configure do |config|
   original_stderr = $stderr
   original_stdout = $stdout

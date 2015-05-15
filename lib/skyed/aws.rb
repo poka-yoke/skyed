@@ -66,11 +66,11 @@ module Skyed
       }
 
       class << self
-        def instance_by_name(instance_name, stack_id, opsworks)
+        def instance_by_name(hostname, stack_id, opsworks)
           opsworks.describe_instances(
-            stack_id: stack_id)[:instances].each do |instance|
-            return instance if instance[:hostname] == instance_name
-          end
+            stack_id: stack_id)[:instances].select do |i|
+            i.hostname == hostname
+          end[0]
         end
 
         def create_layer(layer_params, opsworks)
@@ -186,6 +186,52 @@ module Skyed
     # This module encapsulates all the IAM related functions.
     module IAM
       class << self
+        def remove_user_from_group(user, group)
+          iam = login
+          puts "Removes #{user} from #{group}"
+          iam.remove_user_from_group(
+            group_name: group,
+            user_name: user)
+        rescue Aws::IAM::Errors::NoSuchEntity
+          puts "User #{user} already removed from group #{group}"
+        end
+
+        def clear_user_access_keys(user)
+          iam = login
+          iam.list_access_keys(
+            user_name: user)[:access_key_metadata].each do |access_key|
+            id = access_key.to_h[:access_key_id]
+            puts "Delete access key #{id}"
+            iam.delete_access_key(user_name: user, access_key_id: id)
+          end
+        rescue Aws::IAM::Errors::NoSuchEntity
+          puts "User #{user} access keys already removed"
+        end
+
+        def clear_user_policies(user)
+          iam = login
+          iam.list_user_policies(
+            user_name: user)[:policy_names].each do |policy|
+            puts "Delete user policy #{policy}"
+            iam.delete_user_policy(user_name: user, policy_name: policy)
+          end
+        rescue Aws::IAM::Errors::NoSuchEntity
+          puts "User #{user} policies already removed"
+        end
+
+        def delete_user(user)
+          iam = login
+          clear_user_policies user
+          clear_user_access_keys user
+          remove_user_from_group user, "OpsWorks-#{Skyed::Settings.stack_id}"
+          puts "Delete group OpsWorks-#{Skyed::Settings.stack_id}"
+          iam.delete_group(group_name: "OpsWorks-#{Skyed::Settings.stack_id}")
+          puts "Delete User #{user}"
+          iam.delete_user(user_name: user)
+        rescue Aws::IAM::Errors::NoSuchEntity
+          puts "User #{user} already removed"
+        end
+
         def login(
           access = Skyed::Settings.access_key,
           secret = Skyed::Settings.secret_key,

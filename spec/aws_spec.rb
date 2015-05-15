@@ -137,27 +137,25 @@ describe 'Skyed::AWS::OpsWorks.instance_by_name' do
   let(:stack_id)      { '654654-654654-654654-654654' }
   let(:instances)     { { instances: [instance2, instance1] } }
   let(:instance1) do
-    {
-      instance_id: '9876-9876-9876-9876',
-      hostname: instance_name
-    }
+    Instance.new('9876-9876-9876-9876', instance_name, stack_id, 'online')
   end
   let(:instance2) do
-    {
-      instance_id: '9876-9876-9876-9877',
-      hostname: 'test-user2'
-    }
+    Instance.new('9876-9876-9876-9877', 'test-user2', stack_id, 'online')
   end
   before do
     expect(opsworks)
       .to receive(:describe_instances)
       .with(stack_id: stack_id)
+      .at_least(1)
       .and_return(instances)
   end
   it 'returns the instance with the specified name' do
     expect(Skyed::AWS::OpsWorks.instance_by_name(
       instance_name, stack_id, opsworks))
       .to eq(instance1)
+    expect(Skyed::AWS::OpsWorks.instance_by_name(
+      'test-user3', stack_id, opsworks))
+      .to eq(nil)
   end
 end
 
@@ -651,8 +649,105 @@ describe 'Skyed::AWS::OpsWorks.set_arns' do
   end
 end
 
+describe 'Skyed::AWS::IAM.remove_user_from_group' do
+  let(:iam)   { double('Aws::IAM::Client') }
+  let(:user)  { 'OpsWorks-stack-layer' }
+  let(:group) { 'OpsWorks-stack-id' }
+  before(:each) do
+    expect(Skyed::AWS::IAM)
+      .to receive(:login)
+      .and_return(iam)
+    expect(iam)
+      .to receive(:remove_user_from_group)
+      .with(group_name: group, user_name: user)
+  end
+  it 'removes user from group' do
+    Skyed::AWS::IAM.remove_user_from_group user, group
+  end
+end
+
+describe 'Skyed::AWS::IAM.clear_user_access_keys' do
+  let(:iam)         { double('Aws::IAM::Client') }
+  let(:user)        { 'OpsWorks-stack-layer' }
+  let(:access_keys) { [AccessKey.new('AIKA')] }
+  before(:each) do
+    expect(Skyed::AWS::IAM)
+      .to receive(:login)
+      .and_return(iam)
+    expect(iam)
+      .to receive(:list_access_keys)
+      .with(user_name: user)
+      .and_return(access_key_metadata: access_keys)
+    expect(iam)
+      .to receive(:delete_access_key)
+      .with(user_name: user, access_key_id: 'AIKA')
+  end
+  it 'clears user access keys' do
+    Skyed::AWS::IAM.clear_user_access_keys user
+  end
+end
+
+describe 'Skyed::AWS::IAM.clear_user_policies' do
+  let(:iam)      { double('Aws::IAM::Client') }
+  let(:user)     { 'OpsWorks-stack-layer' }
+  let(:policies) { %w(pol1 pol2) }
+  before(:each) do
+    expect(Skyed::AWS::IAM)
+      .to receive(:login)
+      .and_return(iam)
+    expect(iam)
+      .to receive(:list_user_policies)
+      .with(user_name: user)
+      .and_return(policy_names: policies)
+    expect(iam)
+      .to receive(:delete_user_policy)
+      .with(user_name: user, policy_name: 'pol1')
+    expect(iam)
+      .to receive(:delete_user_policy)
+      .with(user_name: user, policy_name: 'pol2')
+  end
+  it 'clears user attached policies' do
+    Skyed::AWS::IAM.clear_user_policies user
+  end
+end
+
+describe 'Skyed::AWS::IAM.delete_user' do
+  let(:iam)      { double('Aws::IAM::Client') }
+  let(:user)     { 'OpsWorks-stack-layer' }
+  let(:policies) { %w(pol1 pol2) }
+  let(:stack_id) { '098098098098' }
+  let(:group)    { 'OpsWorks-098098098098' }
+  before(:each) do
+    expect(Skyed::AWS::IAM)
+      .to receive(:login)
+      .and_return(iam)
+    expect(Skyed::AWS::IAM)
+      .to receive(:clear_user_policies)
+      .with(user)
+    expect(Skyed::AWS::IAM)
+      .to receive(:clear_user_access_keys)
+      .with(user)
+    expect(Skyed::Settings)
+      .to receive(:stack_id)
+      .at_least(1)
+      .and_return(stack_id)
+    expect(Skyed::AWS::IAM)
+      .to receive(:remove_user_from_group)
+      .with(user, group)
+    expect(iam)
+      .to receive(:delete_group)
+      .with(group_name: group)
+    expect(iam)
+      .to receive(:delete_user)
+      .with(user_name: user)
+  end
+  it 'deletes the user' do
+    Skyed::AWS::IAM.delete_user user
+  end
+end
+
 describe 'Skyed::AWS::IAM.login' do
-  let(:opsworks)   { double('AWS::OpsWorks::Client') }
+  let(:iam)   { double('Aws::IAM::Client') }
   let(:access_key) { 'AKIAASASASASASAS' }
   let(:secret_key) { 'zMdiopqw0923pojsdfklhjdesa09213' }
   before(:each) do
@@ -662,16 +757,16 @@ describe 'Skyed::AWS::IAM.login' do
     expect(Skyed::Settings)
       .to receive(:secret_key)
       .and_return(secret_key)
-    expect(Aws::OpsWorks::Client)
+    expect(Aws::IAM::Client)
       .to receive(:new)
       .with(
         access_key_id: access_key,
         secret_access_key: secret_key,
         region: 'us-east-1')
-      .and_return(opsworks)
+      .and_return(iam)
   end
   it 'logins and returns the OpsWorks client' do
-    expect(Skyed::AWS::OpsWorks.login)
-      .to eq(opsworks)
+    expect(Skyed::AWS::IAM.login)
+      .to eq(iam)
   end
 end
