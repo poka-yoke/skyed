@@ -371,10 +371,6 @@ describe 'Skyed::Run.update_custom_cookbooks' do
   let(:instances)     { ['4321-4321-4321-4321'] }
   before(:each) do
     expect(Skyed::AWS::OpsWorks)
-      .to receive(:generate_command_params)
-      .with(name: 'update_custom_cookbooks')
-      .and_return(cmd)
-    expect(Skyed::AWS::OpsWorks)
       .to receive(:generate_deploy_params)
       .with(stack_id, cmd, instance_ids: instances)
       .and_return(
@@ -425,6 +421,7 @@ describe 'Skyed::Run.execute_recipes' do
   let(:secret)        { 'sGe84ofDSkfo' }
   let(:stack_id)      { 'df345d54-75b4-431b-adb2-eb6b9e549283' }
   let(:layer_id)      { 'e1403a56-286e-4b5e-adb2-eb6b9e549283' }
+  let(:bare_args)     { { name: 'execute_recipes', recipes: [recipe1] } }
   let(:cmd_args)      { { recipes: [recipe1] } }
   let(:cmd)           { { name: 'execute_recipes', args: cmd_args } }
   let(:deployment_id) { 'de305d54-75b4-431b-adb2-eb6b9e546013' }
@@ -432,18 +429,12 @@ describe 'Skyed::Run.execute_recipes' do
     expect(Skyed::Settings)
       .to receive(:stack_id)
       .and_return(stack_id)
-    expect(Skyed::AWS::OpsWorks)
-      .to receive(:generate_command_params)
-      .with(
-        name: 'execute_recipes',
-        recipes: [recipe1])
-      .and_return(cmd)
   end
   context 'without custom_json' do
     before(:each) do
       expect(Skyed::AWS::OpsWorks)
         .to receive(:generate_deploy_params)
-        .with(stack_id, cmd, {})
+        .with(stack_id, bare_args, {})
         .and_return(stack_id: stack_id, command: cmd)
       expect(opsworks)
         .to receive(:create_deployment)
@@ -463,7 +454,7 @@ describe 'Skyed::Run.execute_recipes' do
     before(:each) do
       expect(Skyed::AWS::OpsWorks)
         .to receive(:generate_deploy_params)
-        .with(stack_id, cmd, custom_json: custom_json)
+        .with(stack_id, bare_args, custom_json: custom_json)
         .and_return(stack_id: stack_id, command: cmd, custom_json: custom_json)
       expect(opsworks)
         .to receive(:create_deployment)

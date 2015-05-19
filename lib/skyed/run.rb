@@ -24,12 +24,10 @@ module Skyed
       end
 
       def update_custom_cookbooks(ow, stack_id, instances, wait = 0)
-        command = Skyed::AWS::OpsWorks.generate_command_params(
-          name: 'update_custom_cookbooks')
         status = Skyed::AWS::OpsWorks.wait_for_deploy(ow.create_deployment(
           Skyed::AWS::OpsWorks.generate_deploy_params(
             stack_id,
-            command,
+            { name: 'update_custom_cookbooks' },
             instance_ids: instances)), ow, wait)
         fail 'Deployment failed' unless status[0] == 'successful'
       end
@@ -90,30 +88,16 @@ module Skyed
         recipes
       end
 
-      def execute_recipes(
-        ow,
-        recipes,
-        instances = nil,
-        options = {})
-        options[:custom_json] ||= ''
-        deploy_id = ow.create_deployment(
-          execute_params(recipes, instances, options[:custom_json]))
-        status = Skyed::AWS::OpsWorks.wait_for_deploy(
-          deploy_id, ow, options[:wait_interval] || 0)
+      def execute_recipes(ow, recipes, instances = nil, opts = {})
+        deploy_opts = {}
+        deploy_opts[:custom_json] = opts[:custom_json] if opts.key? :custom_json
+        deploy_opts[:instance_ids] = instances unless instances.nil?
+        status = Skyed::AWS::OpsWorks.wait_for_deploy(ow.create_deployment(
+          Skyed::AWS::OpsWorks.generate_deploy_params(
+            Skyed::Settings.stack_id,
+            { name: 'execute_recipes', recipes: recipes },
+            deploy_opts)), ow, opts[:wait_interval] || 0)
         fail 'Deployment failed' unless status[0] == 'successful'
-      end
-
-      def execute_params(recipes, instances, custom_json)
-        command = Skyed::AWS::OpsWorks.generate_command_params(
-          name: 'execute_recipes',
-          recipes: recipes)
-        options = {}
-        options[:instance_ids] = instances unless instances.nil?
-        options[:custom_json] = custom_json unless custom_json.empty?
-        Skyed::AWS::OpsWorks.generate_deploy_params(
-          Skyed::Settings.stack_id,
-          command,
-          options)
       end
 
       def recipe_in_cookbook(recipe)
