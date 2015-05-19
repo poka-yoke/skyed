@@ -144,7 +144,6 @@ describe 'Skyed::Run.run' do
         let(:other_layer_id)          { '8765-8765-8765-8765' }
         let(:described_stacks)        { { stacks: stacks } }
         let(:described_layers)        { { layers: layers } }
-        let(:described_instances)     { { instances: instances } }
         let(:deploy_id1)              { '123-123-123-123' }
         let(:deploy_id2)              { '321-321-321-321' }
         let(:stacks) do
@@ -159,11 +158,8 @@ describe 'Skyed::Run.run' do
             { stack_id: stack_id, layer_id: layer_id, name: 'test2' }
           ]
         end
-        let(:instances) do
-          [
-            { instance_id: '4321-4321-4321-4322', status: 'stopped' },
-            { instance_id: '4321-4321-4321-4323', status: 'running' }
-          ]
+        let(:described_instances) do
+          ['4321-4321-4321-4323']
         end
         before(:each) do
           expect(opsworks)
@@ -173,9 +169,9 @@ describe 'Skyed::Run.run' do
             .to receive(:describe_layers)
             .with(stack_id: stack_id)
             .and_return(described_layers)
-          expect(opsworks)
-            .to receive(:describe_instances)
-            .with(layer_id: layer_id)
+          expect(Skyed::AWS::OpsWorks)
+            .to receive(:running_instances)
+            .with({ layer_id: layer_id }, opsworks)
             .and_return(described_instances)
           expect(opsworks)
             .to receive(:create_deployment)
@@ -266,7 +262,6 @@ describe 'Skyed::Run.run' do
         let(:other_layer_id)          { '8765-8765-8765-8765' }
         let(:described_stacks)        { { stacks: stacks } }
         let(:described_layers)        { { layers: layers } }
-        let(:described_instances)     { { instances: instances } }
         let(:deploy_id1)              { '123-123-123-123' }
         let(:deploy_id2)              { '321-321-321-321' }
         let(:stacks) do
@@ -281,11 +276,8 @@ describe 'Skyed::Run.run' do
             { stack_id: stack_id, layer_id: layer_id, name: 'test2' }
           ]
         end
-        let(:instances) do
-          [
-            { instance_id: '4321-4321-4321-4322', status: 'stopped' },
-            { instance_id: '4321-4321-4321-4323', status: 'running' }
-          ]
+        let(:described_instances) do
+          ['4321-4321-4321-4323']
         end
         before(:each) do
           expect(opsworks)
@@ -295,9 +287,9 @@ describe 'Skyed::Run.run' do
             .to receive(:describe_layers)
             .with(stack_id: stack_id)
             .and_return(described_layers)
-          expect(opsworks)
-            .to receive(:describe_instances)
-            .with(layer_id: layer_id)
+          expect(Skyed::AWS::OpsWorks)
+            .to receive(:running_instances)
+            .with({ layer_id: layer_id }, opsworks)
             .and_return(described_instances)
           expect(opsworks)
             .to receive(:create_deployment)

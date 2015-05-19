@@ -131,16 +131,53 @@ describe 'Skyed::AWS.confirm_credentials?' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.running_instances' do
+  let(:opsworks)      { double('Aws::OpsWorks::Client') }
+  let(:stack_id)      { '654654-654654-654654-654654' }
+  let(:layer_id)      { '456456-456456-456456-456456' }
+  let(:instances)     { { instances: [instance2, instance1] } }
+  let(:instance1) do
+    Instance.new(
+      '9876-9876-9876-9876',
+      'test',
+      stack_id,
+      [layer_id],
+      'online'
+    )
+  end
+  let(:instance2) do
+    Instance.new(
+      '9876-9876-9876-9877',
+      'test-user2',
+      stack_id,
+      [layer_id],
+      'stopped'
+    )
+  end
+  before do
+    expect(opsworks)
+      .to receive(:describe_instances)
+      .with(layer_id: layer_id)
+      .at_least(1)
+      .and_return(instances)
+  end
+  it 'returns list of running intances' do
+    expect(Skyed::AWS::OpsWorks.running_instances(
+      { layer_id: layer_id }, opsworks))
+      .to eq([instance1.instance_id])
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.instance_by_name' do
   let(:opsworks)      { double('Aws::OpsWorks::Client') }
   let(:instance_name) { 'test-user1' }
   let(:stack_id)      { '654654-654654-654654-654654' }
   let(:instances)     { { instances: [instance2, instance1] } }
   let(:instance1) do
-    Instance.new('9876-9876-9876-9876', instance_name, stack_id, 'online')
+    Instance.new('9876-9876-9876-9876', instance_name, stack_id, nil, 'online')
   end
   let(:instance2) do
-    Instance.new('9876-9876-9876-9877', 'test-user2', stack_id, 'online')
+    Instance.new('9876-9876-9876-9877', 'test-user2', stack_id, nil, 'online')
   end
   before do
     expect(opsworks)

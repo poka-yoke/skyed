@@ -82,6 +82,7 @@ describe 'Skyed::Destroy.deregister_insatance' do
       instance_id,
       hostname,
       stack_id,
+      nil,
       'online'
     )
   end
@@ -160,6 +161,7 @@ describe 'Skyed::Destroy.wait_for_instance' do
       instance_id,
       hostname,
       stack_id,
+      nil,
       'shutting_down'
     )
   end
@@ -168,6 +170,7 @@ describe 'Skyed::Destroy.wait_for_instance' do
       instance_id,
       hostname,
       stack_id,
+      nil,
       'terminated'
     )
   end

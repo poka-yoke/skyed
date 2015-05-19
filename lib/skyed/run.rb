@@ -17,7 +17,9 @@ module Skyed
         ow = login
         Skyed::Settings.stack_id = stack(ow, options)
         Skyed::Settings.layer_id = layer(ow, options)
-        instances = running_instances(ow, Skyed::Settings.layer_id)
+        instances = Skyed::AWS::OpsWorks.running_instances(
+          { layer_id: Skyed::Settings.layer_id },
+          ow)
         update_custom_cookbooks(ow, Skyed::Settings.stack_id, instances,
                                 options[:wait_interval])
         execute_recipes(ow, args, instances, options)
@@ -30,13 +32,6 @@ module Skyed
             { name: 'update_custom_cookbooks' },
             instance_ids: instances)), ow, wait)
         fail 'Deployment failed' unless status[0] == 'successful'
-      end
-
-      def running_instances(ow, layer_id)
-        instances = ow.describe_instances(layer_id: layer_id)
-        instances[:instances].map do |instance|
-          instance[:instance_id] if instance[:status] != 'stopped'
-        end.compact
       end
 
       def layer(ow, options)

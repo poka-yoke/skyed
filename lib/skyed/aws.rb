@@ -66,6 +66,13 @@ module Skyed
       }
 
       class << self
+        def running_instances(options = {}, opsworks)
+          instances = opsworks.describe_instances(options)
+          instances[:instances].map do |instance|
+            instance[:instance_id] if instance[:status] != 'stopped'
+          end.compact
+        end
+
         def instance_by_name(hostname, stack_id, opsworks)
           opsworks.describe_instances(
             stack_id: stack_id)[:instances].select do |i|
