@@ -159,6 +159,93 @@ describe 'Skyed::AWS::OpsWorks.instance_by_name' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.wait_for_deploy' do
+  let(:opsworks)  { double('Aws::OpsWorks::Client') }
+  let(:deploy_id) { '57225c7f-1c06-4fd2-98d5-f39d9a484d62' }
+  let(:deploy)    { { deployment_id: deploy_id } }
+  before(:each) do
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:deploy_status)
+      .with(deploy, opsworks)
+      .once
+      .and_return(['running'])
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:deploy_status)
+      .with(deploy, opsworks)
+      .and_return(['successful'])
+  end
+  it 'returns the deploy status' do
+    expect(Skyed::AWS::OpsWorks.wait_for_deploy deploy, opsworks)
+      .to eq(['successful'])
+  end
+end
+
+describe 'Skyed::AWS::OpsWorks.deploy_status' do
+  let(:opsworks)  { double('Aws::OpsWorks::Client') }
+  let(:deploy_id) { '57225c7f-1c06-4fd2-98d5-f39d9a484d62' }
+  let(:deploy)    { { deployment_id: deploy_id } }
+  before(:each) do
+    expect(opsworks)
+      .to receive(:describe_deployments)
+      .with(deployment_ids: [deploy_id])
+      .and_return(deployments: [{ status: 'running' }])
+  end
+  it 'returns the deploy status' do
+    expect(Skyed::AWS::OpsWorks.deploy_status deploy, opsworks)
+      .to eq(['running'])
+  end
+end
+
+describe 'Skyed::AWS::OpsWorks.generate_deploy_params' do
+  context 'for update_custom_cookbooks command' do
+    let(:stack_id) { '57225c7f-1c06-4fd2-98d5-f39d9a484d62' }
+    let(:command) { { name: 'update_custom_cookbooks' } }
+    it 'returns the create_deployment arguments' do
+      expect(Skyed::AWS::OpsWorks.generate_deploy_params stack_id, command)
+        .to eq(stack_id: stack_id, command: command)
+    end
+    context 'when including instance IDs list' do
+      let(:instances) { ['i-23456', 'i-65432'] }
+      it 'returns the create_deployment arguments' do
+        expect(Skyed::AWS::OpsWorks.generate_deploy_params(
+          stack_id,
+          command,
+          instance_ids: instances))
+          .to eq(stack_id: stack_id, command: command, instance_ids: instances)
+      end
+    end
+  end
+end
+
+describe 'Skyed::AWS::OpsWorks.generate_command_params' do
+  context 'for update_custom_cookbooks command' do
+    let(:options) { { name: 'update_custom_cookbooks' } }
+    it 'returns the update_custom_cookbooks params' do
+      expect(Skyed::AWS::OpsWorks.generate_command_params options)
+        .to eq(options)
+    end
+  end
+  context 'for execute_recipes command' do
+    let(:recipes) { ['cookbook::recipe'] }
+    let(:options) do
+      {
+        name: 'execute_recipes',
+        recipes: recipes
+      }
+    end
+    let(:response) do
+      {
+        name: 'execute_recipes',
+        args: { recipes: recipes }
+      }
+    end
+    it 'returns the execute_recipes params' do
+      expect(Skyed::AWS::OpsWorks.generate_command_params options)
+        .to eq(response)
+    end
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.create_layer' do
   let(:opsworks)       { double('Aws::OpsWorks::Client') }
   let(:ow_layer_response) { double('Core::Response') }

@@ -73,6 +73,38 @@ module Skyed
           end[0]
         end
 
+        def wait_for_deploy(deploy, opsworks, wait = 0)
+          status = Skyed::AWS::OpsWorks.deploy_status(deploy, opsworks)
+          while status[0] == 'running'
+            sleep(wait)
+            status = Skyed::AWS::OpsWorks.deploy_status(deploy, opsworks)
+          end
+          status
+        end
+
+        def deploy_status(deploy, opsworks)
+          deploy = opsworks.describe_deployments(
+            deployment_ids: [deploy[:deployment_id]])
+          deploy[:deployments].map do |s|
+            s[:status]
+          end.compact
+        end
+
+        def generate_deploy_params(stack_id, command, options = {})
+          options = {} if options.nil?
+          params = { stack_id: stack_id, command: command }
+          params.merge(options)
+        end
+
+        def generate_command_params(options = {})
+          response = options
+          response = {
+            name: options[:name],
+            args: options.reject { |k, _v| k == :name }
+          } unless options[:name] != 'execute_recipes'
+          response
+        end
+
         def create_layer(layer_params, opsworks)
           layer = opsworks.create_layer(layer_params)
           Skyed::Settings.layer_id = layer.data[:layer_id]

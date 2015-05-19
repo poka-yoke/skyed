@@ -147,8 +147,6 @@ describe 'Skyed::Run.run' do
         let(:described_instances)     { { instances: instances } }
         let(:deploy_id1)              { '123-123-123-123' }
         let(:deploy_id2)              { '321-321-321-321' }
-        let(:deploy_status_run)       { { status: 'running' } }
-        let(:deploy_status_success)   { { status: 'successful' } }
         let(:stacks) do
           [
             { stack_id: other_stack_id, name: 'test1' },
@@ -186,16 +184,11 @@ describe 'Skyed::Run.run' do
               instance_ids: ['4321-4321-4321-4323'],
               command: { name: 'update_custom_cookbooks' })
             .and_return(deployment_id: deploy_id1)
-          expect(opsworks)
-            .to receive(:describe_deployments)
-            .with(
-              deployment_ids: [deploy_id1])
-            .and_return(deployments: [deploy_status_run])
-          expect(opsworks)
-            .to receive(:describe_deployments)
-            .with(
-              deployment_ids: [deploy_id1])
-            .and_return(deployments: [deploy_status_success])
+          expect(Skyed::AWS::OpsWorks)
+            .to receive(:wait_for_deploy)
+            .with({ deployment_id: deploy_id1 }, opsworks, 0)
+            .once
+            .and_return(['successful'])
           expect(opsworks)
             .to receive(:create_deployment)
             .with(
@@ -203,16 +196,11 @@ describe 'Skyed::Run.run' do
               instance_ids: ['4321-4321-4321-4323'],
               command: { name: 'execute_recipes', args: cmd_args })
             .and_return(deployment_id: deploy_id2)
-          expect(opsworks)
-            .to receive(:describe_deployments)
-            .with(
-              deployment_ids: [deploy_id2])
-            .and_return(deployments: [deploy_status_run])
-          expect(opsworks)
-            .to receive(:describe_deployments)
-            .with(
-              deployment_ids: [deploy_id2])
-            .and_return(deployments: [deploy_status_success])
+          expect(Skyed::AWS::OpsWorks)
+            .to receive(:wait_for_deploy)
+            .with({ deployment_id: deploy_id2 }, opsworks, 0)
+            .once
+            .and_return(['successful'])
         end
         it 'runs' do
           Skyed::Run.run(nil, options, args)
@@ -281,8 +269,6 @@ describe 'Skyed::Run.run' do
         let(:described_instances)     { { instances: instances } }
         let(:deploy_id1)              { '123-123-123-123' }
         let(:deploy_id2)              { '321-321-321-321' }
-        let(:deploy_status_run)       { { status: 'running' } }
-        let(:deploy_status_success)   { { status: 'successful' } }
         let(:stacks) do
           [
             { stack_id: other_stack_id, name: 'test1' },
@@ -320,26 +306,16 @@ describe 'Skyed::Run.run' do
               instance_ids: ['4321-4321-4321-4323'],
               command: { name: 'update_custom_cookbooks' })
             .and_return(deployment_id: deploy_id1)
-          expect(opsworks)
-            .to receive(:describe_deployments)
-            .with(
-              deployment_ids: [deploy_id1])
-            .and_return(deployments: [deploy_status_run])
-          expect(opsworks)
-            .to receive(:describe_deployments)
-            .with(
-              deployment_ids: [deploy_id1])
-            .and_return(deployments: [deploy_status_success])
-          expect(opsworks)
-            .to receive(:describe_deployments)
-            .with(
-              deployment_ids: [deploy_id2])
-            .and_return(deployments: [deploy_status_run])
-          expect(opsworks)
-            .to receive(:describe_deployments)
-            .with(
-              deployment_ids: [deploy_id2])
-            .and_return(deployments: [deploy_status_success])
+          expect(Skyed::AWS::OpsWorks)
+            .to receive(:wait_for_deploy)
+            .with({ deployment_id: deploy_id1 }, opsworks, 0)
+            .once
+            .and_return(['successful'])
+          expect(Skyed::AWS::OpsWorks)
+            .to receive(:wait_for_deploy)
+            .with({ deployment_id: deploy_id2 }, opsworks, 0)
+            .once
+            .and_return(['successful'])
         end
         context 'and no custom json was provided' do
           before(:each) do
@@ -393,10 +369,18 @@ describe 'Skyed::Run.update_custom_cookbooks' do
   let(:cmd)           { { name: 'update_custom_cookbooks' } }
   let(:deployment_id) { 'de305d54-75b4-431b-adb2-eb6b9e546013' }
   let(:instances)     { ['4321-4321-4321-4321'] }
-  let(:deploy_status_run)      { { status: 'running' } }
-  let(:deploy_status_success)  { { status: 'successful' } }
-  let(:deploy_status_fail)     { { status: 'failed' } }
   before(:each) do
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:generate_command_params)
+      .with(name: 'update_custom_cookbooks')
+      .and_return(cmd)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:generate_deploy_params)
+      .with(stack_id, cmd, instance_ids: instances)
+      .and_return(
+        stack_id: stack_id,
+        command: cmd,
+        instance_ids: instances)
     expect(opsworks)
       .to receive(:create_deployment)
       .with(
@@ -404,17 +388,13 @@ describe 'Skyed::Run.update_custom_cookbooks' do
         instance_ids: ['4321-4321-4321-4321'],
         command: cmd)
       .and_return(deployment_id: deployment_id)
-    expect(opsworks)
-      .to receive(:describe_deployments)
-      .with(deployment_ids: [deployment_id])
-      .and_return(deployments: [deploy_status_run])
   end
   context 'when deploy is successful' do
     before(:each) do
-      expect(opsworks)
-        .to receive(:describe_deployments)
-        .with(deployment_ids: [deployment_id])
-        .and_return(deployments: [deploy_status_success])
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:wait_for_deploy)
+        .with({ deployment_id: deployment_id }, opsworks, 0)
+        .and_return(['successful'])
     end
     it 'runs the command' do
       Skyed::Run.update_custom_cookbooks(opsworks, stack_id, instances)
@@ -422,10 +402,10 @@ describe 'Skyed::Run.update_custom_cookbooks' do
   end
   context 'when deploy is failed' do
     before(:each) do
-      expect(opsworks)
-        .to receive(:describe_deployments)
-        .with(deployment_ids: [deployment_id])
-        .and_return(deployments: [deploy_status_fail])
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:wait_for_deploy)
+        .with({ deployment_id: deployment_id }, opsworks, 0)
+        .and_return(['failed'])
     end
     it 'fails' do
       expect do
@@ -448,28 +428,31 @@ describe 'Skyed::Run.execute_recipes' do
   let(:cmd_args)      { { recipes: [recipe1] } }
   let(:cmd)           { { name: 'execute_recipes', args: cmd_args } }
   let(:deployment_id) { 'de305d54-75b4-431b-adb2-eb6b9e546013' }
-  let(:deploy_status_run)      { { status: 'running' } }
-  let(:deploy_status_success)  { { status: 'successful' } }
-  let(:deploy_status_fail)     { { status: 'failed' } }
   before(:each) do
     expect(Skyed::Settings)
       .to receive(:stack_id)
       .and_return(stack_id)
-    expect(opsworks)
-      .to receive(:describe_deployments)
-      .with(deployment_ids: [deployment_id])
-      .and_return(deployments: [deploy_status_run])
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:generate_command_params)
+      .with(
+        name: 'execute_recipes',
+        recipes: [recipe1])
+      .and_return(cmd)
   end
   context 'without custom_json' do
     before(:each) do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:generate_deploy_params)
+        .with(stack_id, cmd, {})
+        .and_return(stack_id: stack_id, command: cmd)
       expect(opsworks)
         .to receive(:create_deployment)
         .with(stack_id: stack_id, command: cmd)
         .and_return(deployment_id: deployment_id)
-      expect(opsworks)
-        .to receive(:describe_deployments)
-        .with(deployment_ids: [deployment_id])
-        .and_return(deployments: [deploy_status_success])
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:wait_for_deploy)
+        .with({ deployment_id: deployment_id }, opsworks, 0)
+        .and_return(['successful'])
     end
     it 'runs the recipe' do
       Skyed::Run.execute_recipes(opsworks, [recipe1])
@@ -478,6 +461,10 @@ describe 'Skyed::Run.execute_recipes' do
   context 'with custom_json' do
     let(:custom_json) { '{"property": "value"}' }
     before(:each) do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:generate_deploy_params)
+        .with(stack_id, cmd, custom_json: custom_json)
+        .and_return(stack_id: stack_id, command: cmd, custom_json: custom_json)
       expect(opsworks)
         .to receive(:create_deployment)
         .with(
@@ -485,10 +472,10 @@ describe 'Skyed::Run.execute_recipes' do
           command: cmd,
           custom_json: custom_json)
         .and_return(deployment_id: deployment_id)
-      expect(opsworks)
-        .to receive(:describe_deployments)
-        .with(deployment_ids: [deployment_id])
-        .and_return(deployments: [deploy_status_success])
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:wait_for_deploy)
+        .with({ deployment_id: deployment_id }, opsworks, 0)
+        .and_return(['successful'])
     end
     it 'runs the recipe' do
       Skyed::Run.execute_recipes(
@@ -504,10 +491,10 @@ describe 'Skyed::Run.execute_recipes' do
         .to receive(:create_deployment)
         .with(stack_id: stack_id, command: cmd)
         .and_return(deployment_id: deployment_id)
-      expect(opsworks)
-        .to receive(:describe_deployments)
-        .with(deployment_ids: [deployment_id])
-        .and_return(deployments: [deploy_status_fail])
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:wait_for_deploy)
+        .with({ deployment_id: deployment_id }, opsworks, 0)
+        .and_return(['failed'])
     end
     it 'fails' do
       expect do
