@@ -66,6 +66,10 @@ module Skyed
       }
 
       class << self
+        def stack_by_id(stack_id, opsworks)
+          stacks(opsworks).select { |x| x[:stack_id] == stack_id }[0] || nil
+        end
+
         def running_instances(options = {}, opsworks)
           instances = opsworks.describe_instances(options)
           instances[:instances].map do |instance|

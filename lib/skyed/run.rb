@@ -47,15 +47,10 @@ module Skyed
       end
 
       def stack(ow, options)
-        stacks = ow.describe_stacks[:stacks]
-        stack = nil
-        stacks.each do |stack_reply|
-          id = stack_reply[:stack_id]
-          stack = id if id == options[:stack]
-        end
+        stack = Skyed::AWS::OpsWorks.stack_by_id(options[:stack], ow)
         msg = "There's no such stack with id #{options[:stack]}"
         fail msg unless stack
-        stack
+        stack[:stack_id]
       end
 
       def login
