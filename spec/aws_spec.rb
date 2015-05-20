@@ -179,7 +179,7 @@ describe 'Skyed::AWS::OpsWorks.layers' do
   let(:opsworks) { double('Aws::OpsWorks::Client') }
   let(:layer1)   { { stack_id: '1', layer_id: '1', name: 'My First Layer' } }
   let(:layer2)   { { stack_id: '2', layer_id: '2', name: 'My Second Layer' } }
-  let(:layers)   { { layers: [layer1, layer2] } }
+  let(:layers)   { { layers: [layer1] } }
   before do
     expect(Skyed::Settings)
       .to receive(:stack_id)
@@ -187,7 +187,7 @@ describe 'Skyed::AWS::OpsWorks.layers' do
     expect(opsworks)
       .to receive(:describe_layers)
       .with(stack_id: '1')
-      .and_return([layer1])
+      .and_return(layers)
   end
   it 'returns a list of all layers' do
     expect(Skyed::AWS::OpsWorks.layers(opsworks))
