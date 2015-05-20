@@ -319,27 +319,16 @@ describe 'Skyed::Run.update_custom_cookbooks' do
   let(:cmd)           { { name: 'update_custom_cookbooks' } }
   let(:deployment_id) { 'de305d54-75b4-431b-adb2-eb6b9e546013' }
   let(:instances)     { ['4321-4321-4321-4321'] }
-  before(:each) do
-    expect(Skyed::AWS::OpsWorks)
-      .to receive(:generate_deploy_params)
-      .with(stack_id, cmd, instance_ids: instances)
-      .and_return(
-        stack_id: stack_id,
-        command: cmd,
-        instance_ids: instances)
-    expect(opsworks)
-      .to receive(:create_deployment)
-      .with(
-        stack_id: stack_id,
-        instance_ids: ['4321-4321-4321-4321'],
-        command: cmd)
-      .and_return(deployment_id: deployment_id)
-  end
   context 'when deploy is successful' do
     before(:each) do
       expect(Skyed::AWS::OpsWorks)
-        .to receive(:wait_for_deploy)
-        .with({ deployment_id: deployment_id }, opsworks, 0)
+        .to receive(:deploy)
+        .with(
+          stack_id: stack_id,
+          command: cmd,
+          instance_ids: instances,
+          client: opsworks,
+          wait_interval: 0)
         .and_return(['successful'])
     end
     it 'runs the command' do
@@ -349,8 +338,13 @@ describe 'Skyed::Run.update_custom_cookbooks' do
   context 'when deploy is failed' do
     before(:each) do
       expect(Skyed::AWS::OpsWorks)
-        .to receive(:wait_for_deploy)
-        .with({ deployment_id: deployment_id }, opsworks, 0)
+        .to receive(:deploy)
+        .with(
+          stack_id: stack_id,
+          command: cmd,
+          instance_ids: instances,
+          client: opsworks,
+          wait_interval: 0)
         .and_return(['failed'])
     end
     it 'fails' do
@@ -383,16 +377,13 @@ describe 'Skyed::Run.execute_recipes' do
   context 'without custom_json' do
     before(:each) do
       expect(Skyed::AWS::OpsWorks)
-        .to receive(:generate_deploy_params)
-        .with(stack_id, bare_args, {})
-        .and_return(stack_id: stack_id, command: cmd)
-      expect(opsworks)
-        .to receive(:create_deployment)
-        .with(stack_id: stack_id, command: cmd)
-        .and_return(deployment_id: deployment_id)
-      expect(Skyed::AWS::OpsWorks)
-        .to receive(:wait_for_deploy)
-        .with({ deployment_id: deployment_id }, opsworks, 0)
+        .to receive(:deploy)
+        .with(
+          stack_id: stack_id,
+          command: bare_args,
+          instance_ids: nil,
+          client: opsworks,
+          wait_interval: 0)
         .and_return(['successful'])
     end
     it 'runs the recipe' do
@@ -403,19 +394,14 @@ describe 'Skyed::Run.execute_recipes' do
     let(:custom_json) { '{"property": "value"}' }
     before(:each) do
       expect(Skyed::AWS::OpsWorks)
-        .to receive(:generate_deploy_params)
-        .with(stack_id, bare_args, custom_json: custom_json)
-        .and_return(stack_id: stack_id, command: cmd, custom_json: custom_json)
-      expect(opsworks)
-        .to receive(:create_deployment)
+        .to receive(:deploy)
         .with(
           stack_id: stack_id,
-          command: cmd,
-          custom_json: custom_json)
-        .and_return(deployment_id: deployment_id)
-      expect(Skyed::AWS::OpsWorks)
-        .to receive(:wait_for_deploy)
-        .with({ deployment_id: deployment_id }, opsworks, 0)
+          command: bare_args,
+          instance_ids: nil,
+          custom_json: custom_json,
+          client: opsworks,
+          wait_interval: 0)
         .and_return(['successful'])
     end
     it 'runs the recipe' do
@@ -428,13 +414,14 @@ describe 'Skyed::Run.execute_recipes' do
   end
   context 'when deploy is failed' do
     before(:each) do
-      expect(opsworks)
-        .to receive(:create_deployment)
-        .with(stack_id: stack_id, command: cmd)
-        .and_return(deployment_id: deployment_id)
       expect(Skyed::AWS::OpsWorks)
-        .to receive(:wait_for_deploy)
-        .with({ deployment_id: deployment_id }, opsworks, 0)
+        .to receive(:deploy)
+        .with(
+          stack_id: stack_id,
+          command: bare_args,
+          instance_ids: nil,
+          client: opsworks,
+          wait_interval: 0)
         .and_return(['failed'])
     end
     it 'fails' do

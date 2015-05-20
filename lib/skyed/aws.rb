@@ -66,6 +66,19 @@ module Skyed
       }
 
       class << self
+        def deploy(opts)
+          xtra = { instance_ids: opts[:instance_ids] }
+          xtra[:custom_json] = opts[:custom_json] if opts.key? :custom_json
+          Skyed::AWS::OpsWorks.wait_for_deploy(
+            opts[:client].create_deployment(
+              Skyed::AWS::OpsWorks.generate_deploy_params(
+                opts[:stack_id],
+                opts[:command],
+                xtra)),
+            opts[:client],
+            opts[:wait_interval])
+        end
+
         def layer_by_id(layer_id, opsworks)
           layers(opsworks).select { |x| x[:layer_id] == layer_id }[0] || nil
         end

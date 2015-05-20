@@ -131,6 +131,122 @@ describe 'Skyed::AWS.confirm_credentials?' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.deploy' do
+  context 'for update_custom_cookbooks' do
+    let(:stack_id)  { '93859374-2382-9874-4592-239287433254' }
+    let(:command)   { { name: 'update_custom_cookbooks' } }
+    let(:opsworks)  { double('Aws::OpsWorks::Client') }
+    let(:instances) { ['65482357-4896-9876-9871-354687513596'] }
+    let(:deploy_id) { { deployment_id: '3859374-2382-9874-4592-239287433254' } }
+    let(:wait)      { 0 }
+    let(:deploy_params) do
+      {
+        stack_id: stack_id,
+        command: command,
+        instance_ids: instances
+      }
+    end
+    before do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:generate_deploy_params)
+        .with(stack_id, command, instance_ids: instances)
+        .and_return(deploy_params)
+      expect(opsworks)
+        .to receive(:create_deployment)
+        .with(deploy_params)
+        .and_return(deploy_id)
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:wait_for_deploy)
+        .with(deploy_id, opsworks, wait)
+        .and_return(['successful'])
+    end
+    it 'run deployment' do
+      expect(Skyed::AWS::OpsWorks.deploy(
+        stack_id: stack_id,
+        command: command,
+        instance_ids: instances,
+        client: opsworks,
+        wait_interval: wait))
+        .to eq(['successful'])
+    end
+  end
+  context 'for execute_recipes' do
+    let(:stack_id)  { '93859374-2382-9874-4592-239287433254' }
+    let(:recipe1)   { 'recipe1' }
+    let(:cmd_args)  { { recipes: [recipe1] } }
+    let(:command)   { { name: 'execute_recipes', args: cmd_args } }
+    let(:opsworks)  { double('Aws::OpsWorks::Client') }
+    let(:instances) { ['65482357-4896-9876-9871-354687513596'] }
+    let(:deploy_id) { { deployment_id: '3859374-2382-9874-4592-239287433254' } }
+    let(:wait)      { 0 }
+    let(:deploy_params) do
+      {
+        stack_id: stack_id,
+        command: command,
+        instance_ids: instances
+      }
+    end
+    before(:each) do
+      expect(opsworks)
+        .to receive(:create_deployment)
+        .with(deploy_params)
+        .and_return(deploy_id)
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:wait_for_deploy)
+        .with(deploy_id, opsworks, wait)
+        .and_return(['successful'])
+    end
+    context 'without custom_json' do
+      before(:each) do
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:generate_deploy_params)
+          .with(stack_id, command, instance_ids: instances)
+          .and_return(deploy_params)
+      end
+      it 'run deployment' do
+        expect(Skyed::AWS::OpsWorks.deploy(
+          stack_id: stack_id,
+          command: command,
+          instance_ids: instances,
+          client: opsworks,
+          wait_interval: wait))
+          .to eq(['successful'])
+      end
+    end
+    context 'with custom_json' do
+      let(:custom_json) { { key: 'value' } }
+      let(:deploy_params) do
+        {
+          stack_id: stack_id,
+          command: command,
+          instance_ids: instances,
+          custom_json: custom_json
+        }
+      end
+      before(:each) do
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:generate_deploy_params)
+          .with(
+            stack_id,
+            command,
+            instance_ids: instances,
+            custom_json: custom_json)
+          .and_return(deploy_params)
+      end
+      it 'run deployment' do
+        expect(Skyed::AWS::OpsWorks.deploy(
+          stack_id: stack_id,
+          command: command,
+          instance_ids: instances,
+          custom_json: custom_json,
+          client: opsworks,
+          wait_interval: wait))
+          .to eq(['successful'])
+      end
+    end
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.layer_by_id' do
   let(:opsworks) { double('Aws::OpsWorks::Client') }
   let(:layer1)   { { stack_id: '1', layer_id: '1', name: 'My First Layer' } }
