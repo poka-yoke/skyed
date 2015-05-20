@@ -66,6 +66,18 @@ module Skyed
       }
 
       class << self
+        def layer_by_id(layer_id, opsworks)
+          layers(opsworks).select { |x| x[:layer_id] == layer_id }[0] || nil
+        end
+
+        def layer_by_name(layer_name, opsworks)
+          layers(opsworks).select { |x| x[:name] == layer_name }[0] || nil
+        end
+
+        def layers(opsworks)
+          opsworks.describe_layers(stack_id: Skyed::Settings.stack_id)[:layers]
+        end
+
         def stack_by_id(stack_id, opsworks)
           stacks(opsworks).select { |x| x[:stack_id] == stack_id }[0] || nil
         end

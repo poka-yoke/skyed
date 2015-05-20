@@ -35,15 +35,10 @@ module Skyed
       end
 
       def layer(ow, options)
-        layers = ow.describe_layers(stack_id: options[:stack])[:layers]
-        layer = nil
-        layers.each do |layer_reply|
-          id = layer_reply[:layer_id]
-          layer = id if id == options[:layer]
-        end
+        layer = Skyed::AWS::OpsWorks.layer_by_id(options[:layer], ow)
         msg = "There's no such layer with id #{options[:layer]}"
         fail msg unless layer
-        layer
+        layer[:layer_id]
       end
 
       def stack(ow, options)

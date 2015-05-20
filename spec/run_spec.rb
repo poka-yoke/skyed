@@ -112,22 +112,16 @@ describe 'Skyed::Run.run' do
       end
       context 'and layer does not exist' do
         let(:other_layer_id)   { '8765-8765-8765-8765' }
-        let(:described_layers) { { layers: layers } }
         let(:stack)            { { stack_id: stack_id, name: 'test2' } }
-        let(:layers) do
-          [
-            { stack_id: stack_id, layer_id: other_layer_id, name: 'test1' }
-          ]
-        end
         before(:each) do
           expect(Skyed::AWS::OpsWorks)
             .to receive(:stack_by_id)
             .with(options[:stack], opsworks)
             .and_return(stack)
-          expect(opsworks)
-            .to receive(:describe_layers)
-            .with(stack_id: stack_id)
-            .and_return(described_layers)
+          expect(Skyed::AWS::OpsWorks)
+            .to receive(:layer_by_id)
+            .with(options[:layer], opsworks)
+            .and_return(nil)
         end
         it 'fails' do
           expect { Skyed::Run.run(nil, options, args) }
@@ -136,15 +130,11 @@ describe 'Skyed::Run.run' do
       end
       context 'and both exist' do
         let(:other_layer_id)   { '8765-8765-8765-8765' }
-        let(:described_layers) { { layers: layers } }
         let(:deploy_id1)       { '123-123-123-123' }
         let(:deploy_id2)       { '321-321-321-321' }
         let(:stack)            { { stack_id: stack_id, name: 'test2' } }
-        let(:layers) do
-          [
-            { stack_id: stack_id, layer_id: other_layer_id, name: 'test1' },
-            { stack_id: stack_id, layer_id: layer_id, name: 'test2' }
-          ]
+        let(:layer) do
+          { stack_id: stack_id, layer_id: layer_id, name: 'test2' }
         end
         let(:described_instances) do
           ['4321-4321-4321-4323']
@@ -154,10 +144,10 @@ describe 'Skyed::Run.run' do
             .to receive(:stack_by_id)
             .with(options[:stack], opsworks)
             .and_return(stack)
-          expect(opsworks)
-            .to receive(:describe_layers)
-            .with(stack_id: stack_id)
-            .and_return(described_layers)
+          expect(Skyed::AWS::OpsWorks)
+            .to receive(:layer_by_id)
+            .with(options[:layer], opsworks)
+            .and_return(layer)
           expect(Skyed::AWS::OpsWorks)
             .to receive(:running_instances)
             .with({ layer_id: layer_id }, opsworks)
@@ -219,22 +209,16 @@ describe 'Skyed::Run.run' do
       end
       context 'and layer does not exist' do
         let(:other_layer_id)   { '8765-8765-8765-8765' }
-        let(:described_layers) { { layers: layers } }
         let(:stack)            { { stack_id: stack_id, name: 'test2' } }
-        let(:layers) do
-          [
-            { stack_id: stack_id, layer_id: other_layer_id, name: 'test1' }
-          ]
-        end
         before(:each) do
           expect(Skyed::AWS::OpsWorks)
             .to receive(:stack_by_id)
             .with(options[:stack], opsworks)
             .and_return(stack)
-          expect(opsworks)
-            .to receive(:describe_layers)
-            .with(stack_id: stack_id)
-            .and_return(described_layers)
+          expect(Skyed::AWS::OpsWorks)
+            .to receive(:layer_by_id)
+            .with(options[:layer], opsworks)
+            .and_return(nil)
         end
         it 'fails' do
           expect { Skyed::Run.run(nil, options, args) }
@@ -243,15 +227,11 @@ describe 'Skyed::Run.run' do
       end
       context 'and both exist' do
         let(:other_layer_id)   { '8765-8765-8765-8765' }
-        let(:described_layers) { { layers: layers } }
         let(:deploy_id1)       { '123-123-123-123' }
         let(:deploy_id2)       { '321-321-321-321' }
         let(:stack)            { { stack_id: stack_id, name: 'test2' } }
-        let(:layers) do
-          [
-            { stack_id: stack_id, layer_id: other_layer_id, name: 'test1' },
-            { stack_id: stack_id, layer_id: layer_id, name: 'test2' }
-          ]
+        let(:layer) do
+          { stack_id: stack_id, layer_id: layer_id, name: 'test2' }
         end
         let(:described_instances) do
           ['4321-4321-4321-4323']
@@ -261,10 +241,10 @@ describe 'Skyed::Run.run' do
             .to receive(:stack_by_id)
             .with(options[:stack], opsworks)
             .and_return(stack)
-          expect(opsworks)
-            .to receive(:describe_layers)
-            .with(stack_id: stack_id)
-            .and_return(described_layers)
+          expect(Skyed::AWS::OpsWorks)
+            .to receive(:layer_by_id)
+            .with(options[:layer], opsworks)
+            .and_return(layer)
           expect(Skyed::AWS::OpsWorks)
             .to receive(:running_instances)
             .with({ layer_id: layer_id }, opsworks)

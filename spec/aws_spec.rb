@@ -131,6 +131,70 @@ describe 'Skyed::AWS.confirm_credentials?' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.layer_by_id' do
+  let(:opsworks) { double('Aws::OpsWorks::Client') }
+  let(:layer1)   { { stack_id: '1', layer_id: '1', name: 'My First Layer' } }
+  let(:layer2)   { { stack_id: '2', layer_id: '2', name: 'My Second Layer' } }
+  let(:layers)   { [layer1, layer2] }
+  before do
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:layers)
+      .at_least(1)
+      .with(opsworks)
+      .and_return(layers)
+  end
+  it 'returns the layer with the specified id' do
+    expect(Skyed::AWS::OpsWorks.layer_by_id('1', opsworks))
+      .to eq(layer1)
+    expect(Skyed::AWS::OpsWorks.layer_by_id('2', opsworks))
+      .to eq(layer2)
+    expect(Skyed::AWS::OpsWorks.layer_by_id('3', opsworks))
+      .to eq(nil)
+  end
+end
+
+describe 'Skyed::AWS::OpsWorks.layer_by_name' do
+  let(:opsworks) { double('Aws::OpsWorks::Client') }
+  let(:layer1)   { { stack_id: '1', layer_id: '1', name: 'My First Layer' } }
+  let(:layer2)   { { stack_id: '2', layer_id: '2', name: 'My Second Layer' } }
+  let(:layers)   { [layer1, layer2] }
+  before do
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:layers)
+      .at_least(1)
+      .with(opsworks)
+      .and_return(layers)
+  end
+  it 'returns the layer with the specified name' do
+    expect(Skyed::AWS::OpsWorks.layer_by_name('My First Layer', opsworks))
+      .to eq(layer1)
+    expect(Skyed::AWS::OpsWorks.layer_by_name('My Second Layer', opsworks))
+      .to eq(layer2)
+    expect(Skyed::AWS::OpsWorks.layer_by_name('Non-existant Layer', opsworks))
+      .to eq(nil)
+  end
+end
+
+describe 'Skyed::AWS::OpsWorks.layers' do
+  let(:opsworks) { double('Aws::OpsWorks::Client') }
+  let(:layer1)   { { stack_id: '1', layer_id: '1', name: 'My First Layer' } }
+  let(:layer2)   { { stack_id: '2', layer_id: '2', name: 'My Second Layer' } }
+  let(:layers)   { { layers: [layer1, layer2] } }
+  before do
+    expect(Skyed::Settings)
+      .to receive(:stack_id)
+      .and_return('1')
+    expect(opsworks)
+      .to receive(:describe_layers)
+      .with(stack_id: '1')
+      .and_return([layer1])
+  end
+  it 'returns a list of all layers' do
+    expect(Skyed::AWS::OpsWorks.layers(opsworks))
+      .to eq([layer1])
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.stack_by_id' do
   let(:opsworks) { double('Aws::OpsWorks::Client') }
   let(:stack1)   { { stack_id: '1', name: 'My First Stack' } }
