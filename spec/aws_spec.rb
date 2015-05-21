@@ -131,6 +131,34 @@ describe 'Skyed::AWS.confirm_credentials?' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.layer' do
+  let(:opsworks) { double('Aws::OpsWorks::Client') }
+  let(:layer1)   { { stack_id: '1', layer_id: '1', name: 'My First Layer' } }
+  let(:layer2)   { { stack_id: '2', layer_id: '2', name: 'My Second Layer' } }
+  let(:layers)   { [layer1, layer2] }
+  before do
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:layers)
+      .at_least(1)
+      .with(opsworks)
+      .and_return(layers)
+  end
+  it 'returns the layer with the specified id' do
+    expect(Skyed::AWS::OpsWorks.layer('1', opsworks))
+      .to eq(layer1)
+    expect(Skyed::AWS::OpsWorks.layer('My First Layer', opsworks))
+      .to eq(layer1)
+    expect(Skyed::AWS::OpsWorks.layer('2', opsworks))
+      .to eq(layer2)
+    expect(Skyed::AWS::OpsWorks.layer('My Second Layer', opsworks))
+      .to eq(layer2)
+    expect(Skyed::AWS::OpsWorks.layer('3', opsworks))
+      .to eq(nil)
+    expect(Skyed::AWS::OpsWorks.layer('Non-existant Layer', opsworks))
+      .to eq(nil)
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.deploy' do
   context 'for update_custom_cookbooks' do
     let(:stack_id)  { '93859374-2382-9874-4592-239287433254' }

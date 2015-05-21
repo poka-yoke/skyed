@@ -66,6 +66,13 @@ module Skyed
       }
 
       class << self
+        def layer(layer_criteria, opsworks)
+          layer_by_name(
+            layer_criteria,
+            opsworks
+          ) || layer_by_id(layer_criteria, opsworks)
+        end
+
         def deploy(opts)
           xtra = { instance_ids: opts[:instance_ids] }
           xtra[:custom_json] = opts[:custom_json] if opts.key? :custom_json

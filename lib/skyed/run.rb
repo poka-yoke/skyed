@@ -36,7 +36,7 @@ module Skyed
       end
 
       def layer(ow, options)
-        layer = Skyed::AWS::OpsWorks.layer_by_id(options[:layer], ow)
+        layer = Skyed::AWS::OpsWorks.layer(options[:layer], ow)
         msg = "There's no such layer with id #{options[:layer]}"
         fail msg unless layer
         layer[:layer_id]
