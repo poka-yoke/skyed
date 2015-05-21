@@ -66,6 +66,13 @@ module Skyed
       }
 
       class << self
+        def stack(stack_criteria, opsworks)
+          stack_by_name(
+            stack_criteria,
+            opsworks
+          ) || stack_by_id(stack_criteria, opsworks)
+        end
+
         def layer(layer_criteria, opsworks)
           layer_by_name(
             layer_criteria,

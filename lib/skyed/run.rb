@@ -43,7 +43,7 @@ module Skyed
       end
 
       def stack(ow, options)
-        stack = Skyed::AWS::OpsWorks.stack_by_id(options[:stack], ow)
+        stack = Skyed::AWS::OpsWorks.stack(options[:stack], ow)
         msg = "There's no such stack with id #{options[:stack]}"
         fail msg unless stack
         stack[:stack_id]

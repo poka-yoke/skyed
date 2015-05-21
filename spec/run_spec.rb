@@ -101,7 +101,7 @@ describe 'Skyed::Run.run' do
       context 'and stack does not exist' do
         before(:each) do
           expect(Skyed::AWS::OpsWorks)
-            .to receive(:stack_by_id)
+            .to receive(:stack)
             .with(options[:stack], opsworks)
             .and_return(nil)
         end
@@ -115,7 +115,7 @@ describe 'Skyed::Run.run' do
         let(:stack)            { { stack_id: stack_id, name: 'test2' } }
         before(:each) do
           expect(Skyed::AWS::OpsWorks)
-            .to receive(:stack_by_id)
+            .to receive(:stack)
             .with(options[:stack], opsworks)
             .and_return(stack)
           expect(Skyed::AWS::OpsWorks)
@@ -141,7 +141,7 @@ describe 'Skyed::Run.run' do
         end
         before(:each) do
           expect(Skyed::AWS::OpsWorks)
-            .to receive(:stack_by_id)
+            .to receive(:stack)
             .with(options[:stack], opsworks)
             .and_return(stack)
           expect(Skyed::AWS::OpsWorks)
@@ -198,7 +198,7 @@ describe 'Skyed::Run.run' do
       context 'and stack does not exist' do
         before(:each) do
           expect(Skyed::AWS::OpsWorks)
-            .to receive(:stack_by_id)
+            .to receive(:stack)
             .with(options[:stack], opsworks)
             .and_return(nil)
         end
@@ -212,7 +212,7 @@ describe 'Skyed::Run.run' do
         let(:stack)            { { stack_id: stack_id, name: 'test2' } }
         before(:each) do
           expect(Skyed::AWS::OpsWorks)
-            .to receive(:stack_by_id)
+            .to receive(:stack)
             .with(options[:stack], opsworks)
             .and_return(stack)
           expect(Skyed::AWS::OpsWorks)
@@ -238,7 +238,7 @@ describe 'Skyed::Run.run' do
         end
         before(:each) do
           expect(Skyed::AWS::OpsWorks)
-            .to receive(:stack_by_id)
+            .to receive(:stack)
             .with(options[:stack], opsworks)
             .and_return(stack)
           expect(Skyed::AWS::OpsWorks)
