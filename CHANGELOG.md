@@ -1,3 +1,15 @@
+## 0.1.7 (2015-05-21)
+
+Features:
+
+  - Allows invoking stack and layer by name in run command.
+  - Destroy command now removes automatically created user and settings.
+  - Destroy waits for the instance to be deregistered.
+
+Improvements:
+
+  - All run command OpsWorks dependencies moved to Skyed::AWS::OpsWorks module.
+
 ## 0.1.6 (2015-05-04)
 
 Bug Fix:
