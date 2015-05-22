@@ -1,4 +1,5 @@
 require 'skyed/utils'
+require 'skyed/git'
 require 'skyed/aws'
 require 'skyed/destroy'
 require 'skyed/run'
