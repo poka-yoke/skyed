@@ -6,6 +6,10 @@ module Skyed
     attr_accessor :_settings
 
     class << self
+      def current_stack?(stack_id)
+        !Skyed::Settings.empty? && Skyed::Settings.stack_id == stack_id
+      end
+
       def load!(filename = CONFIG_FILE)
         newsets = {}
         newsets = YAML.load_file(filename) if File.file? filename
