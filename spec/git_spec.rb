@@ -22,10 +22,10 @@ describe 'Skyed::Git.clone_stack_remote' do
     expect(SecureRandom)
       .to receive(:hex)
       .and_return(random)
-      # TODO: Comment out when INF-865 is completed
-      # expect(Skyed::Settings)
-      #   .to receive(:opsworks_git_key)
-      #   .and_return(key_path)
+    # TODO: Comment out when INF-865 is completed
+    # expect(Skyed::Settings)
+    #   .to receive(:opsworks_git_key)
+    #   .and_return(key_path)
     expect(::Git)
       .to receive(:clone)
       .with(url, clone_path)
