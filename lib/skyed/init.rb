@@ -163,7 +163,7 @@ module Skyed
       end
 
       def repo?(path)
-        Git.open(path)
+        ::Git.open(path)
       rescue ArgumentError
         return false
       end

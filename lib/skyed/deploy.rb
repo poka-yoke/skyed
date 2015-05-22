@@ -11,7 +11,7 @@ module Skyed
       end
 
       def push_devel_branch(_global_options)
-        repo = Git.open(Skyed::Settings.repo)
+        repo = ::Git.open(Skyed::Settings.repo)
         repo.push(Skyed::Settings.remote_name, Skyed::Settings.branch)
       end
     end
