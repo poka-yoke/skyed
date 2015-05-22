@@ -5,14 +5,17 @@ require 'highline/import'
 describe 'Skyed::Run.execute' do
   let(:recipe1) { 'recipe1' }
   let(:args)    { [recipe1] }
+  let(:options) { nil }
+  before(:each) do
+    expect(Skyed::Run)
+      .to receive(:check_recipes_exist)
+      .with(options, args)
+      .and_return([recipe1])
+  end
   context 'when initialized' do
     let(:opsworks) { double('Aws::OpsWorks::Client') }
     context 'and no stack given' do
       before(:each) do
-        expect(Skyed::Run)
-          .to receive(:check_recipes_exist)
-          .with(args)
-          .and_return([recipe1])
         expect(Skyed::Run)
           .to receive(:check_vagrant)
         expect(Skyed::AWS::OpsWorks)
@@ -29,9 +32,6 @@ describe 'Skyed::Run.execute' do
     context 'but stack was given' do
       let(:options) { { stack: '1234-1234-1234-2134' } }
       before(:each) do
-        expect(Skyed::Run)
-          .to_not receive(:check_recipes_exist)
-          .with(args)
         expect(Skyed::Run)
           .to_not receive(:check_vagrant)
         expect(Skyed::AWS::OpsWorks)
@@ -55,7 +55,7 @@ describe 'Skyed::Run.execute' do
         .to receive(:run)
     end
     it 'uses run method' do
-      Skyed::Run.execute(nil, options, args)
+      Skyed::Run.execute(nil, options, [recipe1])
     end
   end
 end
@@ -493,7 +493,7 @@ describe 'Skyed::Run.check_recipes_exist' do
         .and_return(true)
     end
     it 'runs the recipe' do
-      expect(Skyed::Run.check_recipes_exist(args))
+      expect(Skyed::Run.check_recipes_exist(nil, args))
         .to eq [recipe1]
     end
   end
@@ -506,7 +506,7 @@ describe 'Skyed::Run.check_recipes_exist' do
         .and_return(false)
     end
     it 'fails' do
-      expect { Skyed::Run.check_recipes_exist(args) }
+      expect { Skyed::Run.check_recipes_exist(nil, args) }
         .to raise_error
     end
   end
@@ -524,7 +524,7 @@ describe 'Skyed::Run.check_recipes_exist' do
         .and_return(false)
     end
     it 'fails' do
-      expect { Skyed::Run.check_recipes_exist(args) }
+      expect { Skyed::Run.check_recipes_exist(nil, args) }
         .to raise_error
     end
   end
@@ -542,8 +542,74 @@ describe 'Skyed::Run.check_recipes_exist' do
         .and_return(true)
     end
     it 'fails' do
-      expect { Skyed::Run.check_recipes_exist(args) }
+      expect { Skyed::Run.check_recipes_exist(nil, args) }
         .to raise_error
+    end
+  end
+  context 'when a stack was given' do
+    let(:options) { { stack: '1234-1234-1234-2134' } }
+    context 'and invoked with valid recipe' do
+      let(:args)      { [recipe1] }
+      let(:repo_path) { '/home/ifosch/opsworks' }
+      before(:each) do
+        expect(Skyed::Run)
+          .to receive(:recipe_in_remote)
+          .with(options, recipe1)
+          .and_return(true)
+      end
+      it 'runs the recipe' do
+        expect(Skyed::Run.check_recipes_exist(options, args))
+          .to eq [recipe1]
+      end
+    end
+    context 'and invoked with unexisting recipe' do
+      let(:args)   { [recipe1] }
+      before(:each) do
+        expect(Skyed::Run)
+          .to receive(:recipe_in_remote)
+          .with(options, recipe1)
+          .and_return(false)
+      end
+      it 'fails' do
+        expect { Skyed::Run.check_recipes_exist(options, args) }
+          .to raise_error
+      end
+    end
+    context 'and invoked with unexisting recipes' do
+      let(:recipe2) { 'recipe2::restart' }
+      let(:args)   { [recipe1, recipe2] }
+      before(:each) do
+        expect(Skyed::Run)
+          .to receive(:recipe_in_remote)
+          .with(options, recipe1)
+          .and_return(false)
+        expect(Skyed::Run)
+          .to receive(:recipe_in_remote)
+          .with(options, recipe2)
+          .and_return(false)
+      end
+      it 'fails' do
+        expect { Skyed::Run.check_recipes_exist(options, args) }
+          .to raise_error
+      end
+    end
+    context 'and invoked with existing and unexisting recipes' do
+      let(:recipe2) { 'recipe2::restart' }
+      let(:args)   { [recipe1, recipe2] }
+      before(:each) do
+        expect(Skyed::Run)
+          .to receive(:recipe_in_remote)
+          .with(options, recipe1)
+          .and_return(false)
+        expect(Skyed::Run)
+          .to receive(:recipe_in_remote)
+          .with(options, recipe2)
+          .and_return(true)
+      end
+      it 'fails' do
+        expect { Skyed::Run.check_recipes_exist(options, args) }
+          .to raise_error
+      end
     end
   end
 end
@@ -562,7 +628,7 @@ describe 'Skyed::Run.recipe_in_cookbook' do
           .with(File.join(repo_path, recipe1, 'recipes', 'default.rb'))
           .and_return(false)
       end
-      it 'runs the recipe' do
+      it 'validates the recipe' do
         expect(Skyed::Run.recipe_in_cookbook(recipe1))
           .to eq(false)
       end
@@ -582,10 +648,91 @@ describe 'Skyed::Run.recipe_in_cookbook' do
           .with(File.join(repo_path, cookbook, 'recipes', "#{recipe}.rb"))
           .and_return(false)
       end
-      it 'runs the recipe' do
+      it 'validates the recipe' do
         expect(Skyed::Run.recipe_in_cookbook(recipe2))
           .to eq(false)
       end
     end
+  end
+  context 'when using a different repo' do
+    let(:repo_path2)  { '/home/ifosch/opsworks' }
+    context 'when checking default recipe' do
+      context 'which does not exist' do
+        before(:each) do
+          expect(Skyed::Settings)
+            .not_to receive(:repo)
+          expect(File)
+            .to receive(:exist?)
+            .with(File.join(repo_path2, recipe1, 'recipes', 'default.rb'))
+            .and_return(false)
+        end
+        it 'validates the recipe' do
+          expect(Skyed::Run.recipe_in_cookbook(recipe1, repo_path2))
+            .to eq(false)
+        end
+      end
+    end
+    context 'when checking specific recipe' do
+      context 'which does not exist' do
+        let(:cookbook)   { 'recipe2' }
+        let(:recipe)     { 'start' }
+        let(:recipe2)    { "#{cookbook}::#{recipe}" }
+        before(:each) do
+          expect(Skyed::Settings)
+            .not_to receive(:repo)
+          expect(File)
+            .to receive(:exist?)
+            .with(File.join(repo_path2, cookbook, 'recipes', "#{recipe}.rb"))
+            .and_return(false)
+        end
+        it 'validates the recipe' do
+          expect(Skyed::Run.recipe_in_cookbook(recipe2, repo_path2))
+            .to eq(false)
+        end
+      end
+    end
+  end
+end
+
+describe 'Skyed::Run.recipe_in_remote' do
+  let(:opsworks)       { double('Aws::OpsWorks::Client') }
+  let(:stack_id)       { '1234-1234-1234-2134' }
+  let(:options)        { { stack: stack_id } }
+  let(:recipe1)        { 'recipe1' }
+  let(:repo_path)      { '/home/ifosch/opsworks' }
+  let(:temporal_clone) { '/tmp/skyed.2a890f9876' }
+  let(:url)            { 'git@github.com:/user/repo.git' }
+  let(:stack) do
+    {
+      stack_id: stack_id,
+      name: 'test2',
+      custom_cookbooks_source: {
+        type: 'git',
+        url: url,
+        username: 'user',
+        revision: 'master'
+      }
+    }
+  end
+  before(:each) do
+    expect(Skyed::Run)
+      .to receive(:login)
+      .and_return(opsworks)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:stack)
+      .with(options[:stack], opsworks)
+      .and_return(stack)
+    expect(Skyed::Git)
+      .to receive(:clone_stack_remote)
+      .with(stack)
+      .and_return(temporal_clone)
+    expect(Skyed::Run)
+      .to receive(:recipe_in_cookbook)
+      .with(recipe1, temporal_clone)
+      .and_return(true)
+  end
+  it 'checks the recipe exists in remote' do
+    expect(Skyed::Run.recipe_in_remote(options, recipe1))
+      .to eq true
   end
 end

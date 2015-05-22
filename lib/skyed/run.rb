@@ -3,10 +3,10 @@ module Skyed
   module Run
     class << self
       def execute(global_options, options, args)
+        recipes = check_recipes_exist(options, args)
         if !options.nil? && options.key?(:stack) && !options[:stack].nil?
-          run(global_options, options, args)
+          run(global_options, options, recipes)
         else
-          recipes = check_recipes_exist(args)
           check_vagrant
           execute_recipes(Skyed::AWS::OpsWorks.login, recipes)
         end
@@ -67,8 +67,12 @@ module Skyed
         fail msg unless output =~ /running/
       end
 
-      def check_recipes_exist(args)
-        recipes = args.select { |recipe| recipe_in_cookbook(recipe) }
+      def check_recipes_exist(options, args)
+        if !options.nil? && options.key?(:stack) && !options[:stack].nil?
+          recipes = args.select { |recipe| recipe_in_remote(options, recipe) }
+        else
+          recipes = args.select { |recipe| recipe_in_cookbook(recipe) }
+        end
         msg = "Couldn't found #{args - recipes} recipes in repository"
         fail msg unless recipes == args
         recipes
@@ -87,15 +91,22 @@ module Skyed
         fail 'Deployment failed' unless status[0] == 'successful'
       end
 
-      def recipe_in_cookbook(recipe)
+      def recipe_in_cookbook(recipe, path = nil)
+        path ||= Skyed::Settings.repo
         cookbook, recipe = recipe.split('::')
         recipe = 'default' if recipe.nil?
         File.exist?(
           File.join(
-            Skyed::Settings.repo,
+            path,
             cookbook,
             'recipes',
             "#{recipe}.rb"))
+      end
+
+      def recipe_in_remote(options, recipe)
+        clone = Skyed::Git.clone_stack_remote(
+          Skyed::AWS::OpsWorks.stack(options[:stack], login))
+        recipe_in_cookbook(recipe, clone)
       end
     end
   end
