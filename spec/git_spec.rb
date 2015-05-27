@@ -22,37 +22,37 @@ describe 'Skyed::Git.clone_stack_remote' do
     expect(SecureRandom)
       .to receive(:hex)
       .and_return(random)
-    # TODO: Comment out when INF-865 is completed
-    # expect(Skyed::Settings)
-    #   .to receive(:opsworks_git_key)
-    #   .and_return(key_path)
+    expect(Skyed::Settings)
+      .to receive(:opsworks_git_key)
+      .and_return(key_path)
+    expect(Skyed::Utils)
+      .to receive(:create_template)
+      .with('/tmp', 'ssh-git', 'ssh-git.erb')
     expect(::Git)
       .to receive(:clone)
       .with(url, clone_path)
   end
   context 'when is the current stack' do
-    # TODO: Comment out when INF-865 is completed
-    # before(:each) do
-    #   expect(Skyed::Settings)
-    #     .to receive(:current_stack?)
-    #     .with(stack_id)
-    #     .and_return(true)
-    # end
+    before(:each) do
+      expect(Skyed::Settings)
+        .to receive(:current_stack?)
+        .with(stack_id)
+        .and_return(true)
+    end
     it 'clones the stack remote and returns the path to it' do
       expect(Skyed::Git.clone_stack_remote(stack))
         .to eq(clone_path)
     end
   end
   context 'when is not the current stack' do
-    # TODO: Comment out when INF-865 is completed
-    # before(:each) do
-    #   expect(Skyed::Settings)
-    #     .to receive(:current_stack?)
-    #     .with(stack_id)
-    #     .and_return(false)
-    #   expect(Skyed::Init)
-    #     .to receive(:opsworks_git_key)
-    # end
+    before(:each) do
+      expect(Skyed::Settings)
+        .to receive(:current_stack?)
+        .with(stack_id)
+        .and_return(false)
+      expect(Skyed::Init)
+        .to receive(:opsworks_git_key)
+    end
     it 'clones the stack remote and returns the path to it' do
       expect(Skyed::Git.clone_stack_remote(stack))
         .to eq(clone_path)
