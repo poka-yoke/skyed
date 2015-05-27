@@ -115,6 +115,15 @@ module Skyed
       }
 
       class << self
+        def deregister_instance(hostname, opsworks)
+          instance = instance_by_name(
+            hostname, Skyed::Settings.stack_id, opsworks)
+          opsworks.deregister_instance(
+            instance_id: instance.instance_id) unless instance.nil?
+          wait_for_instance(
+            hostname, Skyed::Settings.stack_id, 'terminated', opsworks)
+        end
+
         def delete_user(opsworks)
           stack = opsworks.describe_stacks(
             stack_ids: [Skyed::Settings.stack_id])[:stacks][0][:name]

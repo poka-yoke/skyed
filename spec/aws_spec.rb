@@ -287,6 +287,42 @@ describe 'Skyed::AWS::RDS.login' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.deregister_insatance' do
+  let(:opsworks)    { double('Aws::OpsWorks::Client') }
+  let(:hostname)    { 'test-ifosch' }
+  let(:stack_id)    { 'e1403a56-286e-4b5e-6798-c3406c947b4a' }
+  let(:instance_id) { '12345678-1234-4321-5678-210987654321' }
+  let(:instance_online) do
+    Instance.new(
+      instance_id,
+      hostname,
+      stack_id,
+      nil,
+      'online'
+    )
+  end
+  before(:each) do
+    expect(Skyed::Settings)
+      .to receive(:stack_id)
+      .at_least(1)
+      .and_return(stack_id)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:instance_by_name)
+      .with(hostname, stack_id, opsworks)
+      .once
+      .and_return(instance_online)
+    expect(opsworks)
+      .to receive(:deregister_instance)
+      .with(instance_id: instance_id)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:wait_for_instance)
+      .with(hostname, stack_id, 'terminated', opsworks)
+  end
+  it 'deregisters the vagrant machine' do
+    Skyed::AWS::OpsWorks.deregister_instance(hostname, opsworks)
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.delete_user' do
   let(:opsworks)  { double('Aws::OpsWorks::Client') }
   let(:stack_id)  { '12345678-1234-1234-1234-123456789012' }
