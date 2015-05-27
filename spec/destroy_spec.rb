@@ -99,9 +99,9 @@ describe 'Skyed::Destroy.deregister_insatance' do
     expect(opsworks)
       .to receive(:deregister_instance)
       .with(instance_id: instance_id)
-    expect(Skyed::Destroy)
+    expect(Skyed::AWS::OpsWorks)
       .to receive(:wait_for_instance)
-      .with(hostname, stack_id, opsworks)
+      .with(hostname, stack_id, 'terminated', opsworks)
   end
   it 'deregisters the vagrant machine' do
     Skyed::Destroy.deregister_instance(hostname, opsworks)
@@ -148,44 +148,5 @@ describe 'Skyed::Destroy.delete_user' do
   end
   it 'deletes user for deploy' do
     Skyed::Destroy.delete_user opsworks
-  end
-end
-
-describe 'Skyed::Destroy.wait_for_instance' do
-  let(:opsworks)    { double('Aws::OpsWorks::Client') }
-  let(:hostname)    { 'test-ifosch' }
-  let(:stack_id)    { 'e1403a56-286e-4b5e-6798-c3406c947b4a' }
-  let(:instance_id) { '12345678-1234-4321-5678-210987654321' }
-  let(:instance_shutting) do
-    Instance.new(
-      instance_id,
-      hostname,
-      stack_id,
-      nil,
-      'shutting_down'
-    )
-  end
-  let(:instance_term) do
-    Instance.new(
-      instance_id,
-      hostname,
-      stack_id,
-      nil,
-      'terminated'
-    )
-  end
-  before(:each) do
-    expect(Skyed::AWS::OpsWorks)
-      .to receive(:instance_by_name)
-      .with(hostname, stack_id, opsworks)
-      .once
-      .and_return(instance_shutting)
-    expect(Skyed::AWS::OpsWorks)
-      .to receive(:instance_by_name)
-      .with(hostname, stack_id, opsworks)
-      .and_return(instance_term)
-  end
-  it 'waits until instance is unregistered' do
-    Skyed::Destroy.wait_for_instance(hostname, stack_id, opsworks)
   end
 end

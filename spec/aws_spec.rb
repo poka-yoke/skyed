@@ -287,6 +287,79 @@ describe 'Skyed::AWS::RDS.login' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.wait_for_instance' do
+  let(:opsworks)  { double('Aws::OpsWorks::Client') }
+  let(:instance_name) { 'test-user1' }
+  let(:stack_id)      { '12345678-1234-1234-1234-123456789012' }
+  let(:instances)     { { instances: [instance2, instance1] } }
+  let(:instance1_booting) do
+    Instance.new(
+      '87654321-4321-4321-4321-210987654321',
+      instance_name,
+      stack_id,
+      nil,
+      'booting')
+  end
+  let(:instance1_online) do
+    Instance.new(
+      '87654321-4321-4321-4321-210987654321',
+      instance_name,
+      stack_id,
+      nil,
+      'online')
+  end
+  context 'when it is booting and waiting for online' do
+    before(:each) do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:instance_by_name)
+        .with(instance_name, stack_id, opsworks)
+        .once
+        .and_return(instance1_booting)
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:instance_by_name)
+        .with(instance_name, stack_id, opsworks)
+        .once
+        .and_return(instance1_online)
+    end
+    it 'waits for the instance to be in the correct status' do
+      Skyed::AWS::OpsWorks.wait_for_instance(
+        instance_name,
+        stack_id,
+        'online',
+        opsworks)
+    end
+  end
+  context 'when the instance gets deregistered it is nil' do
+    let(:instance1_deregistering) do
+      Instance.new(
+        '87654321-4321-4321-4321-210987654321',
+        instance_name,
+        stack_id,
+        nil,
+        'stopping')
+    end
+    before(:each) do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:instance_by_name)
+        .with(instance_name, stack_id, opsworks)
+        .once
+        .and_return(instance1_booting)
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:instance_by_name)
+        .with(instance_name, stack_id, opsworks)
+        .once
+        .and_return(nil)
+    end
+    it 'waits for the instance to be in the correct status' do
+      Skyed::AWS::OpsWorks.wait_for_instance(
+        instance_name,
+        stack_id,
+        'deregistered',
+        opsworks)
+    end
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.stack' do
   let(:opsworks) { double('Aws::OpsWorks::Client') }
   let(:stack1)   { { stack_id: '1', name: 'My First Stack' } }

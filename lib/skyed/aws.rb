@@ -115,6 +115,16 @@ module Skyed
       }
 
       class << self
+        def wait_for_instance(instance_name, stack_id, status, opsworks)
+          instance = Skyed::AWS::OpsWorks.instance_by_name(
+            instance_name, stack_id, opsworks)
+          until instance.nil? || instance.status == status
+            sleep(0)
+            instance = Skyed::AWS::OpsWorks.instance_by_name(
+              instance_name, stack_id, opsworks)
+          end
+        end
+
         def stack(stack_criteria, opsworks)
           stack_by_name(
             stack_criteria,

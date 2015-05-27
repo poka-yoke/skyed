@@ -11,31 +11,23 @@ module Skyed
         delete_user ow
       end
 
+      # TODO: Move to Skyed::AWS::OpsWorks
       def deregister_instance(hostname, ow)
         instance = Skyed::AWS::OpsWorks.instance_by_name(
           hostname, Skyed::Settings.stack_id, ow)
         ow.deregister_instance(
           instance_id: instance.instance_id) unless instance.nil?
-        wait_for_instance(
-          hostname, Skyed::Settings.stack_id, ow)
+        Skyed::AWS::OpsWorks.wait_for_instance(
+          hostname, Skyed::Settings.stack_id, 'terminated', ow)
       end
 
+      # TODO: Move to Skyed::AWS::OpsWorks
       def delete_user(ow)
         stack = ow.describe_stacks(
           stack_ids: [Skyed::Settings.stack_id])[:stacks][0][:name]
         layer = ow.describe_layers(
           layer_ids: [Skyed::Settings.layer_id])[:layers][0][:name]
         Skyed::AWS::IAM.delete_user "OpsWorks-#{stack}-#{layer}"
-      end
-
-      def wait_for_instance(hostname, stack_id, opsworks)
-        instance = Skyed::AWS::OpsWorks.instance_by_name(
-          hostname, stack_id, opsworks)
-        until instance.nil? || instance.status == 'terminated'
-          sleep(0)
-          instance = Skyed::AWS::OpsWorks.instance_by_name(
-            hostname, stack_id, opsworks)
-        end
       end
     end
   end
