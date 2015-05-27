@@ -287,6 +287,49 @@ describe 'Skyed::AWS::RDS.login' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.delete_user' do
+  let(:opsworks)  { double('Aws::OpsWorks::Client') }
+  let(:stack_id)  { '12345678-1234-1234-1234-123456789012' }
+  let(:stack_name) { 'stack' }
+  let(:layer_id)  { '87654321-4321-4321-4321-210987654321' }
+  let(:layer_name) { 'layer' }
+  let(:stack) do
+    {
+      stack_id: stack_id,
+      name: stack_name
+    }
+  end
+  let(:layer) do
+    {
+      layer_id: layer_id,
+      name: layer_name
+    }
+  end
+  before(:each) do
+    expect(Skyed::Settings)
+      .to receive(:stack_id)
+      .at_least(1)
+      .and_return(stack_id)
+    expect(opsworks)
+      .to receive(:describe_stacks)
+      .with(stack_ids: [stack_id])
+      .and_return(stacks: [stack])
+    expect(Skyed::Settings)
+      .to receive(:layer_id)
+      .and_return(layer_id)
+    expect(opsworks)
+      .to receive(:describe_layers)
+      .with(layer_ids: [layer_id])
+      .and_return(layers: [layer])
+    expect(Skyed::AWS::IAM)
+      .to receive(:delete_user)
+      .with('OpsWorks-stack-layer')
+  end
+  it 'deletes the current OpsWorks user' do
+    Skyed::AWS::OpsWorks.delete_user(opsworks)
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.wait_for_instance' do
   let(:opsworks)  { double('Aws::OpsWorks::Client') }
   let(:instance_name) { 'test-user1' }

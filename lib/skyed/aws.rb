@@ -115,6 +115,14 @@ module Skyed
       }
 
       class << self
+        def delete_user(opsworks)
+          stack = opsworks.describe_stacks(
+            stack_ids: [Skyed::Settings.stack_id])[:stacks][0][:name]
+          layer = opsworks.describe_layers(
+            layer_ids: [Skyed::Settings.layer_id])[:layers][0][:name]
+          Skyed::AWS::IAM.delete_user "OpsWorks-#{stack}-#{layer}"
+        end
+
         def wait_for_instance(instance_name, stack_id, status, opsworks)
           instance = Skyed::AWS::OpsWorks.instance_by_name(
             instance_name, stack_id, opsworks)

@@ -8,7 +8,7 @@ module Skyed
         `cd #{repo_path} && vagrant destroy -f`
         ow = Skyed::AWS::OpsWorks.login
         deregister_instance hostname, ow
-        delete_user ow
+        Skyed::AWS::OpsWorks.delete_user ow
       end
 
       # TODO: Move to Skyed::AWS::OpsWorks
@@ -19,15 +19,6 @@ module Skyed
           instance_id: instance.instance_id) unless instance.nil?
         Skyed::AWS::OpsWorks.wait_for_instance(
           hostname, Skyed::Settings.stack_id, 'terminated', ow)
-      end
-
-      # TODO: Move to Skyed::AWS::OpsWorks
-      def delete_user(ow)
-        stack = ow.describe_stacks(
-          stack_ids: [Skyed::Settings.stack_id])[:stacks][0][:name]
-        layer = ow.describe_layers(
-          layer_ids: [Skyed::Settings.layer_id])[:layers][0][:name]
-        Skyed::AWS::IAM.delete_user "OpsWorks-#{stack}-#{layer}"
       end
     end
   end

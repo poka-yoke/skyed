@@ -64,8 +64,9 @@ describe 'Skyed::Destroy.execute' do
     # expect(Skyed::Destroy)
     #   .to receive(:wait_for_instance)
     #   .with(hostname, stack_id, opsworks)
-    expect(Skyed::Destroy)
+    expect(Skyed::AWS::OpsWorks)
       .to receive(:delete_user)
+      .with(opsworks)
   end
   it 'destroys the vagrant machine' do
     Skyed::Destroy.execute(nil, nil, nil)
@@ -105,48 +106,5 @@ describe 'Skyed::Destroy.deregister_insatance' do
   end
   it 'deregisters the vagrant machine' do
     Skyed::Destroy.deregister_instance(hostname, opsworks)
-  end
-end
-
-describe 'Skyed::Destroy.delete_user' do
-  let(:opsworks)   { double('Aws::OpsWorks::Client') }
-  let(:stack_id)   { 'e1403a56-286e-4b5e-6798-c3406c947b4a' }
-  let(:stack_name) { 'stack' }
-  let(:layer_id)   { 'e1403a56-286e-4b5e-6798-c3406c947b4a' }
-  let(:layer_name) { 'layer' }
-  let(:stack) do
-    {
-      stack_id: stack_id,
-      name: stack_name
-    }
-  end
-  let(:layer) do
-    {
-      layer_id: layer_id,
-      name: layer_name
-    }
-  end
-  before do
-    expect(Skyed::Settings)
-      .to receive(:stack_id)
-      .at_least(1)
-      .and_return(stack_id)
-    expect(opsworks)
-      .to receive(:describe_stacks)
-      .with(stack_ids: [stack_id])
-      .and_return(stacks: [stack])
-    expect(Skyed::Settings)
-      .to receive(:layer_id)
-      .and_return(layer_id)
-    expect(opsworks)
-      .to receive(:describe_layers)
-      .with(layer_ids: [layer_id])
-      .and_return(layers: [layer])
-    expect(Skyed::AWS::IAM)
-      .to receive(:delete_user)
-      .with('OpsWorks-stack-layer')
-  end
-  it 'deletes user for deploy' do
-    Skyed::Destroy.delete_user opsworks
   end
 end
