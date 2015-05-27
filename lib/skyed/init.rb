@@ -44,13 +44,13 @@ module Skyed
         provisioning_path = File.join(Skyed::Settings.repo, '.provisioning')
         tasks_path = File.join(provisioning_path, 'tasks')
         aws_path = File.join(provisioning_path, 'templates', 'aws')
-        create_template(Skyed::Settings.repo, 'Vagrantfile',
-                        'templates/Vagrantfile.erb')
-        create_template(tasks_path, 'ow-on-premise.yml',
-                        'templates/ow-on-premise.yml.erb')
-        create_template(aws_path, 'config.j2', 'templates/config.j2.erb')
-        create_template(aws_path, 'credentials.j2',
-                        'templates/credentials.j2.erb')
+        Skyed::Utils.create_template(Skyed::Settings.repo, 'Vagrantfile',
+                                     'Vagrantfile.erb')
+        Skyed::Utils.create_template(tasks_path, 'ow-on-premise.yml',
+                                     'ow-on-premise.yml.erb')
+        Skyed::Utils.create_template(aws_path, 'config.j2', 'config.j2.erb')
+        Skyed::Utils.create_template(aws_path, 'credentials.j2',
+                                     'credentials.j2.erb')
       end
 
       def vagrant
@@ -59,19 +59,6 @@ module Skyed
         create_directory(Skyed::Settings.repo, '.provisioning/templates/aws')
         create_directory(Skyed::Settings.repo, '.provisioning/tasks')
         create_vagrant_files
-      end
-
-      def create_template(base, subpath, template_file)
-        b = binding
-        folders = subpath.split('/')
-        template = ERB.new(
-          File.read(
-            File.join(
-              File.dirname(File.dirname(File.dirname(__FILE__))),
-              template_file)))
-        File.open(File.join(base, folders), 'w') do |f|
-          f.write(template.result b)
-        end
       end
 
       def create_directory(base, subpath)

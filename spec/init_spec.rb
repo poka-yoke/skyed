@@ -247,30 +247,30 @@ describe 'Skyed::Init.vagrant' do
     allow(FileUtils)
       .to receive(:mkdir_p)
       .with(tasks_path)
-    expect(Skyed::Init)
+    expect(Skyed::Utils)
       .to receive(:create_template)
       .with(
         repo_path,
         'Vagrantfile',
-        'templates/Vagrantfile.erb')
-    expect(Skyed::Init)
+        'Vagrantfile.erb')
+    expect(Skyed::Utils)
       .to receive(:create_template)
       .with(
         File.join(repo_path, '.provisioning', 'tasks'),
         'ow-on-premise.yml',
-        'templates/ow-on-premise.yml.erb')
-    expect(Skyed::Init)
+        'ow-on-premise.yml.erb')
+    expect(Skyed::Utils)
       .to receive(:create_template)
       .with(
         File.join(repo_path, '.provisioning', 'templates', 'aws'),
         'config.j2',
-        'templates/config.j2.erb')
-    expect(Skyed::Init)
+        'config.j2.erb')
+    expect(Skyed::Utils)
       .to receive(:create_template)
       .with(
         File.join(repo_path, '.provisioning', 'templates', 'aws'),
         'credentials.j2',
-        'templates/credentials.j2.erb')
+        'credentials.j2.erb')
   end
   it 'sets vagrant up' do
     allow($CHILD_STATUS)
