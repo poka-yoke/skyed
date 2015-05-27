@@ -29,7 +29,7 @@ describe 'Skyed::Git.clone_stack_remote' do
       .to receive(:create_template)
       .with('/tmp', 'ssh-git', 'ssh-git.erb')
     expect(File)
-      .to receive(:chmos)
+      .to receive(:chmod)
       .with(0755, '/tmp/ssh-git')
     expect(::Git)
       .to receive(:clone)
