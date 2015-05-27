@@ -38,6 +38,55 @@ module Skyed
       end
     end
 
+    # This module encapsulates all the RDS related functions.
+    module RDS
+      class << self
+        def wait_for_instance(instance_name, status, wait = 0, rds = nil)
+          rds = login if rds.nil?
+          instance = rds.describe_db_instances(
+            db_instance_identifier: instance_name)[:db_instances][0]
+          while instance[:db_instance_status] != status
+            sleep(wait)
+            instance = rds.describe_db_instances(
+              db_instance_identifier: instance_name)[:db_instances][0]
+          end
+        end
+
+        def generate_params(instance_name, options)
+          {
+            db_instance_identifier: instance_name,
+            allocated_storage: options[:size],
+            db_instance_class: "db.#{options[:type]}",
+            engine: 'postgres',
+            master_username: options[:user],
+            master_user_password: options[:pass],
+            db_security_groups: [options[:db_security_group_name]],
+            db_parameter_group_name: options[:db_parameters_group_name]
+          }
+        end
+
+        def create_instance(instance_name, options, rds = nil)
+          rds = login if rds.nil?
+          rds.create_db_instance(
+            generate_params(instance_name, options))[:db_instance]
+          wait_for_instance(instance_name, 'available', 0, rds)
+          db_instance = rds.describe_db_instances(
+            db_instance_identifier: instance_name)[:db_instances][0]
+          "#{db_instance[:endpoint][:address]}:#{db_instance[:endpoint][:port]}"
+        end
+
+        def login(
+          access = Skyed::Settings.access_key,
+          secret = Skyed::Settings.secret_key,
+          region = Skyed::AWS.region)
+          Aws::RDS::Client.new(
+            access_key_id: access,
+            secret_access_key: secret,
+            region: region)
+        end
+      end
+    end
+
     # This module encapsulates all the OpsWorks related functions.
     module OpsWorks
       STACK = {

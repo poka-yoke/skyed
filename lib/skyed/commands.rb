@@ -53,3 +53,32 @@ command :destroy do |cmd|
     Skyed::Destroy.execute(global_options, options, args)
   end
 end
+
+desc 'Create instance'
+long_desc 'Create instance'
+
+command :create do |cmd|
+  cmd.switch :rds, default_value: false,
+                   desc: 'Creates RDS instance'
+  cmd.flag :size, default_value: 100,
+                  type: Integer,
+                  desc: 'Size of the RDS instance'
+  cmd.flag :type, default_value: 'm1.large',
+                  type: String,
+                  desc: 'Type of the RDS instance'
+  cmd.flag :user, default_value: 'root',
+                  type: String,
+                  desc: 'Master user of the RDS instance'
+  cmd.flag :pass, default_value: 'password',
+                  type: String,
+                  desc: 'Master password of the RDS instance'
+  cmd.flag :db_security_group_name, default_value: 'rds-launch-wizard',
+                                    type: String,
+                                    desc: 'Name of the DB Security Group'
+  cmd.flag :db_parameters_group_name, default_value: 'default',
+                                      type: String,
+                                      desc: 'Name of the DB Parameter Group'
+  cmd.action do |global_options, options, args|
+    Skyed::Create.execute(global_options, options, args)
+  end
+end

@@ -131,6 +131,162 @@ describe 'Skyed::AWS.confirm_credentials?' do
   end
 end
 
+describe 'Skyed::AWS::RDS.wait_for_instance' do
+  let(:rds)           { double('AWS::RDS::Client') }
+  let(:instance_name) { 'my-rds' }
+  let(:status_pending) do
+    {
+      db_instance_identifier: instance_name,
+      db_instance_status: 'pending'
+    }
+  end
+  let(:status_available) do
+    {
+      db_instance_identifier: instance_name,
+      db_instance_status: 'available'
+    }
+  end
+  before(:each) do
+    expect(rds)
+      .to receive(:describe_db_instances)
+      .with(db_instance_identifier: instance_name)
+      .and_return(db_instances: [status_pending])
+    expect(rds)
+      .to receive(:describe_db_instances)
+      .with(db_instance_identifier: instance_name)
+      .and_return(db_instances: [status_available])
+  end
+  it 'waits for the status to be available' do
+    Skyed::AWS::RDS.wait_for_instance(instance_name, 'available', 0, rds)
+  end
+end
+
+describe 'Skyed::AWS::RDS.generate_params' do
+  let(:options) do
+    {
+      size: 100,
+      type: 'm1.large',
+      user: 'root',
+      pass: 'my_password',
+      db_security_group_name: 'rds-launch-wizard',
+      db_parameters_group_name: 'my_db_params'
+    }
+  end
+  let(:instance_name) { 'my-rds' }
+  let(:generated_args) do
+    {
+      db_instance_identifier: instance_name,
+      allocated_storage: 100,
+      db_instance_class: 'db.m1.large',
+      engine: 'postgres',
+      master_username: 'root',
+      master_user_password: 'my_password',
+      db_security_groups: ['rds-launch-wizard'],
+      db_parameter_group_name: 'my_db_params'
+    }
+  end
+  it 'generates arguments for the create_db_instance' do
+    expect(Skyed::AWS::RDS.generate_params(instance_name, options))
+      .to eq(generated_args)
+  end
+end
+
+describe 'Skyed::AWS::RDS.create_instance' do
+  let(:rds)           { double('AWS::RDS::Client') }
+  let(:options) do
+    {
+      size: 100,
+      type: 'm1.large',
+      user: 'root',
+      pass: 'my_password',
+      db_security_group_name: 'rds-launch-wizard',
+      db_parameters_group_name: 'my_db_params'
+    }
+  end
+  let(:instance_name) { 'my-rds' }
+  let(:endpoint)      { 'my-rds.c7werpdeshqu.us-east-1.rds.amazonaws.com' }
+  let(:port)          { 5432 }
+  let(:response) do
+    {
+      endpoint: {
+        address: endpoint,
+        port: port
+      }
+    }
+  end
+  let(:status_available) do
+    {
+      db_instance_identifier: instance_name,
+      db_instance_status: 'available',
+      endpoint: {
+        address: endpoint,
+        port: port
+      }
+    }
+  end
+  let(:generated_args) do
+    {
+      db_instance_identifier: instance_name,
+      allocated_storage: 100,
+      db_instance_class: 'db.m1.large',
+      engine: 'postgres',
+      master_username: 'root',
+      master_user_password: 'my_password',
+      db_security_groups: ['rds-launch-wizard'],
+      db_parameter_group_name: 'my_db_params'
+    }
+  end
+  before(:each) do
+    expect(Skyed::AWS::RDS)
+      .to receive(:login)
+      .and_return(rds)
+    expect(Skyed::AWS::RDS)
+      .to receive(:generate_params)
+      .with(instance_name, options)
+      .and_return(generated_args)
+    expect(rds)
+      .to receive(:create_db_instance)
+      .with(generated_args)
+      .and_return(db_instance: response)
+    expect(Skyed::AWS::RDS)
+      .to receive(:wait_for_instance)
+      .with(instance_name, 'available', 0, rds)
+    expect(rds)
+      .to receive(:describe_db_instances)
+      .with(db_instance_identifier: instance_name)
+      .and_return(db_instances: [status_available])
+  end
+  it 'creates the new instance' do
+    expect(Skyed::AWS::RDS.create_instance(instance_name, options))
+      .to eq("#{endpoint}:#{port}")
+  end
+end
+
+describe 'Skyed::AWS::RDS.login' do
+  let(:rds)        { double('AWS::RDS::Client') }
+  let(:access_key) { 'AKIAASASASASASAS' }
+  let(:secret_key) { 'zMdiopqw0923pojsdfklhjdesa09213' }
+  before(:each) do
+    expect(Skyed::Settings)
+      .to receive(:access_key)
+      .and_return(access_key)
+    expect(Skyed::Settings)
+      .to receive(:secret_key)
+      .and_return(secret_key)
+    expect(Aws::RDS::Client)
+      .to receive(:new)
+      .with(
+        access_key_id: access_key,
+        secret_access_key: secret_key,
+        region: 'us-east-1')
+      .and_return(rds)
+  end
+  it 'logins and returns the RDS client' do
+    expect(Skyed::AWS::RDS.login)
+      .to eq(rds)
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.stack' do
   let(:opsworks) { double('Aws::OpsWorks::Client') }
   let(:stack1)   { { stack_id: '1', name: 'My First Stack' } }

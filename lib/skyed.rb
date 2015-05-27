@@ -1,3 +1,4 @@
+require 'skyed/create'
 require 'skyed/utils'
 require 'skyed/git'
 require 'skyed/aws'
