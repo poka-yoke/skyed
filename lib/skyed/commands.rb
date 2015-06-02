@@ -49,6 +49,11 @@ desc 'Destroy instance'
 long_desc 'Destroy instance'
 
 command :destroy do |cmd|
+  cmd.switch :rds, default_value: false,
+                   desc: 'Destroys RDS instance'
+  cmd.flag :final_snapshot_name, default_value: '',
+                                 type: String,
+                                 desc: 'Final snapshot name. Ommit to skip'
   cmd.action do |global_options, options, args|
     Skyed::Destroy.execute(global_options, options, args)
   end

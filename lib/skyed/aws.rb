@@ -41,6 +41,36 @@ module Skyed
     # This module encapsulates all the RDS related functions.
     module RDS
       class << self
+        def destroy_instance(instance_name, options, rds = nil)
+          rds = login if rds.nil?
+          rds.delete_db_instance(
+            generate_params(instance_name, options))[:db_instance]
+        end
+
+        def generate_delete_params(instance_name, options)
+          snapshot = !options[:final_snapshot_name].empty?
+          params = {
+            db_instance_identifier: instance_name,
+            skip_final_snapshot: !snapshot
+          }
+          params[
+            :final_snapshot_name] = options[:final_snapshot_name] if snapshot
+          params
+        end
+
+        def generate_create_params(instance_name, options)
+          {
+            db_instance_identifier: instance_name,
+            allocated_storage: options[:size],
+            db_instance_class: "db.#{options[:type]}",
+            engine: 'postgres',
+            master_username: options[:user],
+            master_user_password: options[:pass],
+            db_security_groups: [options[:db_security_group_name]],
+            db_parameter_group_name: options[:db_parameters_group_name]
+          }
+        end
+
         def wait_for_instance(instance_name, status, wait = 0, rds = nil)
           rds = login if rds.nil?
           instance = rds.describe_db_instances(
@@ -53,16 +83,11 @@ module Skyed
         end
 
         def generate_params(instance_name, options)
-          {
-            db_instance_identifier: instance_name,
-            allocated_storage: options[:size],
-            db_instance_class: "db.#{options[:type]}",
-            engine: 'postgres',
-            master_username: options[:user],
-            master_user_password: options[:pass],
-            db_security_groups: [options[:db_security_group_name]],
-            db_parameter_group_name: options[:db_parameters_group_name]
-          }
+          params = generate_delete_params(
+            instance_name, options) if options.key? :final_snapshot_name
+          params = generate_create_params(
+            instance_name, options) if options.key? :user
+          params
         end
 
         def create_instance(instance_name, options, rds = nil)

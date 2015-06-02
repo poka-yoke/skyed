@@ -161,33 +161,115 @@ describe 'Skyed::AWS::RDS.wait_for_instance' do
   end
 end
 
-describe 'Skyed::AWS::RDS.generate_params' do
+describe 'Skyed::AWS::RDS.destroy_instance' do
+  let(:rds)           { double('AWS::RDS::Client') }
+  let(:instance_name) { 'my-rds' }
   let(:options) do
     {
-      size: 100,
-      type: 'm1.large',
-      user: 'root',
-      pass: 'my_password',
-      db_security_group_name: 'rds-launch-wizard',
-      db_parameters_group_name: 'my_db_params'
+      rds: true,
+      final_snapshot_name: ''
     }
   end
-  let(:instance_name) { 'my-rds' }
   let(:generated_args) do
     {
       db_instance_identifier: instance_name,
-      allocated_storage: 100,
-      db_instance_class: 'db.m1.large',
-      engine: 'postgres',
-      master_username: 'root',
-      master_user_password: 'my_password',
-      db_security_groups: ['rds-launch-wizard'],
-      db_parameter_group_name: 'my_db_params'
+      skip_final_snapshot: true
     }
   end
-  it 'generates arguments for the create_db_instance' do
-    expect(Skyed::AWS::RDS.generate_params(instance_name, options))
-      .to eq(generated_args)
+  let(:response) do
+    {
+      db_instance_identifier: instance_name
+    }
+  end
+  before(:each) do
+    expect(Skyed::AWS::RDS)
+      .to receive(:login)
+      .and_return(rds)
+    expect(Skyed::AWS::RDS)
+      .to receive(:generate_params)
+      .with(instance_name, options)
+      .and_return(generated_args)
+    expect(rds)
+      .to receive(:delete_db_instance)
+      .with(generated_args)
+      .and_return(db_instance: response)
+  end
+  it 'deletes the instance' do
+    Skyed::AWS::RDS.destroy_instance(instance_name, options)
+  end
+end
+
+describe 'Skyed::AWS::RDS.generate_params' do
+  context 'when invoked for create instance' do
+    let(:options) do
+      {
+        rds: true,
+        size: 100,
+        type: 'm1.large',
+        user: 'root',
+        pass: 'my_password',
+        db_security_group_name: 'rds-launch-wizard',
+        db_parameters_group_name: 'my_db_params'
+      }
+    end
+    let(:instance_name) { 'my-rds' }
+    let(:generated_args) do
+      {
+        db_instance_identifier: instance_name,
+        allocated_storage: 100,
+        db_instance_class: 'db.m1.large',
+        engine: 'postgres',
+        master_username: 'root',
+        master_user_password: 'my_password',
+        db_security_groups: ['rds-launch-wizard'],
+        db_parameter_group_name: 'my_db_params'
+      }
+    end
+    it 'generates arguments for the create_db_instance' do
+      expect(Skyed::AWS::RDS.generate_params(instance_name, options))
+        .to eq(generated_args)
+    end
+  end
+  context 'when invoked for delete instance' do
+    context 'without final_snapshot_name' do
+      let(:options) do
+        {
+          rds: true,
+          final_snapshot_name: ''
+        }
+      end
+      let(:instance_name) { 'my-rds' }
+      let(:generated_args) do
+        {
+          db_instance_identifier: instance_name,
+          skip_final_snapshot: true
+        }
+      end
+      it 'generates arguments for the delete_db_instance' do
+        expect(Skyed::AWS::RDS.generate_params(instance_name, options))
+          .to eq(generated_args)
+      end
+    end
+    context 'with final_snapshot_name' do
+      let(:options) do
+        {
+          rds: true,
+          final_snapshot_name: 'final_snap'
+        }
+      end
+      let(:instance_name) { 'my-rds' }
+      let(:generated_args) do
+        {
+          db_instance_identifier: instance_name,
+          skip_final_snapshot: false,
+          final_snapshot_name: 'final_snap'
+        }
+      end
+      it 'generates arguments for the delete_db_instance' do
+        expect(Skyed::AWS::RDS.generate_params(instance_name, options))
+          .to eq(generated_args)
+      end
+    end
   end
 end
 
@@ -195,6 +277,7 @@ describe 'Skyed::AWS::RDS.create_instance' do
   let(:rds)           { double('AWS::RDS::Client') }
   let(:options) do
     {
+      rds: true,
       size: 100,
       type: 'm1.large',
       user: 'root',
