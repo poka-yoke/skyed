@@ -1,6 +1,32 @@
 require 'spec_helper'
 require 'skyed'
 
+describe 'Skyed::Utils.export_credentials' do
+  let(:access) { 'AIKA' }
+  let(:secret) { 'Z3Mw' }
+  before(:all) do
+    @access = ENV['AWS_ACCESS_KEY']
+    @secret = ENV['AWS_SECRET_KEY']
+  end
+  before do
+    expect(Skyed::Settings)
+      .to receive(:access_key)
+      .and_return(access)
+    expect(Skyed::Settings)
+      .to receive(:secret_key)
+      .and_return(secret)
+  end
+  after(:all) do
+    ENV['AWS_ACCESS_KEY'] = @access
+    ENV['AWS_SECRET_KEY'] = @secret
+  end
+  it 'exports AWS_ACCESS_KEY and AWS_SECRET_KEY with corresponding values' do
+    Skyed::Utils.export_credentials
+    expect(ENV['AWS_ACCESS_KEY']).to eq(access)
+    expect(ENV['AWS_ACCESS_KEY']).to eq(access)
+  end
+end
+
 describe 'Skyed::Utils.create_template' do
   let(:base)          { '/tmp' }
   let(:subpath)       { 'file' }

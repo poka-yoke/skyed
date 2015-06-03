@@ -4,6 +4,11 @@ module Skyed
   # This module encapsulates some generic utility functions.
   module Utils
     class << self
+      def export_credentials
+        ENV['AWS_ACCESS_KEY'] = Skyed::Settings.access_key
+        ENV['AWS_SECRET_KEY'] = Skyed::Settings.secret_key
+      end
+
       def create_template(base, subpath, template_file)
         b = binding
         folders = subpath.split('/')

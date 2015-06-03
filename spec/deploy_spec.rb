@@ -9,6 +9,8 @@ describe 'Skyed::Deploy.execute' do
       expect(Skyed::Settings)
         .to receive(:empty?)
         .and_return(false)
+      expect(Skyed::Utils)
+        .to receive(:export_credentials)
       expect(Skyed::Settings)
         .to receive(:repo)
         .and_return(repo_path)
