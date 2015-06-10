@@ -2,18 +2,19 @@ desc 'Initialize skyed'
 long_desc 'Sets up skyed configuration for a repository'
 
 command :init do |cmd|
-  cmd.flag :remote, default_value: nil,
-                    type: String,
-                    desc: 'Remote to use in OpsWorks'
-  cmd.flag :repo, default_value: '.',
-                  type: String,
-                  desc: 'OpsWorks repository location'
-  cmd.flag :repo_key, default_value: nil,
+  cmd.flag [:remote], default_value: nil,
                       type: String,
-                      desc: 'Key to use with repo'
-  cmd.flag :chef_version, default_value: '11.10',
-                          type: String,
-                          desc: 'Chef version to use in OpsWorks'
+                      desc: 'Remote to use in OpsWorks'
+  cmd.flag [:repo], default_value: '.',
+                    type: String,
+                    desc: 'OpsWorks repository location'
+  cmd.flag [:repo_key, 'repo-key'], default_value: nil,
+                                    type: String,
+                                    desc: 'Key to use with repo'
+  desc = 'Chef version to use in OpsWorks'
+  cmd.flag [:chef_version, 'chef-version'], default_value: '11.10',
+                                            type: String,
+                                            desc: desc
   cmd.action do |global_options, options|
     Skyed::Init.execute(global_options, options)
   end
@@ -40,12 +41,13 @@ command :run do |cmd|
   cmd.flag [:l, :layer], default_value: nil,
                          type: String,
                          desc: layer_desc
-  cmd.flag [:w, :wait_interval], default_value: 30,
-                                 type: Integer,
-                                 desc: 'Time to wait for AWS responses'
-  cmd.flag [:j, :custom_json], default_value: '',
-                               type: String,
-                               desc: 'Custom JSON to pass to OW'
+  desc = 'Time to wait for AWS responses'
+  cmd.flag [:w, :wait_interval, 'wait-interval'], default_value: 30,
+                                                  type: Integer,
+                                                  desc: desc
+  cmd.flag [:j, :custom_json, 'custom-json'], default_value: '',
+                                              type: String,
+                                              desc: 'Custom JSON to pass to OW'
   cmd.action do |global_options, options, args|
     Skyed::Run.execute(global_options, options, args)
   end
@@ -55,11 +57,12 @@ desc 'Destroy instance'
 long_desc 'Destroy instance'
 
 command :destroy do |cmd|
-  cmd.switch :rds, default_value: false,
-                   desc: 'Destroys RDS instance'
-  cmd.flag :final_snapshot_name, default_value: '',
-                                 type: String,
-                                 desc: 'Final snapshot name. Ommit to skip'
+  cmd.switch [:rds], default_value: false,
+                     desc: 'Destroys RDS instance'
+  desc = 'Final snapshot name. Ommit to skip'
+  cmd.flag [:final_snapshot_name, 'final-snapshot-name'], default_value: '',
+                                                          type: String,
+                                                          desc: desc
   cmd.action do |global_options, options, args|
     Skyed::Destroy.execute(global_options, options, args)
   end
@@ -69,26 +72,30 @@ desc 'Create instance'
 long_desc 'Create instance'
 
 command :create do |cmd|
-  cmd.switch :rds, default_value: false,
-                   desc: 'Creates RDS instance'
-  cmd.flag :size, default_value: 100,
-                  type: Integer,
-                  desc: 'Size of the RDS instance'
-  cmd.flag :type, default_value: 'm1.large',
-                  type: String,
-                  desc: 'Type of the RDS instance'
-  cmd.flag :user, default_value: 'root',
-                  type: String,
-                  desc: 'Master user of the RDS instance'
-  cmd.flag :pass, default_value: 'password',
-                  type: String,
-                  desc: 'Master password of the RDS instance'
-  cmd.flag :db_security_group_name, default_value: 'rds-launch-wizard',
-                                    type: String,
-                                    desc: 'Name of the DB Security Group'
-  cmd.flag :db_parameters_group_name, default_value: 'default',
-                                      type: String,
-                                      desc: 'Name of the DB Parameter Group'
+  cmd.switch [:rds], default_value: false,
+                     desc: 'Creates RDS instance'
+  cmd.flag [:size], default_value: 100,
+                    type: Integer,
+                    desc: 'Size of the RDS instance'
+  cmd.flag [:type], default_value: 'm1.large',
+                    type: String,
+                    desc: 'Type of the RDS instance'
+  cmd.flag [:user], default_value: 'root',
+                    type: String,
+                    desc: 'Master user of the RDS instance'
+  cmd.flag [:password], default_value: 'password',
+                        type: String,
+                        desc: 'Master password of the RDS instance'
+  defval = 'rds-launch-wizard'
+  desc = 'Name of the DB Security Group'
+  cmd.flag [:db_security_group, 'db-security-group'], default_value: defval,
+                                                      type: String,
+                                                      desc: desc
+  defval = 'default'
+  desc = 'Name of the DB Parameter Group'
+  cmd.flag [:db_parameters_group, 'db-parameters-group'], default_value: defval,
+                                                          type: String,
+                                                          desc: desc
   cmd.action do |global_options, options, args|
     Skyed::Create.execute(global_options, options, args)
   end
