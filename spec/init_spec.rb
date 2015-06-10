@@ -11,9 +11,6 @@ describe 'Skyed::Init.execute' do
         .to receive(:empty?)
         .and_return(true)
       expect(Skyed::Init)
-        .to receive(:get_repo)
-        .and_return(repository)
-      expect(Skyed::Init)
         .to receive(:repo_path)
         .and_return(repo_path)
       expect(repo_path)
@@ -32,13 +29,23 @@ describe 'Skyed::Init.execute' do
         .to receive(:save)
     end
     context 'without any option' do
+      let(:options) do
+        {
+          remote: 'name',
+          repo: '.'
+        }
+      end
       before(:each) do
         expect(Skyed::Init)
+          .to receive(:get_repo)
+          .with('.')
+          .and_return(repository)
+        expect(Skyed::Init)
           .to receive(:branch)
-          .with(nil, nil)
+          .with(nil, options)
       end
       it 'initializes it' do
-        Skyed::Init.execute(nil, nil)
+        Skyed::Init.execute(nil, options)
       end
     end
   end

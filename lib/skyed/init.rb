@@ -12,7 +12,7 @@ module Skyed
     class << self
       def execute(global_options, options)
         fail 'Already initialized' unless Skyed::Settings.empty?
-        Skyed::Settings.repo = repo_path(get_repo).to_s
+        Skyed::Settings.repo = repo_path(get_repo(options[:repo])).to_s
         branch global_options, options
         credentials
         opsworks_git_key
@@ -136,16 +136,14 @@ module Skyed
         Pathname.new(repo.repo.path).dirname
       end
 
-      def get_repo(path = '.', ask = true)
+      def get_repo(path = '.')
         question = 'Which is your CM repository? '
+        force_ask = path == '.'
         repo = repo?(path)
-        if !repo
-          say("ERROR: #{path} is not a repository")
-          repo = get_repo(ask(question), false)
-        elsif ask
-          repo = get_repo(
-            ask(question) { |q| q.default = repo_path(repo).to_s }, false)
-        end
+        say("ERROR: #{path} is not a repository") unless repo
+        repo = get_repo(
+            ask(question) { |q| q.default = repo_path(repo).to_s }
+        ) if !repo || force_ask
         repo
       end
 
