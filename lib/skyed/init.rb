@@ -15,7 +15,7 @@ module Skyed
         Skyed::Settings.repo = repo_path(get_repo(options[:repo])).to_s
         branch global_options, options
         credentials
-        opsworks_git_key
+        opsworks_git_key options
         opsworks options
         vagrant
         Skyed::Settings.save
@@ -116,9 +116,9 @@ module Skyed
         ask(question + remotes_names.to_s)
       end
 
-      def opsworks_git_key
+      def opsworks_git_key(options)
         question = 'Which ssh key should be used for the git repository? '
-        Skyed::Settings.opsworks_git_key = ask(question)
+        Skyed::Settings.opsworks_git_key = options[:repo_key] || ask(question)
       end
 
       def credentials(

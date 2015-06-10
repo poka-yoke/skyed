@@ -20,8 +20,6 @@ describe 'Skyed::Init.execute' do
         .to receive(:credentials)
         .and_return(%w( 'a', 'a' ))
       expect(Skyed::Init)
-        .to receive(:opsworks_git_key)
-      expect(Skyed::Init)
         .to receive(:opsworks)
       expect(Skyed::Init)
         .to receive(:vagrant)
@@ -31,8 +29,9 @@ describe 'Skyed::Init.execute' do
     context 'without any option' do
       let(:options) do
         {
-          remote: 'name',
-          repo: '.'
+          remote: nil,
+          repo: '.',
+          repo_key: nil
         }
       end
       before(:each) do
@@ -43,6 +42,9 @@ describe 'Skyed::Init.execute' do
         expect(Skyed::Init)
           .to receive(:branch)
           .with(nil, options)
+        expect(Skyed::Init)
+          .to receive(:opsworks_git_key)
+          .with(options)
       end
       it 'initializes it' do
         Skyed::Init.execute(nil, options)

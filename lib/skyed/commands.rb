@@ -8,6 +8,9 @@ command :init do |cmd|
   cmd.flag :repo, default_value: '.',
                   type: String,
                   desc: 'OpsWorks repository location'
+  cmd.flag :repo_key, default_value: nil,
+                      type: String,
+                      desc: 'Key to use with repo'
   cmd.flag :chef_version, default_value: '11.10',
                           type: String,
                           desc: 'Chef version to use in OpsWorks'
