@@ -340,6 +340,7 @@ module Skyed
 
         def generate_stack_params(options)
           params = basic_stack_params
+          params[:custom_json] = options[:custom_json] || ''
           params[:custom_cookbooks_source] = custom_cookbooks_source(
             STACK[:custom_cookbooks_source])
           params[:configuration_manager] = configuration_manager(

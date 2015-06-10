@@ -1292,6 +1292,7 @@ describe 'Skyed::AWS::OpsWorks.generate_params' do
       expect(params).to have_key(:default_os)
       expect(params).to have_key(:default_ssh_key_name)
       expect(params).to have_key(:custom_cookbooks_source)
+      expect(params).to have_key(:custom_json)
       expect(params).to have_key(:configuration_manager)
       expect(params).to have_key(:use_custom_cookbooks)
       expect(params).to have_key(:use_opsworks_security_groups)
@@ -1320,6 +1321,7 @@ describe 'Skyed::AWS::OpsWorks.generate_params' do
         expect(params).to have_key(:default_os)
         expect(params).to have_key(:default_ssh_key_name)
         expect(params).to have_key(:custom_cookbooks_source)
+        expect(params).to have_key(:custom_json)
         expect(params).to have_key(:configuration_manager)
         expect(params).to have_key(:use_custom_cookbooks)
         expect(params).to have_key(:use_opsworks_security_groups)
@@ -1330,6 +1332,30 @@ describe 'Skyed::AWS::OpsWorks.generate_params' do
         expect(params[:default_ssh_key_name]).to eq(ssh_key_name)
         expect(params[:custom_cookbooks_source]).to eq(custom_cookbooks_source)
         expect(params[:configuration_manager]).to eq(configuration_manager)
+      end
+    end
+    context 'and custom_json option have been issued' do
+      let(:options) { { custom_json: '{ "some_key": "some_value" }' } }
+      it 'generates the stack parameters with current settings' do
+        params = Skyed::AWS::OpsWorks.generate_params(nil, options)
+        expect(params).to be_a(Hash)
+        expect(params).to have_key(:name)
+        expect(params).to have_key(:region)
+        expect(params).to have_key(:service_role_arn)
+        expect(params).to have_key(:default_instance_profile_arn)
+        expect(params).to have_key(:default_os)
+        expect(params).to have_key(:default_ssh_key_name)
+        expect(params).to have_key(:custom_cookbooks_source)
+        expect(params).to have_key(:custom_json)
+        expect(params).to have_key(:use_custom_cookbooks)
+        expect(params).to have_key(:use_opsworks_security_groups)
+        expect(params[:name]).to eq(username)
+        expect(params[:region]).to eq(region)
+        expect(params[:service_role_arn]).to eq(service_role_ARN)
+        expect(params[:default_instance_profile_arn]).to eq(instance_prof_ARN)
+        expect(params[:default_ssh_key_name]).to eq(ssh_key_name)
+        expect(params[:custom_cookbooks_source]).to eq(custom_cookbooks_source)
+        expect(params[:custom_json]).to eq(options[:custom_json])
       end
     end
   end
