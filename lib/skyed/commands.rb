@@ -11,6 +11,9 @@ command :init do |cmd|
   cmd.flag [:repo_key, 'repo-key'], default_value: nil,
                                     type: String,
                                     desc: 'Key to use with repo'
+  cmd.flag [:j, :custom_json, 'custom-json'], default_value: '',
+                                              type: String,
+                                              desc: 'Custom JSON to pass to OW'
   desc = 'Chef version to use in OpsWorks'
   cmd.flag [:chef_version, 'chef-version'], default_value: '11.10',
                                             type: String,

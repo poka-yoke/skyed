@@ -80,6 +80,7 @@ describe 'Skyed::Init.opsworks' do
         name: 'Chef',
         version: '11.10'
       },
+      custom_json: '',
       use_custom_cookbooks: true,
       default_ssh_key_name: 'key-pair',
       custom_cookbooks_source: {
@@ -155,6 +156,7 @@ describe 'Skyed::Init.opsworks' do
           },
           use_custom_cookbooks: true,
           default_ssh_key_name: 'key-pair',
+          custom_json: '',
           custom_cookbooks_source: {
             url: 'git@github.com:user/repo',
             revision: 'devel-1',
@@ -168,6 +170,44 @@ describe 'Skyed::Init.opsworks' do
         expect(Skyed::AWS::OpsWorks)
           .to receive(:generate_params)
           .with(nil, chef_version: '11.04')
+          .and_return(stack_params2)
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:create_stack)
+          .with(stack_params2, opsworks)
+      end
+      it 'sets up opsworks stack' do
+        Skyed::Init.opsworks options
+      end
+    end
+    context 'and custom-json option have been issued' do
+      let(:options) { { custom_json: '{ "some_key": "some_value" }' } }
+      let(:stack_params2) do
+        {
+          name: 'user',
+          region: 'us-east-1',
+          service_role_arn: service_role_ARN,
+          default_instance_profile_arn: instance_profile_ARN,
+          default_os: 'Ubuntu 12.04 LTS',
+          configuration_manager: {
+            name: 'Chef',
+            version: '11.04'
+          },
+          use_custom_cookbooks: true,
+          default_ssh_key_name: 'key-pair',
+          custom_json: options[:custom_json],
+          custom_cookbooks_source: {
+            url: 'git@github.com:user/repo',
+            revision: 'devel-1',
+            ssh_key: 'ASDDFSASDFASDF',
+            type: 'git'
+          },
+          use_opsworks_security_groups: false
+        }
+      end
+      before(:each) do
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:generate_params)
+          .with(nil, options)
           .and_return(stack_params2)
         expect(Skyed::AWS::OpsWorks)
           .to receive(:create_stack)
