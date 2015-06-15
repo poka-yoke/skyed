@@ -131,6 +131,34 @@ describe 'Skyed::AWS.confirm_credentials?' do
   end
 end
 
+describe 'Skyed::AWS::RDS.list_snapshots' do
+  let(:rds)       { double('AWS::RDS::Client') }
+  let(:options) do
+    {
+      rds: true
+    }
+  end
+  let(:response)  { double('Aws::RDS::Types::DBSnapshotMessage') }
+  let(:snapshot1) { double('Aws::RDS::Types::DBSnapshot') }
+  let(:snapshot2) { double('Aws::RDS::Types::DBSnapshot') }
+  let(:snapshots) { [snapshot1, snapshot2] }
+  before(:each) do
+    expect(Skyed::AWS::RDS)
+      .to receive(:login)
+      .and_return(rds)
+    expect(rds)
+      .to receive(:describe_db_snapshots)
+      .and_return(response)
+    expect(response)
+      .to receive(:db_snapshots)
+      .and_return(snapshots)
+  end
+  it 'lists all snapshots' do
+    expect(Skyed::AWS::RDS.list_snapshots(options, nil))
+      .to eq(snapshots)
+  end
+end
+
 describe 'Skyed::AWS::RDS.wait_for_instance' do
   let(:rds)           { double('AWS::RDS::Client') }
   let(:instance_name) { 'my-rds' }
