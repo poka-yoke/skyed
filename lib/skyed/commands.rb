@@ -103,3 +103,15 @@ command :create do |cmd|
     Skyed::Create.execute(global_options, options, args)
   end
 end
+
+desc 'List objects'
+long_desc 'List objects'
+
+command :list do |cmd|
+  cmd.switch [:rds], default_value: false,
+                     desc: 'Lists RDS objects'
+
+  cmd.action do |global_options, options, args|
+    Skyed::List.execute(global_options, options, args)
+  end
+end

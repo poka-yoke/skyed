@@ -45,7 +45,6 @@ module Skyed
           rds = login if rds.nil?
           request = {}
           request[:db_instance_identifier] = args.first unless args.nil?
-          puts "#{request}"
           response = rds.describe_db_snapshots(request)
           response.db_snapshots
         end
