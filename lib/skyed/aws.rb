@@ -41,9 +41,13 @@ module Skyed
     # This module encapsulates all the RDS related functions.
     module RDS
       class << self
-        def list_snapshots(_options, _args, rds = nil)
+        def list_snapshots(_options, args, rds = nil)
           rds = login if rds.nil?
-          rds.describe_db_snapshots.db_snapshots
+          request = {}
+          request[:db_instance_identifier] = args.first unless args.nil?
+          puts "#{request}"
+          response = rds.describe_db_snapshots(request)
+          response.db_snapshots
         end
 
         def destroy_instance(instance_name, options, rds = nil)

@@ -146,16 +146,34 @@ describe 'Skyed::AWS::RDS.list_snapshots' do
     expect(Skyed::AWS::RDS)
       .to receive(:login)
       .and_return(rds)
-    expect(rds)
-      .to receive(:describe_db_snapshots)
-      .and_return(response)
     expect(response)
       .to receive(:db_snapshots)
       .and_return(snapshots)
   end
-  it 'lists all snapshots' do
-    expect(Skyed::AWS::RDS.list_snapshots(options, nil))
-      .to eq(snapshots)
+  context 'when no specific db instance was specified' do
+    before(:each) do
+      expect(rds)
+        .to receive(:describe_db_snapshots)
+        .and_return(response)
+    end
+    it 'lists all snapshots' do
+      expect(Skyed::AWS::RDS.list_snapshots(options, nil))
+        .to eq(snapshots)
+    end
+  end
+  context 'when specific db instance was specified' do
+    let(:args) { ['my-rds'] }
+    let(:snapshots) { [snapshot1] }
+    before(:each) do
+      expect(rds)
+        .to receive(:describe_db_snapshots)
+        .with(db_instance_identifier: 'my-rds')
+        .and_return(response)
+    end
+    it 'lists snapshots taken from the specified db instance' do
+      expect(Skyed::AWS::RDS.list_snapshots(options, args))
+        .to eq(snapshots)
+    end
   end
 end
 
