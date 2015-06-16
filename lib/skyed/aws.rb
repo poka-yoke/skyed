@@ -73,9 +73,9 @@ module Skyed
             db_instance_class: "db.#{options[:type]}",
             engine: 'postgres',
             master_username: options[:user],
-            master_user_password: options[:pass],
-            db_security_groups: [options[:db_security_group_name]],
-            db_parameter_group_name: options[:db_parameters_group_name]
+            master_user_password: options[:password],
+            db_security_groups: [options[:db_security_group]],
+            db_parameter_group_name: options[:db_parameters_group]
           }
         end
 
