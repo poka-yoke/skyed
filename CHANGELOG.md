@@ -1,3 +1,21 @@
+## 0.1.8 (2015-06-16)
+
+Features:
+
+  - RDS creation, creation from snapshot, destroying, and listing snapshots.
+
+Improvements:
+
+  - Skyed::Git module created with some Git operations.
+  - Enhanced recipe exists check to use remote Git.
+  - Template creation generalized in Utils.create_template.
+  - Mostly all OpsWorks dependencies moved to Skyed::AWS::OpsWorks module.
+  - Init command now has more options.
+
+Bug fixes:
+
+  - Deploy now exports credentials for Vagrant usage.
+
 ## 0.1.7 (2015-05-21)
 
 Features:
