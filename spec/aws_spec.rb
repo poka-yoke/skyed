@@ -131,6 +131,69 @@ describe 'Skyed::AWS.confirm_credentials?' do
   end
 end
 
+describe 'Skyed::AWS::RDS.create_instance_from_snapshot' do
+  let(:rds)           { double('AWS::RDS::Client') }
+  let(:options) do
+    {
+      rds: true,
+      size: 100,
+      type: 'm1.large',
+      user: 'root',
+      pass: 'my_password',
+      db_security_group_name: 'rds-launch-wizard',
+      db_parameters_group_name: 'my_db_params'
+    }
+  end
+  let(:instance_name) { 'my-rds' }
+  let(:snapshot)      { 'rds:instance-2015-06-10-00-06' }
+  let(:endpoint)      { 'my-rds.c7werpdeshqu.us-east-1.rds.amazonaws.com' }
+  let(:port)          { 5432 }
+  let(:response) do
+    {
+      endpoint: {
+        address: endpoint,
+        port: port
+      }
+    }
+  end
+  let(:status_available) do
+    {
+      db_instance_identifier: instance_name,
+      db_instance_status: 'available',
+      endpoint: {
+        address: endpoint,
+        port: port
+      }
+    }
+  end
+  let(:generated_args) do
+    {
+      db_instance_identifier: instance_name,
+      db_snapshot_identifier: snapshot
+    }
+  end
+  before(:each) do
+    expect(Skyed::AWS::RDS)
+      .to receive(:login)
+      .and_return(rds)
+    expect(rds)
+      .to receive(:restore_db_instance_from_db_snapshot)
+      .with(generated_args)
+      .and_return(db_instance: response)
+    expect(Skyed::AWS::RDS)
+      .to receive(:wait_for_instance)
+      .with(instance_name, 'available', 0, rds)
+      .and_return(status_available)
+  end
+  it 'creates the new instance from snapshot' do
+    expect(Skyed::AWS::RDS.create_instance_from_snapshot(
+      instance_name,
+      snapshot,
+      options))
+      .to eq("#{endpoint}:#{port}")
+  end
+end
+
 describe 'Skyed::AWS::RDS.list_snapshots' do
   let(:rds)       { double('AWS::RDS::Client') }
   let(:options) do
@@ -253,9 +316,9 @@ describe 'Skyed::AWS::RDS.generate_params' do
         size: 100,
         type: 'm1.large',
         user: 'root',
-        pass: 'my_password',
-        db_security_group_name: 'rds-launch-wizard',
-        db_parameters_group_name: 'my_db_params'
+        password: 'my_password',
+        db_security_group: 'rds-launch-wizard',
+        db_parameters_group: 'my_db_params'
       }
     end
     let(:instance_name) { 'my-rds' }
@@ -380,10 +443,7 @@ describe 'Skyed::AWS::RDS.create_instance' do
     expect(Skyed::AWS::RDS)
       .to receive(:wait_for_instance)
       .with(instance_name, 'available', 0, rds)
-    expect(rds)
-      .to receive(:describe_db_instances)
-      .with(db_instance_identifier: instance_name)
-      .and_return(db_instances: [status_available])
+      .and_return(status_available)
   end
   it 'creates the new instance' do
     expect(Skyed::AWS::RDS.create_instance(instance_name, options))

@@ -41,6 +41,19 @@ module Skyed
     # This module encapsulates all the RDS related functions.
     module RDS
       class << self
+        def create_instance_from_snapshot(
+          instance_name,
+          snapshot,
+          _options,
+          rds = nil)
+          rds = login if rds.nil?
+          rds.restore_db_instance_from_db_snapshot(
+            db_instance_identifier: instance_name,
+            db_snapshot_identifier: snapshot)[:db_instance]
+          db_instance = wait_for_instance(instance_name, 'available', 0, rds)
+          "#{db_instance[:endpoint][:address]}:#{db_instance[:endpoint][:port]}"
+        end
+
         def list_snapshots(_options, args, rds = nil)
           rds = login if rds.nil?
           request = {}
@@ -88,6 +101,7 @@ module Skyed
             instance = rds.describe_db_instances(
               db_instance_identifier: instance_name)[:db_instances][0]
           end
+          instance
         end
 
         def generate_params(instance_name, options)
@@ -102,9 +116,7 @@ module Skyed
           rds = login if rds.nil?
           rds.create_db_instance(
             generate_params(instance_name, options))[:db_instance]
-          wait_for_instance(instance_name, 'available', 0, rds)
-          db_instance = rds.describe_db_instances(
-            db_instance_identifier: instance_name)[:db_instances][0]
+          db_instance = wait_for_instance(instance_name, 'available', 0, rds)
           "#{db_instance[:endpoint][:address]}:#{db_instance[:endpoint][:port]}"
         end
 
