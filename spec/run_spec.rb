@@ -488,6 +488,9 @@ describe 'Skyed::Run.check_recipes_exist' do
     let(:repo_path) { '/home/ifosch/opsworks' }
     before(:each) do
       expect(Skyed::Run)
+        .to receive(:settings)
+        .with(nil)
+      expect(Skyed::Run)
         .to receive(:recipe_in_cookbook)
         .with(recipe1)
         .and_return(true)
@@ -500,6 +503,9 @@ describe 'Skyed::Run.check_recipes_exist' do
   context 'when invoked with unexisting recipe' do
     let(:args)   { [recipe1] }
     before(:each) do
+      expect(Skyed::Run)
+        .to receive(:settings)
+        .with(nil)
       expect(Skyed::Run)
         .to receive(:recipe_in_cookbook)
         .with(recipe1)
@@ -514,6 +520,9 @@ describe 'Skyed::Run.check_recipes_exist' do
     let(:recipe2) { 'recipe2::restart' }
     let(:args)   { [recipe1, recipe2] }
     before(:each) do
+      expect(Skyed::Run)
+        .to receive(:settings)
+        .with(nil)
       expect(Skyed::Run)
         .to receive(:recipe_in_cookbook)
         .with(recipe1)
@@ -533,6 +542,9 @@ describe 'Skyed::Run.check_recipes_exist' do
     let(:args)   { [recipe1, recipe2] }
     before(:each) do
       expect(Skyed::Run)
+        .to receive(:settings)
+        .with(nil)
+      expect(Skyed::Run)
         .to receive(:recipe_in_cookbook)
         .with(recipe1)
         .and_return(false)
@@ -548,6 +560,11 @@ describe 'Skyed::Run.check_recipes_exist' do
   end
   context 'when a stack was given' do
     let(:options) { { stack: '1234-1234-1234-2134' } }
+    before(:each) do
+      expect(Skyed::Run)
+        .to receive(:settings)
+        .with(options)
+    end
     context 'and invoked with valid recipe' do
       let(:args)      { [recipe1] }
       let(:repo_path) { '/home/ifosch/opsworks' }
@@ -724,7 +741,7 @@ describe 'Skyed::Run.recipe_in_remote' do
       .and_return(stack)
     expect(Skyed::Git)
       .to receive(:clone_stack_remote)
-      .with(stack)
+      .with(stack, options)
       .and_return(temporal_clone)
     expect(Skyed::Run)
       .to receive(:recipe_in_cookbook)

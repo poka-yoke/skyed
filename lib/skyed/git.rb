@@ -5,10 +5,11 @@ module Skyed
   # This module encapsulates all the Git features.
   module Git
     class << self
-      def clone_stack_remote(stack)
-        Skyed::Init.opsworks_git_key unless Skyed::Settings.current_stack?(
-         stack[:stack_id])
-        ENV['PKEY'] = Skyed::Settings.opsworks_git_key
+      def clone_stack_remote(stack, options)
+        unless Skyed::Settings.current_stack?(stack[:stack_id])
+          Skyed::Init.opsworks_git_key options
+        end
+        ENV['PKEY'] ||= Skyed::Settings.opsworks_git_key
         Skyed::Utils.create_template('/tmp', 'ssh-git', 'ssh-git.erb')
         File.chmod(0755, '/tmp/ssh-git')
         ENV['GIT_SSH'] = '/tmp/ssh-git'

@@ -116,7 +116,7 @@ module Skyed
         ask(question + remotes_names.to_s)
       end
 
-      def opsworks_git_key(options)
+      def opsworks_git_key(options = nil)
         question = 'Which ssh key should be used for the git repository? '
         Skyed::Settings.opsworks_git_key = options[:repo_key] || ask(question)
       end

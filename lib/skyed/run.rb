@@ -14,15 +14,20 @@ module Skyed
 
       def run(_global_options, options, args)
         check_run_options(options)
-        ow = login
-        Skyed::Settings.stack_id = stack(ow, options)
-        Skyed::Settings.layer_id = layer(ow, options)
+        ow = settings(options)
         instances = Skyed::AWS::OpsWorks.running_instances(
           { layer_id: Skyed::Settings.layer_id },
           ow)
         update_custom_cookbooks(ow, Skyed::Settings.stack_id, instances,
                                 options[:wait_interval])
         execute_recipes(ow, args, instances, options)
+      end
+
+      def settings(options)
+        ow = login
+        Skyed::Settings.stack_id = stack(ow, options)
+        Skyed::Settings.layer_id = layer(ow, options)
+        ow
       end
 
       def update_custom_cookbooks(ow, stack_id, instances, wait = 0)
@@ -68,6 +73,7 @@ module Skyed
       end
 
       def check_recipes_exist(options, args)
+        settings(options)
         if !options.nil? && options.key?(:stack) && !options[:stack].nil?
           recipes = args.select { |recipe| recipe_in_remote(options, recipe) }
         else
@@ -105,7 +111,8 @@ module Skyed
 
       def recipe_in_remote(options, recipe)
         clone = Skyed::Git.clone_stack_remote(
-          Skyed::AWS::OpsWorks.stack(options[:stack], login))
+          Skyed::AWS::OpsWorks.stack(options[:stack], login),
+          options)
         recipe_in_cookbook(recipe, clone)
       end
     end

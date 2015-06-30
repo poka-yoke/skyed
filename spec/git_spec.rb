@@ -6,6 +6,7 @@ describe 'Skyed::Git.clone_stack_remote' do
   let(:key_path)   { '/home/.ssh/gitkey' }
   let(:stack_id)   { '12345678-1234-1234-1234-123456789012' }
   let(:url)        { 'git@github.com:/user/repo.git' }
+  let(:options)    { { stack: stack_id } }
   let(:stack) do
     {
       stack_id: stack_id,
@@ -22,9 +23,6 @@ describe 'Skyed::Git.clone_stack_remote' do
     expect(SecureRandom)
       .to receive(:hex)
       .and_return(random)
-    expect(Skyed::Settings)
-      .to receive(:opsworks_git_key)
-      .and_return(key_path)
     expect(Skyed::Utils)
       .to receive(:create_template)
       .with('/tmp', 'ssh-git', 'ssh-git.erb')
@@ -41,9 +39,12 @@ describe 'Skyed::Git.clone_stack_remote' do
         .to receive(:current_stack?)
         .with(stack_id)
         .and_return(true)
+      expect(Skyed::Settings)
+        .to receive(:opsworks_git_key)
+        .and_return(key_path)
     end
     it 'clones the stack remote and returns the path to it' do
-      expect(Skyed::Git.clone_stack_remote(stack))
+      expect(Skyed::Git.clone_stack_remote(stack, options))
         .to eq(clone_path)
     end
   end
@@ -55,9 +56,10 @@ describe 'Skyed::Git.clone_stack_remote' do
         .and_return(false)
       expect(Skyed::Init)
         .to receive(:opsworks_git_key)
+        .with(options)
     end
     it 'clones the stack remote and returns the path to it' do
-      expect(Skyed::Git.clone_stack_remote(stack))
+      expect(Skyed::Git.clone_stack_remote(stack, options))
         .to eq(clone_path)
     end
   end
