@@ -1,3 +1,9 @@
+## 0.1.9 (2015-06-30)
+
+Bug fixes:
+
+  - Run command bug when not setup fails.
+
 ## 0.1.8 (2015-06-16)
 
 Features:
