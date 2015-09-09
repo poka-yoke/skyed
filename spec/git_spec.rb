@@ -28,7 +28,7 @@ describe 'Skyed::Git.clone_stack_remote' do
       .with('/tmp', 'ssh-git', 'ssh-git.erb', 0755)
     expect(Skyed::Git)
       .to receive(:`)
-      .with("export GIT_SSH=/tmp/ssh-git; git clone --branch master -- #{url} #{clone_path}")
+      .with("export GIT_SSH=/tmp/ssh-git; time git clone --branch master -- #{url} #{clone_path}")
     # expect(::Git)
     #   .to receive(:clone)
     #   .with(url, clone_path, branch: 'master')
