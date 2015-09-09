@@ -7,6 +7,7 @@ describe 'Skyed::Git.clone_stack_remote' do
   let(:stack_id)   { '12345678-1234-1234-1234-123456789012' }
   let(:url)        { 'git@github.com:/user/repo.git' }
   let(:options)    { { stack: stack_id } }
+  let(:git_cmd)    { 'export GIT_SSH=/tmp/ssh-git; git clone --branch' }
   let(:stack) do
     {
       stack_id: stack_id,
@@ -28,10 +29,7 @@ describe 'Skyed::Git.clone_stack_remote' do
       .with('/tmp', 'ssh-git', 'ssh-git.erb', 0755)
     expect(Skyed::Git)
       .to receive(:`)
-      .with("export GIT_SSH=/tmp/ssh-git; time git clone --branch master -- #{url} #{clone_path}")
-    # expect(::Git)
-    #   .to receive(:clone)
-    #   .with(url, clone_path, branch: 'master')
+      .with("#{git_cmd} master #{url} #{clone_path}")
   end
   context 'when is the current stack' do
     before(:each) do
