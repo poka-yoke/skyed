@@ -9,17 +9,17 @@ module Skyed
         ENV['AWS_SECRET_KEY'] = Skyed::Settings.secret_key
       end
 
-      def create_template(base, subpath, template_file)
+      def create_template(base, subpath, template_file, mode = 0644)
         b = binding
         folders = subpath.split('/')
-        template = ERB.new(
-          File.read(File.join(
-              File.dirname(File.dirname(File.dirname(__FILE__))),
-              'templates',
-              template_file)))
+        template = ERB.new(File.read(File.join(
+          File.dirname(File.dirname(File.dirname(__FILE__))),
+          'templates',
+          template_file)))
         File.open(File.join(base, folders), 'w') do |f|
           f.write(template.result b)
         end
+        File.chmod(mode, File.join(base, folders))
       end
 
       def read_key_file(key_file)

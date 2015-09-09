@@ -60,6 +60,9 @@ describe 'Skyed::Utils.create_template' do
       .to receive(:open)
       .with('/tmp/file', 'w')
       .and_return(file)
+    expect(File)
+      .to receive(:chmod)
+      .with(0644, '/tmp/file')
   end
   it 'creates the file from template' do
     Skyed::Utils.create_template(base, subpath, template_file)
