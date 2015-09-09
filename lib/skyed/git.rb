@@ -13,8 +13,8 @@ module Skyed
         Skyed::Utils.create_template('/tmp', 'ssh-git', 'ssh-git.erb', 0755)
         ENV['GIT_SSH'] = '/tmp/ssh-git'
         path = "/tmp/skyed.#{SecureRandom.hex}"
-        r = ::Git.clone(stack[:custom_cookbooks_source][:url], path)
-        puts "#{stack[:custom_cookbooks_source][:url]} #{r.branch}"
+        ::Git.clone(stack[:custom_cookbooks_source][:url], path)
+        puts Dir[path]
         path
       end
     end
