@@ -14,7 +14,7 @@ module Skyed
         ENV['GIT_SSH'] = '/tmp/ssh-git'
         path = "/tmp/skyed.#{SecureRandom.hex}"
         chef_source = stack[:custom_cookbooks_source]
-        `git clone --branch #{chef_source[:revision]} -- #{chef_source[:url]} #{path} GIT_SSH=/tmp/ssh-git`
+        `export GIT_SSH=/tmp/ssh-git; git clone --branch #{chef_source[:revision]} -- #{chef_source[:url]} #{path}`
         #::Git.clone(chef_source[:url], path, branch: chef_source[:revision])
         path
       end
