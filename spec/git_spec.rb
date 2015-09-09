@@ -28,7 +28,7 @@ describe 'Skyed::Git.clone_stack_remote' do
       .with('/tmp', 'ssh-git', 'ssh-git.erb', 0755)
     expect(::Git)
       .to receive(:clone)
-      .with(url, clone_path)
+      .with(url, clone_path, branch: 'master')
   end
   context 'when is the current stack' do
     before(:each) do
