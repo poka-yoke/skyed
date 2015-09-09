@@ -79,7 +79,7 @@ module Skyed
         else
           recipes = args.select { |recipe| recipe_in_cookbook(recipe) }
         end
-        msg = "Couldn't found #{args - recipes} recipes in repository"
+        msg = "Couldn't find #{args - recipes} recipes in repository"
         fail msg unless recipes == args
         recipes
       end
