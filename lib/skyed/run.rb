@@ -113,8 +113,6 @@ module Skyed
         clone = Skyed::Git.clone_stack_remote(
           Skyed::AWS::OpsWorks.stack(options[:stack], login),
           options)
-        sleep 60
-        puts Dir["#{clone}/*"]
         recipe_in_cookbook(recipe, clone)
       end
     end
