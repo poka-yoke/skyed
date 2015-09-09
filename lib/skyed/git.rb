@@ -14,7 +14,7 @@ module Skyed
         ENV['GIT_SSH'] = '/tmp/ssh-git'
         path = "/tmp/skyed.#{SecureRandom.hex}"
         r = ::Git.clone(stack[:custom_cookbooks_source][:url], path)
-        puts r.path
+        puts repo_path(r)
         path
       end
     end
