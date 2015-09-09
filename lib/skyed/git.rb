@@ -9,12 +9,12 @@ module Skyed
         unless Skyed::Settings.current_stack?(stack[:stack_id])
           Skyed::Init.opsworks_git_key options
         end
-        puts "PKEY is: #{ENV['PKEY']}"
         ENV['PKEY'] ||= Skyed::Settings.opsworks_git_key
         Skyed::Utils.create_template('/tmp', 'ssh-git', 'ssh-git.erb', 0755)
         ENV['GIT_SSH'] = '/tmp/ssh-git'
         path = "/tmp/skyed.#{SecureRandom.hex}"
-        ::Git.clone(stack[:custom_cookbooks_source][:url], path)
+        r = ::Git.clone(stack[:custom_cookbooks_source][:url], path)
+        puts r.status
         path
       end
     end
