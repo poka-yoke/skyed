@@ -114,7 +114,7 @@ module Skyed
           Skyed::AWS::OpsWorks.stack(options[:stack], login),
           options)
         sleep 30
-        Dir["#{clone}/*"]
+        puts Dir["#{clone}/*"]
         recipe_in_cookbook(recipe, clone)
       end
     end
