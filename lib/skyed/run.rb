@@ -101,7 +101,6 @@ module Skyed
         path ||= Skyed::Settings.repo
         cookbook, recipe = recipe.split('::')
         recipe = 'default' if recipe.nil?
-        puts Dir["#{path}/*"]
         File.exist?(
           File.join(
             path,
