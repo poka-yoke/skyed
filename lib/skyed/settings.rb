@@ -28,11 +28,14 @@ module Skyed
       end
 
       def method_missing(name, *args)
+        msg = "unknown configuration root #{name}."
+        msg += ' Initialize skyed or export PKEY'
         if name.match(/.*=/)
           @_settings[name.to_s.split('=')[0]] = args[0]
         else
           @_settings[name.to_s] ||
-            fail(NoMethodError, "unknown configuration root #{name}", caller)
+            fail(
+              NoMethodError, msg, caller)
         end
       end
 

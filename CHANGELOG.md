@@ -1,3 +1,9 @@
+## 0.1.11 (????-??-??)
+
+Improvement:
+
+  - Included references for PKEY environment variable in both README.md and error message.
+
 ## 0.1.10 (2015-09-10)
 
 Bug fixes:
