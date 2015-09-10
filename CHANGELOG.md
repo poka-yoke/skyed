@@ -4,6 +4,8 @@ Improvement:
 
   - Included references for PKEY environment variable in both README.md and error message.
   - Updated VERSION, created --version option, and modified release rake task to update everything.
+  - Updated README.md with some information about commands and features.
+  - Fixed default values for --db-parameters-group and --db-security-group when creating.
 
 ## 0.1.10 (2015-09-10)
 

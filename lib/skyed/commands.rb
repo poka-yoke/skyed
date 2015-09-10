@@ -91,12 +91,12 @@ command :create do |cmd|
   cmd.flag [:password], default_value: 'password',
                         type: String,
                         desc: 'Master password of the RDS instance'
-  defval = 'rds-launch-wizard'
+  defval = 'default'
   desc = 'Name of the DB Security Group'
   cmd.flag [:db_security_group, 'db-security-group'], default_value: defval,
                                                       type: String,
                                                       desc: desc
-  defval = 'default'
+  defval = 'default.postgres9.4'
   desc = 'Name of the DB Parameter Group'
   cmd.flag [:db_parameters_group, 'db-parameters-group'], default_value: defval,
                                                           type: String,
