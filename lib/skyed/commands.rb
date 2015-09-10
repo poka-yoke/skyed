@@ -1,3 +1,5 @@
+version Skyed::VERSION
+
 desc 'Initialize skyed'
 long_desc 'Sets up skyed configuration for a repository'
 
