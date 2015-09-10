@@ -1,3 +1,9 @@
+## 0.1.10 (2015-09-10)
+
+Bug fixes:
+
+  - Fixed bug when clone takes too much time to complete.
+
 ## 0.1.9 (2015-06-30)
 
 Bug fixes:
