@@ -62,29 +62,43 @@ def publish(version)
   require 'gems'
   puts 'Publishing'
   Gems.push File.new "skyed-#{version}.gem" unless ENV['FAKE']
-  FileUtils.rm "skyed-#{version}.gem"
+  FileUtils.rm "skyed-#{version}.gem" unless ENV['FAKE']
 end
 
 task :release do
   require 'git'
-  changelog_re = /## (\d+\.\d+\.\d+) \((\d+-\d+-\d+)\)/
-  changelog_matches = File.open('CHANGELOG.md', &:readline).match(changelog_re)
+  changelog_re = /## (\d+\.\d+\.\d+) \(\?\?\?\?-\?\?-\?\?\)/
+  changelog = File.open('CHANGELOG.md').read
+  changelog_matches = changelog.match(changelog_re)
   new_version = changelog_matches[1]
-  new_date = changelog_matches[2]
+  new_date = Time.now.strftime('%04Y-%02m-%02d')
   gemspec_re = /version\s+=\s+'([^']*)'$/
   gemspec = File.open('skyed.gemspec').read
   current = gemspec.match(gemspec_re)[1]
   fail 'Update your CHANGELOG first, please' if current == new_version
   repo = Git.open('.')
   fail 'Switch to master and merge' unless repo.current_branch == 'master'
-  version_re = /version(\s+)=(\s+)'#{current}'/
-  new_gemspec = gemspec.gsub(version_re, "version\\1=\\2'#{new_version}'")
+  skyed = File.open('lib/skyed.rb').read
+  skyed_version_re = /VERSION(\s+)=(\s+).*/
+  new_skyed = skyed.gsub(skyed_version_re, "VERSION\\1=\\2'#{new_version}'")
+  gspec_version_re = /version(\s+)=(\s+).*/
+  new_gemspec = gemspec.gsub(gspec_version_re, "version\\1=\\2'#{new_version}'")
   date_re = /date(\s+)=(\s+)'.*'/
   new_gemspec = new_gemspec.gsub(date_re, "date\\1=\\2'#{new_date}'")
-  puts 'Updating gemspec'
+  date_re = /## #{new_version} .*/
+  new_changelog = changelog.gsub(date_re, "## #{new_version} (#{new_date})")
+  puts "Updating CHANGELOG: #{new_changelog.lines.first}"
+  File.open('CHANGELOG.md', 'w') { |f| f.puts new_changelog } unless ENV['FAKE']
+  puts "Updating lib/skyed.rb: #{new_skyed.match(skyed_version_re)}"
+  File.open('lib/skyed.rb', 'w') { |f| f.puts new_skyed } unless ENV['FAKE']
+  puts "Updating gemspec: #{new_gemspec.match(gspec_version_re)}"
   File.open('skyed.gemspec', 'w') { |f| f.puts new_gemspec } unless ENV['FAKE']
-  repo.add('skyed.gemspec')
-  repo.commit('Updates gemspec')
+  unless ENV['FAKE']
+    repo.add('lib/skyed.rb')
+    repo.add('skyed.gemspec')
+    repo.add('CHANGELOG.md')
+    repo.commit('Updates gemspec')
+  end
   puts 'Tagging'
   repo.add_tag(
     "v#{new_version}",
@@ -92,6 +106,6 @@ task :release do
     m: "Releasing #{new_version}") unless ENV['FAKE']
   puts 'Pushing'
   repo.push(repo.remote('ifosch'), 'master', tags: true) unless ENV['FAKE']
-  build
+  build unless ENV['FAKE']
   publish(new_version)
 end

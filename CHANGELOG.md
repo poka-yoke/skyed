@@ -3,6 +3,7 @@
 Improvement:
 
   - Included references for PKEY environment variable in both README.md and error message.
+  - Updated VERSION, created --version option, and modified release rake task to update everything.
 
 ## 0.1.10 (2015-09-10)
 
