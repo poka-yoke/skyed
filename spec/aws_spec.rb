@@ -476,6 +476,43 @@ describe 'Skyed::AWS::RDS.login' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.create_instance' do
+  let(:opsworks)      { double('Aws::OpsWorks::Client') }
+  let(:instance_type) { 'm1.large' }
+  let(:hostname)      { 'test1' }
+  let(:stack_id)      { 'e1403a56-286e-4b5e-6798-c3406c947b4a' }
+  let(:layer_id)      { '56a3041e-e682-e5b4-8976-a4b749c6043c' }
+  let(:instance_id)   { '12345678-1234-4321-5678-210987654321' }
+  let(:instance_online) do
+    Instance.new(
+      instance_id,
+      hostname,
+      stack_id,
+      nil,
+      'online'
+    )
+  end
+  before(:each) do
+    expect(opsworks)
+      .to receive(:create_instance)
+      .with(
+        stack_id: stack_id,
+        layer_ids: [layer_id],
+        instance_type: instance_type)
+      .and_return(instance_online)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:wait_for_instance)
+      .with(hostname, stack_id, 'online', opsworks)
+  end
+  it 'creates the vagrant machine' do
+    Skyed::AWS::OpsWorks.create_instance(
+      stack_id,
+      layer_id,
+      instance_type,
+      opsworks)
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.deregister_insatance' do
   let(:opsworks)    { double('Aws::OpsWorks::Client') }
   let(:hostname)    { 'test-ifosch' }

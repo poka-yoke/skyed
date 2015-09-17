@@ -91,6 +91,12 @@ command :create do |cmd|
   cmd.flag [:password], default_value: 'password',
                         type: String,
                         desc: 'Master password of the RDS instance'
+  cmd.flag [:s, :stack], default_value: nil,
+                         type: String,
+                         desc: stack_desc
+  cmd.flag [:l, :layer], default_value: nil,
+                         type: String,
+                         desc: layer_desc
   defval = 'default'
   desc = 'Name of the DB Security Group'
   cmd.flag [:db_security_group, 'db-security-group'], default_value: defval,

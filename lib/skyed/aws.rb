@@ -160,6 +160,18 @@ module Skyed
       }
 
       class << self
+        def create_instance(stack_id, layer_id, instance_type, opsworks)
+          instance = opsworks.create_instance(
+            stack_id: stack_id,
+            layer_ids: [layer_id],
+            instance_type: instance_type)
+          wait_for_instance(
+            instance.hostname,
+            stack_id,
+            'online',
+            opsworks)
+        end
+
         def deregister_instance(hostname, opsworks)
           instance = instance_by_name(
             hostname, Skyed::Settings.stack_id, opsworks)
