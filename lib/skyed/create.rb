@@ -16,11 +16,12 @@ module Skyed
 
       def create_opsworks(options, _args)
         check_create_options(options)
-        ow = login
-        stack_id = stack(ow, options)
-        layer_id = layer(ow, options)
+        ow = settings(options)
         Skyed::AWS::OpsWorks.create_instance(
-          stack_id, layer_id, options[:type], ow)
+          Skyed::Settings.stack_id,
+          Skyed::Settings.layer_id,
+          options[:type],
+          ow)
       end
 
       def stack(ow, options)
@@ -54,6 +55,13 @@ module Skyed
         Skyed::AWS::RDS.create_instance(
           args[0],
           options.select { |k| ! @non_rds_options.include? k })
+      end
+
+      def settings(options)
+        ow = login
+        Skyed::Settings.stack_id = stack(ow, options)
+        Skyed::Settings.layer_id = layer(ow, options)
+        ow
       end
 
       def login

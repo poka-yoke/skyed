@@ -500,16 +500,71 @@ describe 'Skyed::AWS::OpsWorks.create_instance' do
         layer_ids: [layer_id],
         instance_type: instance_type)
       .and_return(instance_online)
+    expect(opsworks)
+      .to receive(:start_instance)
+      .with(instance_id: instance_id)
     expect(Skyed::AWS::OpsWorks)
-      .to receive(:wait_for_instance)
-      .with(hostname, stack_id, 'online', opsworks)
+      .to receive(:wait_for_instance_id)
+      .with(instance_id, 'online', opsworks)
   end
-  it 'creates the vagrant machine' do
+  it 'creates the new instance' do
     Skyed::AWS::OpsWorks.create_instance(
       stack_id,
       layer_id,
       instance_type,
       opsworks)
+  end
+end
+
+describe 'Skyed::AWS::OpsWorks.wait_for_instance_id' do
+  let(:opsworks)    { double('Aws::OpsWorks::Client') }
+  let(:instance_id) { '87654321-4321-4321-4321-210987654321' }
+  let(:stack_id)    { '12345678-1234-1234-1234-123456789012' }
+  let(:result1)     { double('Aws::OpsWorks::Types::DescribeInstancesResult') }
+  let(:result2)     { double('Aws::OpsWorks::Types::DescribeInstancesResult') }
+  let(:instances1)  { [instance1_booting] }
+  let(:instances2)  { [instance1_online] }
+  let(:instance1_booting) do
+    Instance.new(
+      '87654321-4321-4321-4321-210987654321',
+      'test1',
+      stack_id,
+      nil,
+      'booting')
+  end
+  let(:instance1_online) do
+    Instance.new(
+      '87654321-4321-4321-4321-210987654321',
+      'test1',
+      stack_id,
+      nil,
+      'online')
+  end
+  context 'when it is booting and waiting for online' do
+    before(:each) do
+      expect(result1)
+        .to receive(:instances)
+        .and_return(instances1)
+      expect(result2)
+        .to receive(:instances)
+        .and_return(instances2)
+      expect(opsworks)
+        .to receive(:describe_instances)
+        .with(instance_ids: [instance_id])
+        .once
+        .and_return(result1)
+      expect(opsworks)
+        .to receive(:describe_instances)
+        .with(instance_ids: [instance_id])
+        .once
+        .and_return(result2)
+    end
+    it 'waits for the instance to be in the correct status' do
+      Skyed::AWS::OpsWorks.wait_for_instance_id(
+        instance_id,
+        'online',
+        opsworks)
+    end
   end
 end
 

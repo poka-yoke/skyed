@@ -165,11 +165,21 @@ module Skyed
             stack_id: stack_id,
             layer_ids: [layer_id],
             instance_type: instance_type)
-          wait_for_instance(
-            instance.hostname,
-            stack_id,
+          opsworks.start_instance(instance_id: instance.instance_id)
+          wait_for_instance_id(
+            instance.instance_id,
             'online',
             opsworks)
+        end
+
+        def wait_for_instance_id(instance_id, status, opsworks)
+          instance = opsworks.describe_instances(
+            instance_ids: [instance_id]).instances.first
+          until instance.nil? || instance.status == status
+            sleep(0)
+            instance = opsworks.describe_instances(
+              instance_ids: [instance_id]).instances.first
+          end
         end
 
         def deregister_instance(hostname, opsworks)
