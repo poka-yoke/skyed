@@ -160,6 +160,13 @@ module Skyed
       }
 
       class << self
+        def stopped_instances(options = {}, opsworks)
+          instances = opsworks.describe_instances(options)
+          instances[:instances].map do |instance|
+            instance[:instance_id] if instance[:status] == 'stopped'
+          end.compact
+        end
+
         def create_instance(stack_id, layer_id, instance_type, opsworks)
           instance = opsworks.create_instance(
             stack_id: stack_id,
