@@ -12,7 +12,7 @@ describe 'Skyed::Create.execute' do
       let(:args)     { [] }
       before(:each) do
         expect(Skyed::Create)
-          .to receive(:create_opsworks)
+          .to receive(:create_or_start)
       end
       context 'and not initialized' do
         before(:each) do
@@ -146,7 +146,7 @@ describe 'Skyed::Create.execute' do
   end
 end
 
-describe 'Skyed::Create.create_opsworks' do
+describe 'Skyed::Create.create_or_start' do
   context 'when stack is not given' do
     let(:options) do
       {
@@ -156,7 +156,7 @@ describe 'Skyed::Create.create_opsworks' do
     end
     let(:args) { [] }
     it 'fails' do
-      expect { Skyed::Create.create_opsworks(options, args) }
+      expect { Skyed::Create.create_or_start(options, args) }
         .to raise_error
     end
   end
@@ -173,7 +173,7 @@ describe 'Skyed::Create.create_opsworks' do
       end
       let(:args) { [] }
       it 'fails' do
-        expect { Skyed::Create.create_opsworks(options, args) }
+        expect { Skyed::Create.create_or_start(options, args) }
           .to raise_error
       end
     end
@@ -201,7 +201,7 @@ describe 'Skyed::Create.create_opsworks' do
             .and_return(nil)
         end
         it 'fails' do
-          expect { Skyed::Create.create_opsworks(options, args) }
+          expect { Skyed::Create.create_or_start(options, args) }
             .to raise_error
         end
       end
@@ -218,7 +218,7 @@ describe 'Skyed::Create.create_opsworks' do
             .and_return(nil)
         end
         it 'fails' do
-          expect { Skyed::Create.create_opsworks(options, args) }
+          expect { Skyed::Create.create_or_start(options, args) }
             .to raise_error
         end
       end
@@ -245,12 +245,34 @@ describe 'Skyed::Create.create_opsworks' do
             .to receive(:layer)
             .with(options[:layer], opsworks)
             .and_return(layer)
-          expect(Skyed::AWS::OpsWorks)
-            .to receive(:create_instance)
-            .with(stack_id, layer_id, options[:type], opsworks)
         end
-        it 'creates the OpsWorks machine' do
-          Skyed::Create.create_opsworks(options, args)
+        context 'while there is no stopped instance' do
+          before(:each) do
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:stopped_instances)
+              .with({ layer_id: options[:layer] }, opsworks)
+              .and_return([])
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:create_instance)
+              .with(stack_id, layer_id, options[:type], opsworks)
+          end
+          it 'creates the OpsWorks machine' do
+            Skyed::Create.create_or_start(options, args)
+          end
+        end
+        context 'if there are stopped instances' do
+          before(:each) do
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:stopped_instances)
+              .with({ layer_id: options[:layer] }, opsworks)
+              .and_return([instance_id])
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:start_instance)
+              .with(instance_id, opsworks)
+          end
+          it 'creates the OpsWorks machine' do
+            Skyed::Create.create_or_start(options, args)
+          end
         end
       end
     end

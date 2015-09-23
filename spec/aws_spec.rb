@@ -476,6 +476,41 @@ describe 'Skyed::AWS::RDS.login' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.start_instance' do
+  let(:opsworks)      { double('Aws::OpsWorks::Client') }
+  let(:stack_id)      { '654654-654654-654654-654654' }
+  let(:layer_id)      { '456456-456456-456456-456456' }
+  let(:instance1) do
+    Instance.new(
+      '9876-9876-9876-9876',
+      'test',
+      stack_id,
+      [layer_id],
+      'online'
+    )
+  end
+  let(:instance2) do
+    Instance.new(
+      '9876-9876-9876-9876',
+      'test',
+      stack_id,
+      [layer_id],
+      'stopped'
+    )
+  end
+  before do
+    expect(opsworks)
+      .to receive(:start_instance)
+      .with(instance_id: instance2.instance_id)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:wait_for_instance_id)
+      .with(instance2.instance_id, 'online', opsworks)
+  end
+  it 'starts an intance' do
+    Skyed::AWS::OpsWorks.start_instance(instance1.instance_id, opsworks)
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.stopped_instances' do
   let(:opsworks)      { double('Aws::OpsWorks::Client') }
   let(:stack_id)      { '654654-654654-654654-654654' }

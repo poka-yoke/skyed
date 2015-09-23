@@ -160,6 +160,14 @@ module Skyed
       }
 
       class << self
+        def start_instance(instance_id, opsworks)
+          opsworks.start_instance(instance_id: instance_id)
+          wait_for_instance_id(
+            instance_id,
+            'online',
+            opsworks)
+        end
+
         def stopped_instances(options = {}, opsworks)
           instances = opsworks.describe_instances(options)
           instances[:instances].map do |instance|

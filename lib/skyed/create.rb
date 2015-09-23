@@ -6,7 +6,7 @@ module Skyed
       def execute(_global_options, options, args)
         Skyed::Init.credentials if Skyed::Settings.empty?
         execute_rds(options, args) if options[:rds]
-        create_opsworks(options, args) unless options[:rds]
+        create_or_start(options, args) unless options[:rds]
       end
 
       def check_create_options(options)
@@ -14,9 +14,17 @@ module Skyed
         fail msg unless options[:stack] && options[:layer]
       end
 
-      def create_opsworks(options, _args)
+      def create_or_start(options, _args)
         check_create_options(options)
         ow = settings(options)
+        stopped = Skyed::AWS::OpsWorks.stopped_instances(
+          { layer_id: Skyed::Settings.layer_id }, ow).first
+        Skyed::AWS::OpsWorks.start_instance(
+          stopped, ow) unless stopped.nil?
+        create_opsworks(options, ow) if stopped.nil?
+      end
+
+      def create_opsworks(options, ow)
         Skyed::AWS::OpsWorks.create_instance(
           Skyed::Settings.stack_id,
           Skyed::Settings.layer_id,
