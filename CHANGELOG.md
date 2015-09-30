@@ -1,4 +1,4 @@
-## 0.1.11 (????-??-??)
+## 0.1.11 (2015-09-30)
 
 Improvement:
 
@@ -6,6 +6,7 @@ Improvement:
   - Updated VERSION, created --version option, and modified release rake task to update everything.
   - Updated README.md with some information about commands and features.
   - Fixed default values for --db-parameters-group and --db-security-group when creating.
+  - Added wait_interval option to create instance command.
 
 ## 0.1.10 (2015-09-10)
 
