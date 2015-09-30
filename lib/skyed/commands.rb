@@ -97,6 +97,10 @@ command :create do |cmd|
   cmd.flag [:l, :layer], default_value: nil,
                          type: String,
                          desc: layer_desc
+  desc = 'Time to wait for AWS responses'
+  cmd.flag [:w, :wait_interval, 'wait-interval'], default_value: 30,
+                                                  type: Integer,
+                                                  desc: desc
   defval = 'default'
   desc = 'Name of the DB Security Group'
   cmd.flag [:db_security_group, 'db-security-group'], default_value: defval,

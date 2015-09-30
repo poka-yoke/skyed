@@ -141,7 +141,8 @@ describe 'Skyed::AWS::RDS.create_instance_from_snapshot' do
       user: 'root',
       pass: 'my_password',
       db_security_group_name: 'rds-launch-wizard',
-      db_parameters_group_name: 'my_db_params'
+      db_parameters_group_name: 'my_db_params',
+      wait_interval: 0
     }
   end
   let(:instance_name) { 'my-rds' }

@@ -42,15 +42,13 @@ module Skyed
     module RDS
       class << self
         def create_instance_from_snapshot(
-          instance_name,
-          snapshot,
-          _options,
-          rds = nil)
+          instance_name, snapshot, options, rds = nil)
           rds = login if rds.nil?
           rds.restore_db_instance_from_db_snapshot(
             db_instance_identifier: instance_name,
             db_snapshot_identifier: snapshot)[:db_instance]
-          db_instance = wait_for_instance(instance_name, 'available', 0, rds)
+          db_instance = wait_for_instance(
+            instance_name, 'available', options[:wait_interval], rds)
           "#{db_instance[:endpoint][:address]}:#{db_instance[:endpoint][:port]}"
         end
 
