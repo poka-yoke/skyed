@@ -37,8 +37,8 @@ end
 desc 'Run specific recipes on instance'
 long_desc 'Runs specified recipes on all running instances'
 
-stack_desc = 'Stack to which the run affects.'
-layer_desc = 'Layer to which the run affects.'
+stack_desc = 'Stack to which the command affects.'
+layer_desc = 'Layer to which the command affects.'
 command :run do |cmd|
   cmd.flag [:s, :stack], default_value: nil,
                          type: String,
@@ -70,6 +70,22 @@ command :destroy do |cmd|
                                                           desc: desc
   cmd.action do |global_options, options, args|
     Skyed::Destroy.execute(global_options, options, args)
+  end
+end
+
+desc 'Stop instance'
+long_desc 'Stop instance'
+
+command :stop do |cmd|
+  cmd.flag [:s, :stack], default_value: nil,
+                         type: String,
+                         desc: stack_desc
+  desc = 'Time to wait for AWS responses'
+  cmd.flag [:w, :wait_interval, 'wait-interval'], default_value: 30,
+                                                  type: Integer,
+                                                  desc: desc
+  cmd.action do |global_options, options, args|
+    Skyed::Stop.execute(global_options, options, args)
   end
 end
 

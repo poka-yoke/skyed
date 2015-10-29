@@ -158,6 +158,16 @@ module Skyed
       }
 
       class << self
+        def stop_instance(stack_id, hostname, opsworks = nil)
+          opsworks = login if opsworks.nil?
+          instance = instance_by_name(hostname, stack_id, opsworks)
+          opsworks.stop_instance(instance_id: instance.instance_id)
+          wait_for_instance_id(
+            instance.instance_id,
+            'stopped',
+            opsworks)
+        end
+
         def create_instance(stack_id, layer_id, instance_type, opsworks)
           instance = opsworks.create_instance(
             stack_id: stack_id,

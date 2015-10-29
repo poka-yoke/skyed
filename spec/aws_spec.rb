@@ -477,6 +477,36 @@ describe 'Skyed::AWS::RDS.login' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.stop_instance' do
+  let(:opsworks)    { double('Aws::OpsWorks::Client') }
+  let(:hostname)    { 'test1' }
+  let(:stack_id)    { 'e1403a56-286e-4b5e-6798-c3406c947b4a' }
+  let(:instance_id) { '12345678-1234-4321-5678-210987654321' }
+  let(:instance1) do
+    Instance.new(instance_id, hostname, stack_id, nil, 'online')
+  end
+  before(:each) do
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:login)
+      .and_return(opsworks)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:instance_by_name)
+      .with(hostname, stack_id, opsworks)
+      .and_return(instance1)
+    expect(opsworks)
+      .to receive(:stop_instance)
+      .with(instance_id: instance_id)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:wait_for_instance_id)
+      .with(instance_id, 'stopped', opsworks)
+  end
+  it 'stops the new instance' do
+    Skyed::AWS::OpsWorks.stop_instance(
+      stack_id,
+      hostname)
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.create_instance' do
   let(:opsworks)      { double('Aws::OpsWorks::Client') }
   let(:instance_type) { 'm1.large' }
