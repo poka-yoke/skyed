@@ -1,3 +1,10 @@
+## 0.1.12 (2015-10-30)
+
+Improvement:
+
+  - Included stop command to stop OW instances.
+  - Command create modified to allow starting stopped instances instead of creating new ones.
+
 ## 0.1.11 (2015-09-30)
 
 Improvement:
