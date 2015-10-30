@@ -477,6 +477,77 @@ describe 'Skyed::AWS::RDS.login' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.start_instance' do
+  let(:opsworks)      { double('Aws::OpsWorks::Client') }
+  let(:instance_id)   { '12345678-1234-4321-5678-210987654321' }
+  let(:instance_online) do
+    Instance.new(
+      instance_id,
+      hostname,
+      stack_id,
+      nil,
+      'online'
+    )
+  end
+  before(:each) do
+    expect(opsworks)
+      .to receive(:start_instance)
+      .with(instance_id: instance_id)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:wait_for_instance_id)
+      .with(instance_id, 'online', opsworks)
+  end
+  it 'starts the new instance' do
+    Skyed::AWS::OpsWorks.start_instance(
+      instance_id,
+      opsworks)
+  end
+end
+
+describe 'Skyed::AWS::OpsWorks.instances_by_status' do
+  let(:opsworks)  { double('Aws::OpsWorks::Client') }
+  let(:stack_id)  { '654654-654654-654654-654654' }
+  let(:layer_id)  { '654654-654654-654654-654654' }
+  let(:instances) { { instances: [instance2, instance1] } }
+  let(:stack1) do
+    Stack.new(stack_id, 'My Stack')
+  end
+  let(:layer1) do
+    Layer.new(stack_id, layer_id, 'My Layer')
+  end
+  let(:instance1) do
+    Instance.new('9876-9876-9876-9876', 'test-user1', stack_id, nil, 'online')
+  end
+  let(:instance2) do
+    Instance.new('9876-9876-9876-9877', 'test-user2', stack_id, nil, 'stopped')
+  end
+  before do
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:stack)
+      .with(stack_id, opsworks)
+      .at_least(1)
+      .and_return(stack1)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:layer)
+      .with(layer_id, opsworks)
+      .at_least(1)
+      .and_return(layer1)
+    expect(opsworks)
+      .to receive(:describe_instances)
+      .with(layer_id: layer_id)
+      .at_least(1)
+      .and_return(instances)
+  end
+  it 'returns the instances list with the specified status' do
+    expect(Skyed::AWS::OpsWorks.instances_by_status(
+      stack_id, layer_id, 'stopped', opsworks))
+      .to eq([instance2])
+    expect(Skyed::AWS::OpsWorks.instances_by_status(
+      stack_id, layer_id, 'online', opsworks))
+      .to eq([instance1])
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.stop_instance' do
   let(:opsworks)    { double('Aws::OpsWorks::Client') }
   let(:hostname)    { 'test1' }
@@ -599,7 +670,7 @@ describe 'Skyed::AWS::OpsWorks.wait_for_instance_id' do
   end
 end
 
-describe 'Skyed::AWS::OpsWorks.deregister_insatance' do
+describe 'Skyed::AWS::OpsWorks.deregister_instance' do
   let(:opsworks)    { double('Aws::OpsWorks::Client') }
   let(:hostname)    { 'test-ifosch' }
   let(:stack_id)    { 'e1403a56-286e-4b5e-6798-c3406c947b4a' }
@@ -1039,7 +1110,7 @@ describe 'Skyed::AWS::OpsWorks.running_instances' do
       .at_least(1)
       .and_return(instances)
   end
-  it 'returns list of running intances' do
+  it 'returns list of running instances' do
     expect(Skyed::AWS::OpsWorks.running_instances(
       { layer_id: layer_id }, opsworks))
       .to eq([instance1.instance_id])

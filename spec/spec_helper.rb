@@ -3,6 +3,8 @@ require 'simplecov'
 SimpleCov.start
 
 Instance = Struct.new(:instance_id, :hostname, :stack_id, :layer_ids, :status)
+Layer = Struct.new(:stack_id, :layer_id, :name)
+Stack = Struct.new(:stack_id, :name)
 AccessKey = Struct.new(:access_key_id)
 
 RSpec.configure do |config|

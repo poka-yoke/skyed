@@ -1,12 +1,22 @@
 module Skyed
   # This module encapsulates all the create command steps.
   module Create
-    @non_rds_options = [:rds, :stack, :layer]
+    @non_rds_options = [:rds, :start, :stack, :layer]
     class << self
       def execute(_global_options, options, args)
         Skyed::Init.credentials if Skyed::Settings.empty?
         execute_rds(options, args) if options[:rds]
         create_opsworks(options, args) unless options[:rds]
+      end
+
+      def start_opsworks(options, ow)
+        stopped_instances = Skyed::AWS::OpsWorks.instances_by_status(
+          options[:stack], options[:layer], 'stopped', ow)
+        return false if stopped_instances.empty?
+        Skyed::AWS::OpsWorks.start_instance(
+          stopped_instances.first.instance_id,
+          ow)
+        true
       end
 
       def check_create_options(options)
@@ -17,11 +27,12 @@ module Skyed
       def create_opsworks(options, _args)
         check_create_options(options)
         ow = settings(options)
+        options[:start] = start_opsworks(options, ow) if options[:start]
         Skyed::AWS::OpsWorks.create_instance(
           Skyed::Settings.stack_id,
           Skyed::Settings.layer_id,
           options[:type],
-          ow)
+          ow) unless options[:start]
       end
 
       def stack(ow, options)

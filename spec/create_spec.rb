@@ -6,7 +6,8 @@ describe 'Skyed::Create.execute' do
     context 'for new instance creation' do
       let(:options) do
         {
-          rds: false
+          rds: false,
+          start: false
         }
       end
       let(:args)     { [] }
@@ -147,28 +148,13 @@ describe 'Skyed::Create.execute' do
 end
 
 describe 'Skyed::Create.create_opsworks' do
-  context 'when stack is not given' do
-    let(:options) do
-      {
-        rds: false,
-        stack: nil
-      }
-    end
-    let(:args) { [] }
-    it 'fails' do
-      expect { Skyed::Create.create_opsworks(options, args) }
-        .to raise_error
-    end
-  end
-  context 'when stack is given' do
-    let(:opsworks) { double('Aws::OpsWorks::Client') }
-    let(:stack_id) { '1234-1234-1234-1234' }
-    context 'but layer is not' do
+  context 'when creation is wanted' do
+    context 'when stack is not given' do
       let(:options) do
         {
           rds: false,
-          stack: stack_id,
-          layer: nil
+          start: false,
+          stack: nil
         }
       end
       let(:args) { [] }
@@ -177,81 +163,150 @@ describe 'Skyed::Create.create_opsworks' do
           .to raise_error
       end
     end
-    context 'when stack and layer are given' do
+    context 'when stack is given' do
+      let(:opsworks) { double('Aws::OpsWorks::Client') }
       let(:stack_id) { '1234-1234-1234-1234' }
-      let(:layer_id) { '4321-4321-4321-4321' }
+      context 'but layer is not' do
+        let(:options) do
+          {
+            rds: false,
+            start: false,
+            stack: stack_id,
+            layer: nil
+          }
+        end
+        let(:args) { [] }
+        it 'fails' do
+          expect { Skyed::Create.create_opsworks(options, args) }
+            .to raise_error
+        end
+      end
+      context 'when stack and layer are given' do
+        let(:stack_id) { '1234-1234-1234-1234' }
+        let(:layer_id) { '4321-4321-4321-4321' }
+        let(:options) do
+          {
+            rds: false,
+            start: false,
+            stack: stack_id,
+            layer: layer_id
+          }
+        end
+        let(:args) { [] }
+        before(:each) do
+          expect(Skyed::Create)
+            .to receive(:login)
+            .and_return(opsworks)
+        end
+        context 'but stack does not exist' do
+          before(:each) do
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:stack)
+              .with(options[:stack], opsworks)
+              .and_return(nil)
+          end
+          it 'fails' do
+            expect { Skyed::Create.create_opsworks(options, args) }
+              .to raise_error
+          end
+        end
+        context 'but layer does not exist' do
+          let(:stack) { { stack_id: stack_id, name: 'test2' } }
+          before(:each) do
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:stack)
+              .with(options[:stack], opsworks)
+              .and_return(stack)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:layer)
+              .with(options[:layer], opsworks)
+              .and_return(nil)
+          end
+          it 'fails' do
+            expect { Skyed::Create.create_opsworks(options, args) }
+              .to raise_error
+          end
+        end
+        context 'and both exist' do
+          let(:stack)       { { stack_id: stack_id, name: 'test2' } }
+          let(:instance_id) { 'i-3492486' }
+          let(:layer) do
+            { stack_id: stack_id, layer_id: layer_id, name: 'test2' }
+          end
+          let(:options) do
+            {
+              rds: false,
+              start: false,
+              stack: stack_id,
+              layer: layer_id,
+              type: 'm1.large'
+            }
+          end
+          before(:each) do
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:stack)
+              .with(options[:stack], opsworks)
+              .and_return(stack)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:layer)
+              .with(options[:layer], opsworks)
+              .and_return(layer)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:create_instance)
+              .with(stack_id, layer_id, options[:type], opsworks)
+          end
+          it 'creates the OpsWorks machine' do
+            Skyed::Create.create_opsworks(options, args)
+          end
+        end
+      end
+    end
+  end
+  context 'when starting is preferred' do
+    context 'and both exist' do
+      let(:opsworks)    { double('Aws::OpsWorks::Client') }
+      let(:args)        { [] }
+      let(:stack_id)    { '1' }
+      let(:layer_id)    { '1' }
+      let(:stack)       { { stack_id: stack_id, name: 'test' } }
+      let(:instance_id) { 'i-3492486' }
+      let(:layer) do
+        { stack_id: stack_id, layer_id: layer_id, name: 'test' }
+      end
+      let(:instance1) do
+        Instance.new(instance_id, 'test1', stack_id, nil, 'stopped')
+      end
       let(:options) do
         {
           rds: false,
+          start: true,
           stack: stack_id,
-          layer: layer_id
+          layer: layer_id,
+          type: 'm1.large'
         }
       end
-      let(:args) { [] }
       before(:each) do
         expect(Skyed::Create)
           .to receive(:login)
           .and_return(opsworks)
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:stack)
+          .with(options[:stack], opsworks)
+          .and_return(stack)
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:layer)
+          .with(options[:layer], opsworks)
+          .and_return(layer)
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:instances_by_status)
+          .with(stack_id, layer_id, 'stopped', opsworks)
+          .and_return([instance1])
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:start_instance)
+          .with(instance_id, opsworks)
       end
-      context 'but stack does not exist' do
-        before(:each) do
-          expect(Skyed::AWS::OpsWorks)
-            .to receive(:stack)
-            .with(options[:stack], opsworks)
-            .and_return(nil)
-        end
-        it 'fails' do
-          expect { Skyed::Create.create_opsworks(options, args) }
-            .to raise_error
-        end
-      end
-      context 'but layer does not exist' do
-        let(:stack) { { stack_id: stack_id, name: 'test2' } }
-        before(:each) do
-          expect(Skyed::AWS::OpsWorks)
-            .to receive(:stack)
-            .with(options[:stack], opsworks)
-            .and_return(stack)
-          expect(Skyed::AWS::OpsWorks)
-            .to receive(:layer)
-            .with(options[:layer], opsworks)
-            .and_return(nil)
-        end
-        it 'fails' do
-          expect { Skyed::Create.create_opsworks(options, args) }
-            .to raise_error
-        end
-      end
-      context 'and both exist' do
-        let(:stack)       { { stack_id: stack_id, name: 'test2' } }
-        let(:instance_id) { 'i-3492486' }
-        let(:layer) do
-          { stack_id: stack_id, layer_id: layer_id, name: 'test2' }
-        end
-        let(:options) do
-          {
-            rds: false,
-            stack: stack_id,
-            layer: layer_id,
-            type: 'm1.large'
-          }
-        end
-        before(:each) do
-          expect(Skyed::AWS::OpsWorks)
-            .to receive(:stack)
-            .with(options[:stack], opsworks)
-            .and_return(stack)
-          expect(Skyed::AWS::OpsWorks)
-            .to receive(:layer)
-            .with(options[:layer], opsworks)
-            .and_return(layer)
-          expect(Skyed::AWS::OpsWorks)
-            .to receive(:create_instance)
-            .with(stack_id, layer_id, options[:type], opsworks)
-        end
-        it 'creates the OpsWorks machine' do
-          Skyed::Create.create_opsworks(options, args)
-        end
+      it 'starts the stopped instance' do
+        Skyed::Create.create_opsworks(options, args)
       end
     end
   end

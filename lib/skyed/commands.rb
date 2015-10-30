@@ -92,6 +92,7 @@ end
 desc 'Create instance'
 long_desc 'Create instance'
 
+start_desc = 'Avoids creation if stopped OW instance already exists'
 command :create do |cmd|
   cmd.switch [:rds], default_value: false,
                      desc: 'Creates RDS instance'
@@ -113,6 +114,8 @@ command :create do |cmd|
   cmd.flag [:l, :layer], default_value: nil,
                          type: String,
                          desc: layer_desc
+  cmd.switch [:start], default_value: false,
+                       desc: start_desc
   desc = 'Time to wait for AWS responses'
   cmd.flag [:w, :wait_interval, 'wait-interval'], default_value: 30,
                                                   type: Integer,

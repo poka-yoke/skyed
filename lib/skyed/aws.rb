@@ -158,6 +158,19 @@ module Skyed
       }
 
       class << self
+        def start_instance(instance_id, opsworks)
+          opsworks.start_instance(instance_id: instance_id)
+          wait_for_instance_id(instance_id, 'online', opsworks)
+        end
+
+        def instances_by_status(stack_id, layer_id, status, ow)
+          Skyed::Settings.stack_id = stack(stack_id, ow).stack_id
+          ow.describe_instances(
+            layer_id: layer(layer_id, ow).layer_id)[:instances].select do |i|
+            i.status == status
+          end
+        end
+
         def stop_instance(stack_id, hostname, opsworks = nil)
           opsworks = login if opsworks.nil?
           instance = instance_by_name(hostname, stack_id, opsworks)
