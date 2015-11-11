@@ -861,19 +861,61 @@ describe 'Skyed::AWS::OpsWorks.layer' do
       .with(opsworks)
       .and_return(layers)
   end
-  it 'returns the layer with the specified id or name' do
-    expect(Skyed::AWS::OpsWorks.layer('1', opsworks))
-      .to eq(layer1)
-    expect(Skyed::AWS::OpsWorks.layer('My First Layer', opsworks))
-      .to eq(layer1)
-    expect(Skyed::AWS::OpsWorks.layer('2', opsworks))
-      .to eq(layer2)
-    expect(Skyed::AWS::OpsWorks.layer('My Second Layer', opsworks))
-      .to eq(layer2)
-    expect(Skyed::AWS::OpsWorks.layer('3', opsworks))
-      .to eq(nil)
-    expect(Skyed::AWS::OpsWorks.layer('Non-existant Layer', opsworks))
-      .to eq(nil)
+  context 'when using an non existing instance name' do
+    before do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:instance_by_name)
+        .at_least(1)
+        .and_return(nil)
+    end
+    it 'returns the layer with the specified id or name' do
+      expect(Skyed::AWS::OpsWorks.layer('1', opsworks))
+        .to eq(layer1)
+      expect(Skyed::AWS::OpsWorks.layer('My First Layer', opsworks))
+        .to eq(layer1)
+      expect(Skyed::AWS::OpsWorks.layer('2', opsworks))
+        .to eq(layer2)
+      expect(Skyed::AWS::OpsWorks.layer('My Second Layer', opsworks))
+        .to eq(layer2)
+      expect(Skyed::AWS::OpsWorks.layer('3', opsworks))
+        .to eq(nil)
+      expect(Skyed::AWS::OpsWorks.layer('Non-existant Layer', opsworks))
+        .to eq(nil)
+    end
+  end
+  context 'when using an non existing instance name' do
+    let(:stack_id) { '1' }
+    let(:instance1) do
+      Instance.new('9876-9876-9876-9876', 'test1', stack_id, '1', 'online')
+    end
+    before do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:instance_by_name)
+        .with('test3', stack_id, opsworks)
+        .once
+        .and_return(nil)
+    end
+    it 'returns the layer which the instance is in' do
+      expect(Skyed::AWS::OpsWorks.layer('test3', opsworks, stack_id))
+        .to eq(nil)
+    end
+  end
+  context 'when using an existing instance name' do
+    let(:stack_id) { '1' }
+    let(:instance1) do
+      Instance.new('9876-9876-9876-9876', 'test1', stack_id, '1', 'online')
+    end
+    before do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:instance_by_name)
+        .with('test1', stack_id, opsworks)
+        .once
+        .and_return(instance1)
+    end
+    it 'returns the layer which the instance is in' do
+      expect(Skyed::AWS::OpsWorks.layer('test1', opsworks, stack_id))
+        .to eq(layer1)
+    end
   end
 end
 

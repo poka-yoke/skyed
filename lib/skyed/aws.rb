@@ -237,9 +237,13 @@ module Skyed
           ) || stack_by_id(stack_criteria, opsworks)
         end
 
-        def layer(layer_criteria, opsworks)
-          layer_by_name(layer_criteria, opsworks) ||
-            layer_by_id(layer_criteria, opsworks)
+        def layer(layer_criteria, opsworks, stack_id = nil)
+          layer = layer_by_name(layer_criteria, opsworks) ||
+                  layer_by_id(layer_criteria, opsworks)
+          instance = instance_by_name(layer_criteria, stack_id, opsworks)
+          layer ||= layer_by_id(
+            instance.layer_ids[0], opsworks) unless instance.nil?
+          layer
         end
 
         def deploy(opts)
