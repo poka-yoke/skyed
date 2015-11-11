@@ -861,13 +861,7 @@ describe 'Skyed::AWS::OpsWorks.layer' do
       .with(opsworks)
       .and_return(layers)
   end
-  context 'when using an non existing instance name' do
-    before do
-      expect(Skyed::AWS::OpsWorks)
-        .to receive(:instance_by_name)
-        .at_least(1)
-        .and_return(nil)
-    end
+  context 'when using an layer name' do
     it 'returns the layer with the specified id or name' do
       expect(Skyed::AWS::OpsWorks.layer('1', opsworks))
         .to eq(layer1)

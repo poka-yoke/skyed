@@ -78,12 +78,235 @@ describe 'Skyed::Run.run' do
       expect { Skyed::Run.run(nil, options, args) }
         .to raise_error
     end
+    context 'but instance name is given' do
+      let(:instance_name) { 'test1' }
+      let(:opsworks)      { double('Aws::OpsWorks::Client') }
+      let(:options) do
+        { stack: stack_id, instance: instance_name, wait_interval: 0 }
+      end
+      before(:each) do
+        expect(Skyed::AWS::OpsWorks)
+          .to receive(:login)
+          .and_return(opsworks)
+      end
+      context 'without settings defined' do
+        before(:each) do
+          expect(Skyed::Settings)
+            .to receive(:empty?)
+            .and_return(true)
+          expect(Skyed::Init)
+            .to receive(:credentials)
+        end
+        context 'and stack does not exist' do
+          before(:each) do
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:stack)
+              .with(options[:stack], opsworks)
+              .and_return(nil)
+          end
+          it 'fails' do
+            expect { Skyed::Run.run(nil, options, args) }
+              .to raise_error
+          end
+        end
+        context 'and layer for instance does not exist' do
+          let(:stack) { { stack_id: stack_id, name: 'test2' } }
+          before(:each) do
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:stack)
+              .with(options[:stack], opsworks)
+              .and_return(stack)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:layer)
+              .with(options[:layer], opsworks)
+              .and_return(nil)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:layer)
+              .with(options[:instance], opsworks, stack_id)
+              .and_return(nil)
+          end
+          it 'fails' do
+            expect { Skyed::Run.run(nil, options, args) }
+              .to raise_error
+          end
+        end
+        context 'and both exist' do
+          let(:layer_id)            { '123-123-123-123' }
+          let(:deploy_id1)          { '123-123-123-123' }
+          let(:deploy_id2)          { '321-321-321-321' }
+          let(:stack)               { { stack_id: stack_id, name: 'test2' } }
+          let(:instance1) do
+            Instance.new(
+              '4321-4321-4321-4323',
+              instance_name,
+              stack_id,
+              [layer_id],
+              'online')
+          end
+          let(:layer) do
+            { stack_id: stack_id, layer_id: layer_id, name: 'test2' }
+          end
+          before(:each) do
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:stack)
+              .with(options[:stack], opsworks)
+              .and_return(stack)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:layer)
+              .with(options[:layer], opsworks)
+              .and_return(nil)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:layer)
+              .with(options[:instance], opsworks, stack_id)
+              .and_return(layer)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:instance_by_name)
+              .with(instance_name, stack_id, opsworks)
+              .and_return(instance1)
+            expect(opsworks)
+              .to receive(:create_deployment)
+              .with(
+                stack_id: stack_id,
+                instance_ids: ['4321-4321-4321-4323'],
+                command: { name: 'update_custom_cookbooks' })
+              .and_return(deployment_id: deploy_id1)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:wait_for_deploy)
+              .with({ deployment_id: deploy_id1 }, opsworks, 0)
+              .once
+              .and_return(['successful'])
+            expect(opsworks)
+              .to receive(:create_deployment)
+              .with(
+                stack_id: stack_id,
+                instance_ids: ['4321-4321-4321-4323'],
+                command: { name: 'execute_recipes', args: cmd_args })
+              .and_return(deployment_id: deploy_id2)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:wait_for_deploy)
+              .with({ deployment_id: deploy_id2 }, opsworks, 0)
+              .once
+              .and_return(['successful'])
+          end
+          it 'runs' do
+            Skyed::Run.run(nil, options, args)
+          end
+        end
+      end
+      context 'with settings defined' do
+        before(:each) do
+          expect(Skyed::Settings)
+            .to receive(:empty?)
+            .and_return(false)
+        end
+        context 'and stack does not exist' do
+          before(:each) do
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:stack)
+              .with(options[:stack], opsworks)
+              .and_return(nil)
+          end
+          it 'fails' do
+            expect { Skyed::Run.run(nil, options, args) }
+              .to raise_error
+          end
+        end
+        context 'and layer for instance does not exist' do
+          let(:stack) { { stack_id: stack_id, name: 'test2' } }
+          before(:each) do
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:stack)
+              .with(options[:stack], opsworks)
+              .and_return(stack)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:layer)
+              .with(options[:layer], opsworks)
+              .and_return(nil)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:layer)
+              .with(options[:instance], opsworks, stack_id)
+              .and_return(nil)
+          end
+          it 'fails' do
+            expect { Skyed::Run.run(nil, options, args) }
+              .to raise_error
+          end
+        end
+        context 'and both exist' do
+          let(:layer_id)            { '123-123-123-123' }
+          let(:deploy_id1)          { '123-123-123-123' }
+          let(:deploy_id2)          { '321-321-321-321' }
+          let(:stack)               { { stack_id: stack_id, name: 'test2' } }
+          let(:instance1) do
+            Instance.new(
+              '4321-4321-4321-4323',
+              instance_name,
+              stack_id,
+              [layer_id],
+              'online')
+          end
+          let(:layer) do
+            { stack_id: stack_id, layer_id: layer_id, name: 'test2' }
+          end
+          before(:each) do
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:stack)
+              .with(options[:stack], opsworks)
+              .and_return(stack)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:layer)
+              .with(options[:layer], opsworks)
+              .and_return(nil)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:layer)
+              .with(options[:instance], opsworks, stack_id)
+              .and_return(layer)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:instance_by_name)
+              .with(instance_name, stack_id, opsworks)
+              .and_return(instance1)
+            expect(opsworks)
+              .to receive(:create_deployment)
+              .with(
+                stack_id: stack_id,
+                instance_ids: ['4321-4321-4321-4323'],
+                command: { name: 'update_custom_cookbooks' })
+              .and_return(deployment_id: deploy_id1)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:wait_for_deploy)
+              .with({ deployment_id: deploy_id1 }, opsworks, 0)
+              .once
+              .and_return(['successful'])
+            expect(opsworks)
+              .to receive(:create_deployment)
+              .with(
+                stack_id: stack_id,
+                instance_ids: ['4321-4321-4321-4323'],
+                command: { name: 'execute_recipes', args: cmd_args })
+              .and_return(deployment_id: deploy_id2)
+            expect(Skyed::AWS::OpsWorks)
+              .to receive(:wait_for_deploy)
+              .with({ deployment_id: deploy_id2 }, opsworks, 0)
+              .once
+              .and_return(['successful'])
+          end
+          it 'runs' do
+            Skyed::Run.run(nil, options, args)
+          end
+        end
+      end
+    end
   end
   context 'when stack and layer ids given' do
     let(:stack_id)         { '1234-1234-1234-1234' }
     let(:layer_id)         { '4321-4321-4321-4321' }
     let(:options) do
       { stack: stack_id, layer: layer_id, wait_interval: 0 }
+    end
+    before(:each) do
+      expect(Skyed::AWS::OpsWorks)
+        .to receive(:login)
+        .and_return(opsworks)
     end
     context 'without settings defined' do
       let(:opsworks)         { double('Aws::OpsWorks::Client') }
@@ -93,9 +316,6 @@ describe 'Skyed::Run.run' do
           .and_return(true)
         expect(Skyed::Init)
           .to receive(:credentials)
-        expect(Skyed::AWS::OpsWorks)
-          .to receive(:login)
-          .and_return(opsworks)
       end
       context 'and stack does not exist' do
         before(:each) do
@@ -183,11 +403,6 @@ describe 'Skyed::Run.run' do
         expect(Skyed::Settings)
           .to receive(:empty?)
           .and_return(false)
-        expect(Skyed::Init)
-          .not_to receive(:credentials)
-        expect(Skyed::AWS::OpsWorks)
-          .to receive(:login)
-          .and_return(opsworks)
       end
       context 'and stack does not exist' do
         before(:each) do

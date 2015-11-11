@@ -15,12 +15,21 @@ module Skyed
       def run(_global_options, options, args)
         check_run_options(options)
         ow = settings(options)
-        instances = Skyed::AWS::OpsWorks.running_instances(
-          { layer_id: Skyed::Settings.layer_id },
-          ow)
+        instances = select_instances(options, ow)
         update_custom_cookbooks(ow, Skyed::Settings.stack_id, instances,
                                 options[:wait_interval])
         execute_recipes(ow, args, instances, options)
+      end
+
+      def select_instances(options, ow)
+        instances = nil
+        instances = Skyed::AWS::OpsWorks.running_instances(
+          { layer_id: Skyed::Settings.layer_id },
+          ow) unless options[:layer].nil?
+        instances = [Skyed::AWS::OpsWorks.instance_by_name(
+          options[:instance], Skyed::Settings.stack_id,
+          ow).instance_id] unless options[:instance].nil?
+        instances
       end
 
       def settings(options)
@@ -42,7 +51,10 @@ module Skyed
 
       def layer(ow, options)
         layer = Skyed::AWS::OpsWorks.layer(options[:layer], ow)
+        layer = Skyed::AWS::OpsWorks.layer(
+          options[:instance], ow, Skyed::Settings.stack_id) unless layer
         msg = "There's no such layer with id #{options[:layer]}"
+        msg += " or for instance #{options[:instance]}"
         fail msg unless layer
         layer[:layer_id]
       end
@@ -61,7 +73,8 @@ module Skyed
 
       def check_run_options(options)
         msg = 'Specify stack and layer or initialize for local management'
-        fail msg unless options[:stack] && options[:layer]
+        required = options[:stack] && (options[:layer] || options[:instance])
+        fail msg unless required
       end
 
       def check_vagrant

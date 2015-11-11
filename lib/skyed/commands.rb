@@ -46,6 +46,9 @@ command :run do |cmd|
   cmd.flag [:l, :layer], default_value: nil,
                          type: String,
                          desc: layer_desc
+  cmd.flag [:i, :instance], default_value: nil,
+                            type: String,
+                            desc: layer_desc
   desc = 'Time to wait for AWS responses'
   cmd.flag [:w, :wait_interval, 'wait-interval'], default_value: 30,
                                                   type: Integer,
