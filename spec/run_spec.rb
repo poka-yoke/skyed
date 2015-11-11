@@ -87,7 +87,6 @@ describe 'Skyed::Run.run' do
     end
     context 'without settings defined' do
       let(:opsworks)         { double('Aws::OpsWorks::Client') }
-      let(:other_stack_id)   { '5678-5678-5678-5678' }
       before(:each) do
         expect(Skyed::Settings)
           .to receive(:empty?)
@@ -111,7 +110,6 @@ describe 'Skyed::Run.run' do
         end
       end
       context 'and layer does not exist' do
-        let(:other_layer_id)   { '8765-8765-8765-8765' }
         let(:stack)            { { stack_id: stack_id, name: 'test2' } }
         before(:each) do
           expect(Skyed::AWS::OpsWorks)
@@ -129,15 +127,12 @@ describe 'Skyed::Run.run' do
         end
       end
       context 'and both exist' do
-        let(:other_layer_id)   { '8765-8765-8765-8765' }
-        let(:deploy_id1)       { '123-123-123-123' }
-        let(:deploy_id2)       { '321-321-321-321' }
-        let(:stack)            { { stack_id: stack_id, name: 'test2' } }
+        let(:deploy_id1)          { '123-123-123-123' }
+        let(:deploy_id2)          { '321-321-321-321' }
+        let(:stack)               { { stack_id: stack_id, name: 'test2' } }
+        let(:described_instances) { ['4321-4321-4321-4323'] }
         let(:layer) do
           { stack_id: stack_id, layer_id: layer_id, name: 'test2' }
-        end
-        let(:described_instances) do
-          ['4321-4321-4321-4323']
         end
         before(:each) do
           expect(Skyed::AWS::OpsWorks)
@@ -184,7 +179,6 @@ describe 'Skyed::Run.run' do
     end
     context 'with settings defined' do
       let(:opsworks)         { double('Aws::OpsWorks::Client') }
-      let(:other_stack_id)   { '5678-5678-5678-5678' }
       before(:each) do
         expect(Skyed::Settings)
           .to receive(:empty?)
@@ -208,7 +202,6 @@ describe 'Skyed::Run.run' do
         end
       end
       context 'and layer does not exist' do
-        let(:other_layer_id)   { '8765-8765-8765-8765' }
         let(:stack)            { { stack_id: stack_id, name: 'test2' } }
         before(:each) do
           expect(Skyed::AWS::OpsWorks)
@@ -226,15 +219,12 @@ describe 'Skyed::Run.run' do
         end
       end
       context 'and both exist' do
-        let(:other_layer_id)   { '8765-8765-8765-8765' }
-        let(:deploy_id1)       { '123-123-123-123' }
-        let(:deploy_id2)       { '321-321-321-321' }
-        let(:stack)            { { stack_id: stack_id, name: 'test2' } }
+        let(:deploy_id1)          { '123-123-123-123' }
+        let(:deploy_id2)          { '321-321-321-321' }
+        let(:stack)               { { stack_id: stack_id, name: 'test2' } }
+        let(:described_instances) { ['4321-4321-4321-4323'] }
         let(:layer) do
           { stack_id: stack_id, layer_id: layer_id, name: 'test2' }
-        end
-        let(:described_instances) do
-          ['4321-4321-4321-4323']
         end
         before(:each) do
           expect(Skyed::AWS::OpsWorks)
