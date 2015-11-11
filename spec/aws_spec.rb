@@ -753,7 +753,6 @@ describe 'Skyed::AWS::OpsWorks.wait_for_instance' do
   let(:opsworks)  { double('Aws::OpsWorks::Client') }
   let(:instance_name) { 'test-user1' }
   let(:stack_id)      { '12345678-1234-1234-1234-123456789012' }
-  let(:instances)     { { instances: [instance2, instance1] } }
   let(:instance1_booting) do
     Instance.new(
       '87654321-4321-4321-4321-210987654321',

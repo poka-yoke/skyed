@@ -238,10 +238,8 @@ module Skyed
         end
 
         def layer(layer_criteria, opsworks)
-          layer_by_name(
-            layer_criteria,
-            opsworks
-          ) || layer_by_id(layer_criteria, opsworks)
+          layer_by_name(layer_criteria, opsworks) ||
+            layer_by_id(layer_criteria, opsworks)
         end
 
         def deploy(opts)
