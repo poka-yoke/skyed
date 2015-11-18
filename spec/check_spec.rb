@@ -132,7 +132,7 @@ describe 'Skyed::Check.reduce_health_check' do
   let(:elb)                   { double('Aws::ElastiLoadBalancing::Client') }
   let(:elb_name)              { 'ELB_name' }
   let(:original_health_check) { HealthCheck.new('HTTP:80', 20, 120, 5, 10) }
-  let(:new_health_check)      { HealthCheck.new('HTTP:80', 2, 5, 2, 2) }
+  let(:new_health_check)      { HealthCheck.new('HTTP:80', 5, 2, 2, 2) }
   before(:each) do
     expect(Skyed::Check)
       .to receive(:login)
