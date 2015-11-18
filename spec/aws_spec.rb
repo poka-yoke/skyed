@@ -1,6 +1,24 @@
 require 'spec_helper'
 require 'skyed'
 
+LoadBalancerDescription = Struct.new(
+  :load_balancer_name,
+  :health_check
+)
+DescribeAccessPointsOutput = Struct.new(
+  :load_balancer_descriptions,
+  :next_marker
+)
+InstanceState = Struct.new(
+  :instance_id,
+  :state,
+  :reason_code,
+  :description
+)
+DescribeEndPointStateOutput = Struct.new(
+  :instance_states
+)
+
 describe 'Skyed::AWS.region' do
   let(:default_region) { 'us-east-1' }
   context 'when no environment variable is set' do
@@ -128,6 +146,130 @@ describe 'Skyed::AWS.confirm_credentials?' do
       expect(Skyed::AWS.confirm_credentials?(access_key, secret_key))
         .to eq(false)
     end
+  end
+end
+
+describe 'Skyed::AWS::ELB.instance_ok?' do
+  let(:elb)         { double('Aws::ElasticLoadBalancing::Client') }
+  let(:elb_name)    { 'ELB_name' }
+  let(:instance_id) { 'i-9736293' }
+  let(:instance_states) do
+    [InstanceState.new(
+      instance_id,
+      'InService',
+      'N/A',
+      'N/A'
+    )]
+  end
+  let(:health_output) do
+    DescribeEndPointStateOutput.new(instance_states)
+  end
+  before(:each) do
+    expect(elb)
+      .to receive(:describe_instance_health)
+      .with(
+        load_balancer_name: elb_name,
+        instances: [{ instance_id: instance_id }]
+      )
+      .and_return(health_output)
+  end
+  it 'returns true when instance is healthy' do
+    expect(Skyed::AWS::ELB.instance_ok?(
+      'ELB_name',
+      'i-9736293',
+      elb
+    )).to eq(true)
+  end
+end
+
+describe 'Skyed::AWS::ELB.set_health_check' do
+  let(:elb)      { double('Aws::ElasticLoadBalancing::Client') }
+  let(:elb_name) { 'ELB_name' }
+  let(:health_check) do
+    HealthCheck.new(
+      'TCP:8080',
+      5,
+      10,
+      2,
+      10
+    )
+  end
+  before(:each) do
+    expect(elb)
+      .to receive(:configure_health_check)
+      .with(
+        load_balancer_name: elb_name,
+        health_check: {
+          target: health_check.target,
+          interval: health_check.interval,
+          timeout: health_check.timeout,
+          unhealthy_threshold: health_check.unhealthy_threshold,
+          healthy_threshold: health_check.healthy_threshold
+        }
+      )
+  end
+  it 'sets the health check' do
+    Skyed::AWS::ELB.set_health_check('ELB_name', health_check, elb)
+  end
+end
+
+describe 'Skyed::AWS::ELB.get_health_check' do
+  let(:elb)      { double('Aws::ElasticLoadBalancing::Client') }
+  let(:elb_name) { 'ELB_name' }
+  let(:health_check) do
+    HealthCheck.new(
+      'TCP:8080',
+      5,
+      10,
+      2,
+      10
+    )
+  end
+  let(:elb_description) do
+    LoadBalancerDescription.new(
+      elb_name,
+      health_check
+    )
+  end
+  let(:elbs) do
+    DescribeAccessPointsOutput.new(
+      [elb_description],
+      nil
+    )
+  end
+  before(:each) do
+    expect(elb)
+      .to receive(:describe_load_balancers)
+      .with(load_balancer_names: [elb_name])
+      .and_return(elbs)
+  end
+  it 'gets the health check' do
+    expect(Skyed::AWS::ELB.get_health_check('ELB_name', elb))
+      .to eq(health_check)
+  end
+end
+
+describe 'Skyed::AWS::ELB.login' do
+  let(:elb)        { double('Aws::ElasticLoadBalancing::Client') }
+  let(:access_key) { 'AKIAASASASASASAS' }
+  let(:secret_key) { 'zMdiopqw0923pojsdfklhjdesa09213' }
+  before(:each) do
+    expect(Skyed::Settings)
+      .to receive(:access_key)
+      .and_return(access_key)
+    expect(Skyed::Settings)
+      .to receive(:secret_key)
+      .and_return(secret_key)
+    expect(Aws::ElasticLoadBalancing::Client)
+      .to receive(:new)
+      .with(
+        access_key_id: access_key,
+        secret_access_key: secret_key,
+        region: 'us-east-1')
+      .and_return(elb)
+  end
+  it 'logins and returns the ELB client' do
+    expect(Skyed::AWS::ELB.login).to eq(elb)
   end
 end
 
@@ -486,7 +628,8 @@ describe 'Skyed::AWS::OpsWorks.start_instance' do
       hostname,
       stack_id,
       nil,
-      'online'
+      'online',
+      nil
     )
   end
   before(:each) do
@@ -516,10 +659,24 @@ describe 'Skyed::AWS::OpsWorks.instances_by_status' do
     Layer.new(stack_id, layer_id, 'My Layer')
   end
   let(:instance1) do
-    Instance.new('9876-9876-9876-9876', 'test-user1', stack_id, nil, 'online')
+    Instance.new(
+      '9876-9876-9876-9876',
+      'test-user1',
+      stack_id,
+      nil,
+      'online',
+      nil
+    )
   end
   let(:instance2) do
-    Instance.new('9876-9876-9876-9877', 'test-user2', stack_id, nil, 'stopped')
+    Instance.new(
+      '9876-9876-9876-9877',
+      'test-user2',
+      stack_id,
+      nil,
+      'stopped',
+      nil
+    )
   end
   before do
     expect(Skyed::AWS::OpsWorks)
@@ -554,7 +711,14 @@ describe 'Skyed::AWS::OpsWorks.stop_instance' do
   let(:stack_id)    { 'e1403a56-286e-4b5e-6798-c3406c947b4a' }
   let(:instance_id) { '12345678-1234-4321-5678-210987654321' }
   let(:instance1) do
-    Instance.new(instance_id, hostname, stack_id, nil, 'online')
+    Instance.new(
+      instance_id,
+      hostname,
+      stack_id,
+      nil,
+      'online',
+      nil
+    )
   end
   before(:each) do
     expect(Skyed::AWS::OpsWorks)
@@ -591,7 +755,8 @@ describe 'Skyed::AWS::OpsWorks.create_instance' do
       hostname,
       stack_id,
       nil,
-      'online'
+      'online',
+      nil
     )
   end
   before(:each) do
@@ -632,7 +797,9 @@ describe 'Skyed::AWS::OpsWorks.wait_for_instance_id' do
       'test1',
       stack_id,
       nil,
-      'booting')
+      'booting',
+      nil
+    )
   end
   let(:instance1_online) do
     Instance.new(
@@ -640,7 +807,9 @@ describe 'Skyed::AWS::OpsWorks.wait_for_instance_id' do
       'test1',
       stack_id,
       nil,
-      'online')
+      'online',
+      nil
+    )
   end
   context 'when it is booting and waiting for online' do
     before(:each) do
@@ -681,7 +850,8 @@ describe 'Skyed::AWS::OpsWorks.deregister_instance' do
       hostname,
       stack_id,
       nil,
-      'online'
+      'online',
+      nil
     )
   end
   before(:each) do
@@ -759,7 +929,9 @@ describe 'Skyed::AWS::OpsWorks.wait_for_instance' do
       instance_name,
       stack_id,
       nil,
-      'booting')
+      'booting',
+      nil
+    )
   end
   let(:instance1_online) do
     Instance.new(
@@ -767,7 +939,9 @@ describe 'Skyed::AWS::OpsWorks.wait_for_instance' do
       instance_name,
       stack_id,
       nil,
-      'online')
+      'online',
+      nil
+    )
   end
   context 'when it is booting and waiting for online' do
     before(:each) do
@@ -797,7 +971,9 @@ describe 'Skyed::AWS::OpsWorks.wait_for_instance' do
         instance_name,
         stack_id,
         nil,
-        'stopping')
+        'stopping',
+        nil
+      )
     end
     before(:each) do
       expect(Skyed::AWS::OpsWorks)
@@ -880,7 +1056,14 @@ describe 'Skyed::AWS::OpsWorks.layer' do
   context 'when using an non existing instance name' do
     let(:stack_id) { '1' }
     let(:instance1) do
-      Instance.new('9876-9876-9876-9876', 'test1', stack_id, '1', 'online')
+      Instance.new(
+        '9876-9876-9876-9876',
+        'test1',
+        stack_id,
+        '1',
+        'online',
+        nil
+      )
     end
     before do
       expect(Skyed::AWS::OpsWorks)
@@ -897,7 +1080,14 @@ describe 'Skyed::AWS::OpsWorks.layer' do
   context 'when using an existing instance name' do
     let(:stack_id) { '1' }
     let(:instance1) do
-      Instance.new('9876-9876-9876-9876', 'test1', stack_id, '1', 'online')
+      Instance.new(
+        '9876-9876-9876-9876',
+        'test1',
+        stack_id,
+        '1',
+        'online',
+        nil
+      )
     end
     before do
       expect(Skyed::AWS::OpsWorks)
@@ -1126,7 +1316,8 @@ describe 'Skyed::AWS::OpsWorks.running_instances' do
       'test',
       stack_id,
       [layer_id],
-      'online'
+      'online',
+      nil
     )
   end
   let(:instance2) do
@@ -1135,7 +1326,8 @@ describe 'Skyed::AWS::OpsWorks.running_instances' do
       'test-user2',
       stack_id,
       [layer_id],
-      'stopped'
+      'stopped',
+      nil
     )
   end
   before do
@@ -1158,10 +1350,24 @@ describe 'Skyed::AWS::OpsWorks.instance_by_name' do
   let(:stack_id)      { '654654-654654-654654-654654' }
   let(:instances)     { { instances: [instance2, instance1] } }
   let(:instance1) do
-    Instance.new('9876-9876-9876-9876', instance_name, stack_id, nil, 'online')
+    Instance.new(
+      '9876-9876-9876-9876',
+      instance_name,
+      stack_id,
+      nil,
+      'online',
+      nil
+    )
   end
   let(:instance2) do
-    Instance.new('9876-9876-9876-9877', 'test-user2', stack_id, nil, 'online')
+    Instance.new(
+      '9876-9876-9876-9877',
+      'test-user2',
+      stack_id,
+      nil,
+      'online',
+      nil
+    )
   end
   before do
     expect(opsworks)

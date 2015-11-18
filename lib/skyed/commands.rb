@@ -149,3 +149,19 @@ command :list do |cmd|
     Skyed::List.execute(global_options, options, args)
   end
 end
+
+desc 'Check ELB'
+long_desc 'Check ELB'
+
+start_desc = 'Allows check ELB health state'
+command :check do |cmd|
+  cmd.flag [:s, :stack], default_value: nil,
+                         type: String,
+                         desc: stack_desc
+  cmd.flag [:l, :layer], default_value: nil,
+                         type: String,
+                         desc: layer_desc
+  cmd.action do |global_options, options, args|
+    Skyed::Check.execute(global_options, options, args)
+  end
+end

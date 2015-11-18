@@ -141,7 +141,9 @@ describe 'Skyed::Run.run' do
               instance_name,
               stack_id,
               [layer_id],
-              'online')
+              'online',
+              nil
+            )
           end
           let(:layer) do
             { stack_id: stack_id, layer_id: layer_id, name: 'test2' }
@@ -243,7 +245,9 @@ describe 'Skyed::Run.run' do
               instance_name,
               stack_id,
               [layer_id],
-              'online')
+              'online',
+              nil
+            )
           end
           let(:layer) do
             { stack_id: stack_id, layer_id: layer_id, name: 'test2' }

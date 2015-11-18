@@ -39,6 +39,46 @@ module Skyed
     end
 
     # This module encapsulates all the RDS related functions.
+    module ELB
+      class << self
+        def instance_ok?(elb_name, ec2_instance_id, elb = nil)
+          elb.describe_instance_health(
+            load_balancer_name: elb_name,
+            instances: [{ instance_id: ec2_instance_id }]
+          ).instance_states[0].state == 'InService'
+        end
+
+        def set_health_check(elb_name, health_check, elb = nil)
+          elb.configure_health_check(
+            load_balancer_name: elb_name,
+            health_check: {
+              target: health_check.target,
+              interval: health_check.interval,
+              timeout: health_check.timeout,
+              unhealthy_threshold: health_check.unhealthy_threshold,
+              healthy_threshold: health_check.healthy_threshold
+            }
+          )
+        end
+
+        def get_health_check(elb_name, elb = nil)
+          elbs = elb.describe_load_balancers(load_balancer_names: [elb_name])
+          elbs.load_balancer_descriptions[0].health_check
+        end
+
+        def login(
+          access = Skyed::Settings.access_key,
+          secret = Skyed::Settings.secret_key,
+          region = Skyed::AWS.region)
+          Aws::ElasticLoadBalancing::Client.new(
+            access_key_id: access,
+            secret_access_key: secret,
+            region: region)
+        end
+      end
+    end
+
+    # This module encapsulates all the RDS related functions.
     module RDS
       class << self
         def create_instance_from_snapshot(
