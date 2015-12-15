@@ -1,3 +1,12 @@
+## 0.1.13 (2015-12-15)
+
+Improvements:
+
+  - Adds check command for ELB evaluation, with timeout
+  - The run command now allows to specify a single instance
+  - Some cleaning in for Skyed::AWS::OpsWorks
+  - Some cleaning in Specs for run command
+
 ## 0.1.12 (2015-10-30)
 
 Improvement:
