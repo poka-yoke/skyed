@@ -49,7 +49,6 @@ describe 'Skyed::Check.wait_for_backend_restart' do
   let(:stack_id)        { '87654321-4321-4321-4321-210987654321' }
   let(:ec2_instance_id) { 'i-9876543' }
   let(:layer_id)        { '87654321-1234-4321-4321-210987654321' }
-  let(:options)         { { stack: stack_id, layer: layer_id } }
   let(:instance1) do
     Instance.new(
       instance_id,
@@ -76,15 +75,34 @@ describe 'Skyed::Check.wait_for_backend_restart' do
       .to receive(:login)
       .with('elb')
       .and_return(elb)
-    expect(Skyed::Check)
-      .to receive(:wait_for_backend)
-      .with(elb_name, ec2_instance_id, elb, false)
-    expect(Skyed::Check)
-      .to receive(:wait_for_backend)
-      .with(elb_name, ec2_instance_id, elb)
   end
-  it 'waits for the instance to restart' do
-    Skyed::Check.wait_for_backend_restart(elb_name, instance_name, options)
+  context 'without timeout' do
+    let(:options) { { stack: stack_id, layer: layer_id, wait_interval: 0 } }
+    before(:each) do
+      expect(Skyed::Check)
+        .to receive(:wait_for_backend)
+        .with(elb_name, ec2_instance_id, elb, false, 0)
+      expect(Skyed::Check)
+        .to receive(:wait_for_backend)
+        .with(elb_name, ec2_instance_id, elb, true, 0)
+    end
+    it 'waits for the instance to restart' do
+      Skyed::Check.wait_for_backend_restart(elb_name, instance_name, options)
+    end
+  end
+  context 'with timeout' do
+    let(:options) { { stack: stack_id, layer: layer_id, wait_interval: 5 } }
+    before(:each) do
+      expect(Skyed::Check)
+        .to receive(:wait_for_backend)
+        .with(elb_name, ec2_instance_id, elb, false, 5)
+      expect(Skyed::Check)
+        .to receive(:wait_for_backend)
+        .with(elb_name, ec2_instance_id, elb, true, 5)
+    end
+    it 'waits for the instance to restart' do
+      Skyed::Check.wait_for_backend_restart(elb_name, instance_name, options)
+    end
   end
 end
 
@@ -99,6 +117,10 @@ describe 'Skyed::Check.wait_for_backend' do
         .with(elb_name, ec2_instance_id, elb)
         .once
         .and_return(true)
+      expect(Kernel)
+        .to receive(:sleep)
+        .with(0)
+        .at_least(1)
       expect(Skyed::AWS::ELB)
         .to receive(:instance_ok?)
         .with(elb_name, ec2_instance_id, elb)
@@ -109,13 +131,38 @@ describe 'Skyed::Check.wait_for_backend' do
       Skyed::Check.wait_for_backend(elb_name, ec2_instance_id, elb, false)
     end
   end
-  context 'when waiting for down' do
+  context 'when waiting for down with timeout' do
+    before(:each) do
+      expect(Skyed::AWS::ELB)
+        .to receive(:instance_ok?)
+        .with(elb_name, ec2_instance_id, elb)
+        .twice
+        .and_return(true)
+      expect(Kernel)
+        .to receive(:sleep)
+        .with(5)
+        .at_least(1)
+      expect(Skyed::AWS::ELB)
+        .to receive(:instance_ok?)
+        .with(elb_name, ec2_instance_id, elb)
+        .at_least(1)
+        .and_return(false)
+    end
+    it 'waits for the backend to be down' do
+      Skyed::Check.wait_for_backend(elb_name, ec2_instance_id, elb, false, 5)
+    end
+  end
+  context 'when waiting for up' do
     before(:each) do
       expect(Skyed::AWS::ELB)
         .to receive(:instance_ok?)
         .with(elb_name, ec2_instance_id, elb)
         .once
         .and_return(false)
+      expect(Kernel)
+        .to receive(:sleep)
+        .with(0)
+        .at_least(1)
       expect(Skyed::AWS::ELB)
         .to receive(:instance_ok?)
         .with(elb_name, ec2_instance_id, elb)
@@ -124,6 +171,27 @@ describe 'Skyed::Check.wait_for_backend' do
     end
     it 'waits for the backend to be up' do
       Skyed::Check.wait_for_backend(elb_name, ec2_instance_id, elb, true)
+    end
+  end
+  context 'when waiting for up with timeout' do
+    before(:each) do
+      expect(Skyed::AWS::ELB)
+        .to receive(:instance_ok?)
+        .with(elb_name, ec2_instance_id, elb)
+        .once
+        .and_return(false)
+      expect(Kernel)
+        .to receive(:sleep)
+        .with(5)
+        .at_least(1)
+      expect(Skyed::AWS::ELB)
+        .to receive(:instance_ok?)
+        .with(elb_name, ec2_instance_id, elb)
+        .once
+        .and_return(true)
+    end
+    it 'waits for the backend to be up' do
+      Skyed::Check.wait_for_backend(elb_name, ec2_instance_id, elb, true, 5)
     end
   end
 end

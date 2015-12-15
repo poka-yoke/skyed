@@ -11,24 +11,26 @@ module Skyed
         Skyed::AWS::ELB.set_health_check(args[0], original_health_check, elb)
       end
 
-      def wait_for_backend_restart(elb_name, instance_name, options)
-        ow = settings(options)
+      def wait_for_backend_restart(elb_name, instance_name, opts)
+        ow = settings(opts)
         instance = Skyed::AWS::OpsWorks.instance_by_name(
           instance_name,
           Skyed::Settings.stack_id,
           ow)
         elb = login('elb')
-        wait_for_backend(elb_name, instance.ec2_instance_id, elb, false)
-        wait_for_backend(elb_name, instance.ec2_instance_id, elb)
+        [true, false].each do |op|
+          wait_for_backend(
+            elb_name, instance.ec2_instance_id, elb, op, opts[:wait_interval])
+        end
       end
 
-      def wait_for_backend(elb_name, ec2_instance_id, elb, ok = true)
+      def wait_for_backend(elb_name, ec2_instance_id, elb, ok = true, wait = 0)
         until ok == Skyed::AWS::ELB.instance_ok?(
           elb_name,
           ec2_instance_id,
           elb
         )
-          sleep(0)
+          Kernel.sleep(wait)
         end
       end
 
