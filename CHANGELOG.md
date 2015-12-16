@@ -1,3 +1,9 @@
+## 0.1.14 (2015-12-16)
+
+Improvements:
+
+  - Adds real timeout option to check command, previous was a wait interval.
+
 ## 0.1.13 (2015-12-15)
 
 Improvements:

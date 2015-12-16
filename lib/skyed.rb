@@ -13,5 +13,5 @@ require 'skyed/settings'
 
 # Skyed is a set of tools for cloud computing
 module Skyed
-  VERSION = '0.1.13'
+  VERSION = '0.1.14'
 end
