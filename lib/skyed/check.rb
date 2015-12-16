@@ -13,24 +13,29 @@ module Skyed
 
       def wait_for_backend_restart(elb_name, instance_name, opts)
         ow = settings(opts)
-        instance = Skyed::AWS::OpsWorks.instance_by_name(
-          instance_name,
-          Skyed::Settings.stack_id,
-          ow)
+        instance_id = instance_by_name(instance_name, ow)
+                      .ec2_instance_id
         elb = login('elb')
+        wait = opts[:wait_interval] || 0
+        timeout = opts[:timeout] || 0
         [true, false].each do |op|
-          wait_for_backend(
-            elb_name, instance.ec2_instance_id, elb, op, opts[:wait_interval])
+          wait_for_backend(elb_name, instance_id, elb, op, wait, timeout)
         end
       end
 
-      def wait_for_backend(elb_name, ec2_instance_id, elb, ok = true, wait = 0)
-        until ok == Skyed::AWS::ELB.instance_ok?(
-          elb_name,
-          ec2_instance_id,
-          elb
-        )
+      def instance_by_name(name, ow)
+        Skyed::AWS::OpsWorks
+          .instance_by_name(name, Skyed::Settings.stack_id, ow)
+      end
+
+      def wait_for_backend(
+        elb_name, instance_id, elb, *other_args)
+        ok, wait, timeout = other_args
+        time = 0
+        until ok == Skyed::AWS::ELB.instance_ok?(elb_name, instance_id, elb) ||
+              time >= timeout
           Kernel.sleep(wait)
+          time += wait
         end
       end
 

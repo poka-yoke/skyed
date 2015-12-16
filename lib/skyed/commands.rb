@@ -162,6 +162,9 @@ command :check do |cmd|
                          type: String,
                          desc: layer_desc
   desc = 'Time to wait for AWS responses'
+  cmd.flag [:t, :timeout, 'timeout'], default_value: 30,
+                                      type: Integer,
+                                      desc: 'Defines timout for the check'
   cmd.flag [:w, :wait_interval, 'wait-interval'], default_value: 30,
                                                   type: Integer,
                                                   desc: desc
