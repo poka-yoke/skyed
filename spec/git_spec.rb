@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'skyed'
 
 describe 'Skyed::Git.clone_stack_remote' do
   let(:random)     { '5b5cd0da3121fc53b4bc84d0c8af2e81' }
@@ -33,6 +34,10 @@ describe 'Skyed::Git.clone_stack_remote' do
   end
   context 'when is the current stack' do
     before(:each) do
+      expect(ENV)
+        .to receive(:[])
+        .with('PKEY')
+        .and_return(nil)
       expect(Skyed::Settings)
         .to receive(:current_stack?)
         .with(stack_id)
