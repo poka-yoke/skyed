@@ -1,0 +1,1 @@
+require 'skyed/cli'
