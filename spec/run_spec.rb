@@ -142,6 +142,7 @@ describe 'Skyed::Run.run' do
               stack_id,
               [layer_id],
               'online',
+              nil,
               nil
             )
           end
@@ -246,6 +247,7 @@ describe 'Skyed::Run.run' do
               stack_id,
               [layer_id],
               'online',
+              nil,
               nil
             )
           end

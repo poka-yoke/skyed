@@ -619,9 +619,58 @@ describe 'Skyed::AWS::RDS.login' do
   end
 end
 
+describe 'Skyed::AWS::OpsWorks.instance_by_id' do
+  let(:opsworks)    { double('Aws::OpsWorks::Client') }
+  let(:instance_id) { '9876-9876-9876-9877' }
+  let(:stack_id)    { '654654-654654-654654-654654' }
+  let(:instances)   { { instances: [instance2] } }
+  let(:instance1) do
+    Instance.new(
+      '9876-9876-9876-9876',
+      instance_name,
+      stack_id,
+      nil,
+      'online',
+      nil,
+      'ec2-10-10-10-10.compute-1.amazonaws.com'
+    )
+  end
+  let(:instance2) do
+    Instance.new(
+      '9876-9876-9876-9877',
+      'test-user2',
+      stack_id,
+      nil,
+      'online',
+      nil,
+      'ec2-11-11-11-11.compute-1.amazonaws.com'
+    )
+  end
+  before do
+    expect(opsworks)
+      .to receive(:describe_instances)
+      .with(instance_ids: [instance_id])
+      .once
+      .and_return(instances)
+    expect(opsworks)
+      .to receive(:describe_instances)
+      .and_return(instance: [])
+  end
+  it 'returns the instance with the specified id' do
+    expect(Skyed::AWS::OpsWorks.instance_by_id(
+      instance_id, opsworks))
+      .to eq(instance2)
+    expect(Skyed::AWS::OpsWorks.instance_by_id(
+      'test-user3', opsworks))
+      .to eq(nil)
+  end
+end
+
 describe 'Skyed::AWS::OpsWorks.start_instance' do
-  let(:opsworks)      { double('Aws::OpsWorks::Client') }
-  let(:instance_id)   { '12345678-1234-4321-5678-210987654321' }
+  let(:opsworks)    { double('Aws::OpsWorks::Client') }
+  let(:instance_id) { '12345678-1234-4321-5678-210987654321' }
+  let(:stack_id)    { '12345679-1235-5321-5679-210987654322' }
+  let(:hostname)    { 'test1' }
   let(:instance_online) do
     Instance.new(
       instance_id,
@@ -629,7 +678,8 @@ describe 'Skyed::AWS::OpsWorks.start_instance' do
       stack_id,
       nil,
       'online',
-      nil
+      nil,
+      'ec2-10-10-10-10.compute-1.amazonaws.com'
     )
   end
   before(:each) do
@@ -639,6 +689,10 @@ describe 'Skyed::AWS::OpsWorks.start_instance' do
     expect(Skyed::AWS::OpsWorks)
       .to receive(:wait_for_instance_id)
       .with(instance_id, 'online', opsworks)
+    expect(Skyed::AWS::OpsWorks)
+      .to receive(:instance_by_id)
+      .with(instance_id, opsworks)
+      .and_return(instance_online)
   end
   it 'starts the new instance' do
     Skyed::AWS::OpsWorks.start_instance(
@@ -665,6 +719,7 @@ describe 'Skyed::AWS::OpsWorks.instances_by_status' do
       stack_id,
       nil,
       'online',
+      nil,
       nil
     )
   end
@@ -675,6 +730,7 @@ describe 'Skyed::AWS::OpsWorks.instances_by_status' do
       stack_id,
       nil,
       'stopped',
+      nil,
       nil
     )
   end
@@ -717,6 +773,7 @@ describe 'Skyed::AWS::OpsWorks.stop_instance' do
       stack_id,
       nil,
       'online',
+      nil,
       nil
     )
   end
@@ -756,6 +813,7 @@ describe 'Skyed::AWS::OpsWorks.create_instance' do
       stack_id,
       nil,
       'online',
+      nil,
       nil
     )
   end
@@ -798,6 +856,7 @@ describe 'Skyed::AWS::OpsWorks.wait_for_instance_id' do
       stack_id,
       nil,
       'booting',
+      nil,
       nil
     )
   end
@@ -808,6 +867,7 @@ describe 'Skyed::AWS::OpsWorks.wait_for_instance_id' do
       stack_id,
       nil,
       'online',
+      nil,
       nil
     )
   end
@@ -851,6 +911,7 @@ describe 'Skyed::AWS::OpsWorks.deregister_instance' do
       stack_id,
       nil,
       'online',
+      nil,
       nil
     )
   end
@@ -930,6 +991,7 @@ describe 'Skyed::AWS::OpsWorks.wait_for_instance' do
       stack_id,
       nil,
       'booting',
+      nil,
       nil
     )
   end
@@ -940,6 +1002,7 @@ describe 'Skyed::AWS::OpsWorks.wait_for_instance' do
       stack_id,
       nil,
       'online',
+      nil,
       nil
     )
   end
@@ -972,6 +1035,7 @@ describe 'Skyed::AWS::OpsWorks.wait_for_instance' do
         stack_id,
         nil,
         'stopping',
+        nil,
         nil
       )
     end
@@ -1062,6 +1126,7 @@ describe 'Skyed::AWS::OpsWorks.layer' do
         stack_id,
         '1',
         'online',
+        nil,
         nil
       )
     end
@@ -1086,6 +1151,7 @@ describe 'Skyed::AWS::OpsWorks.layer' do
         stack_id,
         '1',
         'online',
+        nil,
         nil
       )
     end
@@ -1317,6 +1383,7 @@ describe 'Skyed::AWS::OpsWorks.running_instances' do
       stack_id,
       [layer_id],
       'online',
+      nil,
       nil
     )
   end
@@ -1327,6 +1394,7 @@ describe 'Skyed::AWS::OpsWorks.running_instances' do
       stack_id,
       [layer_id],
       'stopped',
+      nil,
       nil
     )
   end
@@ -1356,6 +1424,7 @@ describe 'Skyed::AWS::OpsWorks.instance_by_name' do
       stack_id,
       nil,
       'online',
+      nil,
       nil
     )
   end
@@ -1366,6 +1435,7 @@ describe 'Skyed::AWS::OpsWorks.instance_by_name' do
       stack_id,
       nil,
       'online',
+      nil,
       nil
     )
   end

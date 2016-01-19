@@ -56,7 +56,8 @@ describe 'Skyed::Check.wait_for_backend_restart' do
       stack_id,
       [],
       'online',
-      ec2_instance_id
+      ec2_instance_id,
+      nil
     )
   end
   before(:each) do

@@ -274,7 +274,7 @@ describe 'Skyed::Create.create_opsworks' do
         { stack_id: stack_id, layer_id: layer_id, name: 'test' }
       end
       let(:instance1) do
-        Instance.new(instance_id, 'test1', stack_id, nil, 'stopped', nil)
+        Instance.new(instance_id, 'test1', stack_id, nil, 'stopped', nil, nil)
       end
       let(:options) do
         {

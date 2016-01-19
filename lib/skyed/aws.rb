@@ -198,9 +198,17 @@ module Skyed
       }
 
       class << self
+        def instance_by_id(instance_id, opsworks)
+          instances_data = opsworks.describe_instances(
+            instance_ids: [instance_id])
+          instances = instances_data[:instances] unless instances_data.nil?
+          instances[0] unless instances.nil?
+        end
+
         def start_instance(instance_id, opsworks)
           opsworks.start_instance(instance_id: instance_id)
           wait_for_instance_id(instance_id, 'online', opsworks)
+          puts instance_by_id(instance_id, opsworks).public_dns
         end
 
         def instances_by_status(stack_id, layer_id, status, ow)

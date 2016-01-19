@@ -8,7 +8,8 @@ Instance = Struct.new(
   :stack_id,
   :layer_ids,
   :status,
-  :ec2_instance_id
+  :ec2_instance_id,
+  :public_dns
 )
 Layer = Struct.new(:stack_id, :layer_id, :name)
 Stack = Struct.new(:stack_id, :name)
