@@ -1,3 +1,9 @@
+## 0.1.15 (????-??-??)
+
+Improvements:
+
+  - When starts an instance, skyed now prints the public DNS name.
+
 ## 0.1.14 (2015-12-16)
 
 Improvements:
