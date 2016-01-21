@@ -1,10 +1,6 @@
-# skyed
+# skyed [![Build Status](https://travis-ci.org/ifosch/skyed.svg)](https://travis-ci.org/ifosch/skyed) [![Coverage Status](https://img.shields.io/coveralls/ifosch/skyed/master.svg)](https://coveralls.io/r/ifosch/skyed) [![Gem Version](https://badge.fury.io/rb/skyed.svg)](http://badge.fury.io/rb/skyed) [![Code Climate](https://codeclimate.com/github/ifosch/skyed/badges/gpa.svg)](https://codeclimate.com/github/ifosch/skyed)
 
 **THIS TOOL IS WORK IN PROGRESS - USE IT CAREFULLY!**
-
-[![Build Status](https://travis-ci.org/ifosch/skyed.svg)](https://travis-ci.org/ifosch/skyed)
-[![Coverage Status](https://img.shields.io/coveralls/ifosch/skyed/master.svg)](https://coveralls.io/r/ifosch/skyed)
-[![Gem Version](https://badge.fury.io/rb/skyed.svg)](http://badge.fury.io/rb/skyed)
 
 ## Description
 
