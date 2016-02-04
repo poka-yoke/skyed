@@ -67,7 +67,7 @@ end
 
 task :release do
   require 'git'
-  changelog_re = /## (\d+\.\d+\.\d+) \(\?\?\?\?-\?\?-\?\?\)/
+  changelog_re = /## (\d+\.\d+\.\d+(|\..*)) \(\?\?\?\?-\?\?-\?\?\)/
   changelog = File.open('CHANGELOG.md').read
   changelog_matches = changelog.match(changelog_re)
   new_version = changelog_matches[1]
