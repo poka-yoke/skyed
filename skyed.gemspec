@@ -1,8 +1,8 @@
 # rubocop:disable Style/SpaceAroundOperators
 Gem::Specification.new do |s|
   s.name                   = 'skyed'
-  s.version                = '0.1.14'
-  s.date                   = '2015-12-16'
+  s.version                = '0.2.0.dev'
+  s.date                   = '2016-02-04'
   s.summary                = 'Are you surrounded by sky?'
   s.description            = 'A cloudy gem'
   s.authors                = ['Ignasi Fosch']

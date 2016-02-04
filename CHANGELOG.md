@@ -1,3 +1,7 @@
+## 0.2.0.dev (2016-02-04)
+
+This is the first development release of skyed 0.2.x.
+
 ## 0.1.15 (2016-01-19)
 
 Improvements:

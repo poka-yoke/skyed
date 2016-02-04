@@ -4,5 +4,5 @@ require_all 'plugins/*/lib/**/*.rb'
 
 # Main Skyed module
 module Skyed
-  VERSION = '0.2.0'
+  VERSION = '0.2.0.dev'
 end
