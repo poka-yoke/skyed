@@ -72,15 +72,16 @@ task :release do
   changelog_matches = changelog.match(changelog_re)
   fail 'Update your CHANGELOG first, please' if changelog_matches.nil?
   new_version = changelog_matches[1]
-  skyed_branch = 'master'
-  skyed_branch = 'v0.2' if /0\.2/ =~ new_version
+  pub_branch = 'master'
+  pub_branch = 'v0.2' if /0\.2/ =~ new_version
   new_date = Time.now.strftime('%04Y-%02m-%02d')
   gemspec_re = /version\s+=\s+'([^']*)'$/
   gemspec = File.open('skyed.gemspec').read
   current = gemspec.match(gemspec_re)[1]
   fail 'Update your CHANGELOG first, please' if current == new_version
   repo = Git.open('.')
-  fail "Switch to #{skyed_branch} and merge" unless repo.current_branch == skyed_branch
+  current_branch = pub_branch
+  fail "Switch to #{pub_branch} and merge" unless current_branch == pub_branch
   skyed = File.open('lib/skyed.rb').read
   skyed_version_re = /VERSION(\s+)=(\s+).*/
   new_skyed = skyed.gsub(skyed_version_re, "VERSION\\1=\\2'#{new_version}'")
@@ -108,7 +109,7 @@ task :release do
     a: "v#{new_version}",
     m: "Releasing #{new_version}") unless ENV['FAKE']
   puts 'Pushing'
-  repo.push(repo.remote('ifosch'), skyed_branch, tags: true) unless ENV['FAKE']
+  repo.push(repo.remote('ifosch'), pub_branch, tags: true) unless ENV['FAKE']
   build unless ENV['FAKE']
   publish(new_version)
 end
