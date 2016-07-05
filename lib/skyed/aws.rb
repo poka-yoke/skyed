@@ -112,8 +112,8 @@ module Skyed
             db_instance_identifier: instance_name,
             skip_final_snapshot: !snapshot
           }
-          params[
-            :final_snapshot_name] = options[:final_snapshot_name] if snapshot
+          snapshot_name = options[:final_snapshot_name]
+          params[:final_db_snapshot_identifier] = snapshot_name if snapshot
           params
         end
 
