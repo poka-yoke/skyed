@@ -514,7 +514,7 @@ describe 'Skyed::AWS::RDS.generate_params' do
         {
           db_instance_identifier: instance_name,
           skip_final_snapshot: false,
-          final_snapshot_name: 'final_snap'
+          final_db_snapshot_identifier: 'final_snap'
         }
       end
       it 'generates arguments for the delete_db_instance' do
