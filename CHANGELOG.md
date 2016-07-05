@@ -1,3 +1,9 @@
+## 0.1.16 (????-??-??)
+
+Bug fix:
+
+  - Destroying a RDS instance with snapshot, now works fine.
+
 ## 0.1.15 (2016-01-19)
 
 Improvements:
